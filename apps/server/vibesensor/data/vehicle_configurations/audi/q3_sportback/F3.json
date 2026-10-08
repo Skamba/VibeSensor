@@ -1,0 +1,750 @@
+{
+  "definitions": {
+    "evidence_ref_sets": {
+      "e1": [
+        "audi_mediacenter_sources:f3-q3-sportback-45-tfsi-e-2024-03-tech-data-pdf"
+      ],
+      "e2": [
+        "audi_mediacenter_sources:f3-q3-sportback-2019-ee-tech-data-pdf",
+        "audi_mediacenter_sources:f3-q3-sportback-35-tdi-2024-07-tech-data-pdf",
+        "audi_mediacenter_sources:f3-q3-sportback-35-tdi-2025-06-tech-data-pdf"
+      ],
+      "e3": [
+        "audi_mediacenter_sources:f3-q3-sportback-35-tfsi-manual-2024-07-tech-data-pdf",
+        "audi_mediacenter_sources:f3-q3-sportback-35-tfsi-manual-2025-06-tech-data-pdf"
+      ],
+      "e4": [
+        "audi_mediacenter_sources:f3-q3-sportback-35-tfsi-s-tronic-2024-07-tech-data-pdf",
+        "audi_mediacenter_sources:f3-q3-sportback-35-tfsi-s-tronic-2025-06-tech-data-pdf"
+      ],
+      "e5": [
+        "audi_mediacenter_sources:f3-q3-sportback-40-tfsi-quattro-2024-07-tech-data-pdf",
+        "audi_mediacenter_sources:f3-q3-sportback-40-tfsi-quattro-2025-06-tech-data-pdf"
+      ],
+      "e6": [
+        "audi_mediacenter_sources:f3-q3-sportback-45-tfsi-quattro-2024-07-tech-data-pdf",
+        "audi_mediacenter_sources:f3-q3-sportback-45-tfsi-quattro-2025-06-tech-data-pdf"
+      ],
+      "e7": [
+        "audi_mediacenter_sources:f3-q3-sportback-40-tdi-quattro-2025-01-tech-data-pdf",
+        "audi_mediacenter_sources:f3-q3-sportback-40-tdi-quattro-2025-06-tech-data-pdf"
+      ],
+      "e8": [
+        "audi_mediacenter_sources:f3-q3-sportback-2019-ee-tech-data-pdf"
+      ]
+    }
+  },
+  "defaults": {
+    "brand": "Audi",
+    "type": "SUV",
+    "market": "EU",
+    "model_code": "F3",
+    "body_code": "F3",
+    "model_name": "Q3 Sportback (F3, 2020-2025)"
+  },
+  "configurations": [
+    {
+      "id": "audi-f3-sportback-35-tdi-eu-2020-dct7-fwd",
+      "production_start_year": 2020,
+      "production_end_year": 2025,
+      "variant_name": "35 TDI",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e2",
+        "notes": "The official Audi 09/2019, 07/2024 and 06/2025 Q3 Sportback technical data (Program for Germany) list the 35 TDI with front-wheel drive.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e2",
+        "notes": "The official Audi 09/2019, 07/2024 and 06/2025 Q3 Sportback technical data (Program for Germany) list a 7-speed S tronic for the 35 TDI.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "The official Audi 09/2019, 07/2024 and 06/2025 Q3 Sportback technical data (Program for Germany) list 0.561 as the top gear for the 35 TDI.",
+          "value": 0.561
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "The official Audi 09/2019, 07/2024 and 06/2025 Q3 Sportback technical data (Program for Germany) list the forward ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561 for the 35 TDI.",
+          "value": [
+            3.579,
+            2.75,
+            1.677,
+            0.889,
+            0.677,
+            0.722,
+            0.561
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e2",
+          "notes": "The official Audi 09/2019, 07/2024 and 06/2025 Q3 Sportback technical data (Program for Germany) list the 35 TDI. Audi prints two gearbox output final drives, 4.813 (1-2) and 3.667 (2-3), not front and rear axle ratios. Of every way to run the forward ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561 through the two outputs, only those with the top gear on 3.667 keep the overall ratios falling gear by gear, so 3.667 is the final drive behind the top gear and is the only one stored.",
+          "value": 3.667
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e2",
+          "notes": "The official Audi 09/2019, 07/2024 and 06/2025 Q3 Sportback technical data (Program for Germany) list 215/65 R17 as the basic tire for the 35 TDI.",
+          "front": {
+            "width_mm": 215.0,
+            "aspect_pct": 65.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e2",
+            "notes": "The official Audi 09/2019, 07/2024 and 06/2025 Q3 Sportback technical data (Program for Germany) list 215/65 R17 as the basic tire for the 35 TDI.",
+            "front": {
+              "width_mm": 215.0,
+              "aspect_pct": 65.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Basic 17\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official Audi 09/2019, 07/2024 and 06/2025 Q3 Sportback technical data (Program for Germany) list the 35 TDI (in-line four TDI, 1968 cc). The 09/2019 launch sheet prints the same forward ratios and the same 1-2 output (4.813) as the 2024 and 2025 sheets. The Germany-program launch sheets are dated September 2019 (after July), so the row starts in 2020. Audi MediaCenter lists the model as 'Q3 Sportback (until 2025)' and its last sheets are dated 06/2025, so the row ends in 2025.",
+          "evidence_refs": [
+            "audi_mediacenter_sources:f3-q3-sportback-2019-ee-tech-data-pdf",
+            "audi_mediacenter_sources:f3-q3-sportback-35-tdi-2024-07-tech-data-pdf",
+            "audi_mediacenter_sources:f3-q3-sportback-35-tdi-2025-06-tech-data-pdf",
+            "audi_mediacenter_sources:f3-q3-sportback-until-2025-model-page"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Q3 Sportback 35 TDI optional tire sizes",
+          "reason": "The technical-data sheets list only the basic tire and no official Q3 Sportback wheel programme was checked, so no optional size is stored.",
+          "evidence_refs_ref": "e2"
+        },
+        {
+          "item": "Q3 Sportback 35 TDI final drive behind the top gear before 2024",
+          "reason": "The 09/2019 sheet prints only the 1-2 output final drive (4.813); the 3.667 output behind the top gear is printed from 07/2024. The gear set and the 1-2 output match, so the row keeps 3.667 for the whole span.",
+          "evidence_refs": [
+            "audi_mediacenter_sources:f3-q3-sportback-2019-ee-tech-data-pdf",
+            "audi_mediacenter_sources:f3-q3-sportback-35-tdi-2024-07-tech-data-pdf"
+          ]
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "audi-f3-sportback-35-tfsi-eu-2024-mt6-fwd",
+      "production_start_year": 2024,
+      "production_end_year": 2025,
+      "variant_name": "35 TFSI",
+      "engine_code": "1.5L",
+      "engine_name": "1.5L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e3",
+        "notes": "The official Audi 07/2024 and 06/2025 Q3 Sportback technical data (Program for Germany) list the 35 TFSI with front-wheel drive.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e3",
+        "notes": "The official Audi 07/2024 and 06/2025 Q3 Sportback technical data (Program for Germany) list a 6-speed manual for the 35 TFSI.",
+        "code": "MT6",
+        "name": "6-speed manual"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official Audi 07/2024 and 06/2025 Q3 Sportback technical data (Program for Germany) list 0.652 as the top gear for the 35 TFSI.",
+          "value": 0.652
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official Audi 07/2024 and 06/2025 Q3 Sportback technical data (Program for Germany) list the forward ratios 3.750 / 2.100 / 1.357 / 1.026 / 0.810 / 0.652 for the 35 TFSI.",
+          "value": [
+            3.75,
+            2.1,
+            1.357,
+            1.026,
+            0.81,
+            0.652
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official Audi 07/2024 and 06/2025 Q3 Sportback technical data (Program for Germany) list 4.563 as the final drive for the 35 TFSI (both gearbox outputs print 4.563).",
+          "value": 4.563
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e3",
+          "notes": "The official Audi 07/2024 and 06/2025 Q3 Sportback technical data (Program for Germany) list 215/65 R17 as the basic tire for the 35 TFSI.",
+          "front": {
+            "width_mm": 215.0,
+            "aspect_pct": 65.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e3",
+            "notes": "The official Audi 07/2024 and 06/2025 Q3 Sportback technical data (Program for Germany) list 215/65 R17 as the basic tire for the 35 TFSI.",
+            "front": {
+              "width_mm": 215.0,
+              "aspect_pct": 65.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Basic 17\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official Audi 07/2024 and 06/2025 Q3 Sportback technical data (Program for Germany) list the 35 TFSI (in-line four TFSI, 1498 cc). The 07/2024 sheet is the earliest checked sheet with this gear set, so the row starts in 2024. Audi MediaCenter lists the model as 'Q3 Sportback (until 2025)' and its last sheets are dated 06/2025, so the row ends in 2025.",
+          "evidence_refs": [
+            "audi_mediacenter_sources:f3-q3-sportback-2019-ee-tech-data-pdf",
+            "audi_mediacenter_sources:f3-q3-sportback-35-tfsi-manual-2024-07-tech-data-pdf",
+            "audi_mediacenter_sources:f3-q3-sportback-35-tfsi-manual-2025-06-tech-data-pdf",
+            "audi_mediacenter_sources:f3-q3-sportback-until-2025-model-page"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Q3 Sportback 35 TFSI optional tire sizes",
+          "reason": "The technical-data sheets list only the basic tire and no official Q3 Sportback wheel programme was checked, so no optional size is stored.",
+          "evidence_refs_ref": "e3"
+        },
+        {
+          "item": "Q3 Sportback 35 TFSI manual before 07/2024",
+          "reason": "No official sheet between launch and 07/2024 was found for the 35 TFSI manual. The 09/2019 launch sheet prints another six-speed gear set (3.769 / 2.087 / 1.324 / 0.977 / 0.975 / 0.814, final drive 1-2 4.563), and the change date is unknown, so the row covers only the years the checked sheets support.",
+          "evidence_refs_ref": "e8"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "audi-f3-sportback-35-tfsi-eu-2024-dct7-fwd",
+      "production_start_year": 2024,
+      "production_end_year": 2025,
+      "variant_name": "35 TFSI",
+      "engine_code": "1.5L",
+      "engine_name": "1.5L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e4",
+        "notes": "The official Audi 07/2024 and 06/2025 Q3 Sportback technical data (Program for Germany) list the 35 TFSI with front-wheel drive.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e4",
+        "notes": "The official Audi 07/2024 and 06/2025 Q3 Sportback technical data (Program for Germany) list a 7-speed S tronic for the 35 TFSI.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "The official Audi 07/2024 and 06/2025 Q3 Sportback technical data (Program for Germany) list 0.661 as the top gear for the 35 TFSI.",
+          "value": 0.661
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "The official Audi 07/2024 and 06/2025 Q3 Sportback technical data (Program for Germany) list the forward ratios 3.190 / 2.750 / 1.897 / 1.040 / 0.793 / 0.860 / 0.661 for the 35 TFSI.",
+          "value": [
+            3.19,
+            2.75,
+            1.897,
+            1.04,
+            0.793,
+            0.86,
+            0.661
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e4",
+          "notes": "The official Audi 07/2024 and 06/2025 Q3 Sportback technical data (Program for Germany) list the 35 TFSI. Audi prints two gearbox output final drives, 5.200 (1-2) and 3.900 (2-3), not front and rear axle ratios. Of every way to run the forward ratios 3.190 / 2.750 / 1.897 / 1.040 / 0.793 / 0.860 / 0.661 through the two outputs, only those with the top gear on 3.900 keep the overall ratios falling gear by gear, so 3.900 is the final drive behind the top gear and is the only one stored.",
+          "value": 3.9
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e4",
+          "notes": "The official Audi 07/2024 and 06/2025 Q3 Sportback technical data (Program for Germany) list 215/65 R17 as the basic tire for the 35 TFSI.",
+          "front": {
+            "width_mm": 215.0,
+            "aspect_pct": 65.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e4",
+            "notes": "The official Audi 07/2024 and 06/2025 Q3 Sportback technical data (Program for Germany) list 215/65 R17 as the basic tire for the 35 TFSI.",
+            "front": {
+              "width_mm": 215.0,
+              "aspect_pct": 65.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Basic 17\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official Audi 07/2024 and 06/2025 Q3 Sportback technical data (Program for Germany) list the 35 TFSI (in-line four TFSI, 1498 cc). The 07/2024 sheet is the earliest checked Q3 Sportback sheet for this variant, so the row starts in 2024. Audi MediaCenter lists the model as 'Q3 Sportback (until 2025)' and its last sheets are dated 06/2025, so the row ends in 2025.",
+          "evidence_refs": [
+            "audi_mediacenter_sources:f3-q3-sportback-35-tfsi-s-tronic-2024-07-tech-data-pdf",
+            "audi_mediacenter_sources:f3-q3-sportback-35-tfsi-s-tronic-2025-06-tech-data-pdf",
+            "audi_mediacenter_sources:f3-q3-sportback-until-2025-model-page"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Q3 Sportback 35 TFSI optional tire sizes",
+          "reason": "The technical-data sheets list only the basic tire and no official Q3 Sportback wheel programme was checked, so no optional size is stored.",
+          "evidence_refs_ref": "e4"
+        },
+        {
+          "item": "Q3 Sportback 35 TFSI S tronic before 07/2024",
+          "reason": "No official sheet between launch and 07/2024 was found for the 35 TFSI S tronic. The 09/2019 launch sheets do not list it, so the row covers only the years the checked sheets support.",
+          "evidence_refs_ref": "e8"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "audi-f3-sportback-40-tfsi-quattro-eu-2024-dct7-awd",
+      "production_start_year": 2024,
+      "production_end_year": 2025,
+      "variant_name": "40 TFSI quattro",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e5",
+        "notes": "The official Audi 07/2024 and 06/2025 Q3 Sportback technical data (Program for Germany) list the 40 TFSI quattro with on-demand quattro all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e5",
+        "notes": "The official Audi 07/2024 and 06/2025 Q3 Sportback technical data (Program for Germany) list a 7-speed S tronic for the 40 TFSI quattro.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e5",
+          "notes": "The official Audi 07/2024 and 06/2025 Q3 Sportback technical data (Program for Germany) list 0.635 as the top gear for the 40 TFSI quattro.",
+          "value": 0.635
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e5",
+          "notes": "The official Audi 07/2024 and 06/2025 Q3 Sportback technical data (Program for Germany) list the forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635 for the 40 TFSI quattro.",
+          "value": [
+            3.4,
+            2.75,
+            1.767,
+            0.925,
+            0.705,
+            0.755,
+            0.635
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e5",
+          "notes": "The official Audi 07/2024 and 06/2025 Q3 Sportback technical data (Program for Germany) list the 40 TFSI quattro. Audi prints two gearbox output final drives, 4.813 (1-2) and 3.667 (2-3), not front and rear axle ratios. Of every way to run the forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635 through the two outputs, only those with the top gear on 3.667 keep the overall ratios falling gear by gear, so 3.667 is the final drive behind the top gear and is the only one stored. It is stored as the rear axle ratio, the all-wheel-drive convention.",
+          "value": 3.667
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e5",
+          "notes": "The official Audi 07/2024 and 06/2025 Q3 Sportback technical data (Program for Germany) list 215/65 R17 as the basic tire for the 40 TFSI quattro.",
+          "front": {
+            "width_mm": 215.0,
+            "aspect_pct": 65.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e5",
+            "notes": "The official Audi 07/2024 and 06/2025 Q3 Sportback technical data (Program for Germany) list 215/65 R17 as the basic tire for the 40 TFSI quattro.",
+            "front": {
+              "width_mm": 215.0,
+              "aspect_pct": 65.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Basic 17\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official Audi 07/2024 and 06/2025 Q3 Sportback technical data (Program for Germany) list the 40 TFSI quattro (in-line four TFSI, 1984 cc). The 07/2024 sheet is the earliest checked Q3 Sportback sheet for this variant, so the row starts in 2024. Audi MediaCenter lists the model as 'Q3 Sportback (until 2025)' and its last sheets are dated 06/2025, so the row ends in 2025.",
+          "evidence_refs": [
+            "audi_mediacenter_sources:f3-q3-sportback-40-tfsi-quattro-2024-07-tech-data-pdf",
+            "audi_mediacenter_sources:f3-q3-sportback-40-tfsi-quattro-2025-06-tech-data-pdf",
+            "audi_mediacenter_sources:f3-q3-sportback-until-2025-model-page"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Q3 Sportback 40 TFSI quattro optional tire sizes",
+          "reason": "The technical-data sheets list only the basic tire and no official Q3 Sportback wheel programme was checked, so no optional size is stored.",
+          "evidence_refs_ref": "e5"
+        },
+        {
+          "item": "Q3 Sportback 40 TFSI quattro before 07/2024",
+          "reason": "No official sheet between launch and 07/2024 was found for the 40 TFSI quattro. The 09/2019 launch sheets do not list it, so the row covers only the years the checked sheets support.",
+          "evidence_refs_ref": "e8"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "audi-f3-sportback-45-tfsi-quattro-eu-2024-dct7-awd",
+      "production_start_year": 2024,
+      "production_end_year": 2025,
+      "variant_name": "45 TFSI quattro",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 Turbo",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e6",
+        "notes": "The official Audi 07/2024 and 06/2025 Q3 Sportback technical data (Program for Germany) list the 45 TFSI quattro with on-demand quattro all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e6",
+        "notes": "The official Audi 07/2024 and 06/2025 Q3 Sportback technical data (Program for Germany) list a 7-speed S tronic for the 45 TFSI quattro.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e6",
+          "notes": "The official Audi 07/2024 and 06/2025 Q3 Sportback technical data (Program for Germany) list 0.635 as the top gear for the 45 TFSI quattro.",
+          "value": 0.635
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e6",
+          "notes": "The official Audi 07/2024 and 06/2025 Q3 Sportback technical data (Program for Germany) list the forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635 for the 45 TFSI quattro.",
+          "value": [
+            3.4,
+            2.75,
+            1.767,
+            0.925,
+            0.705,
+            0.755,
+            0.635
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e6",
+          "notes": "The official Audi 07/2024 and 06/2025 Q3 Sportback technical data (Program for Germany) list the 45 TFSI quattro. Audi prints two gearbox output final drives, 4.813 (1-2) and 3.667 (2-3), not front and rear axle ratios. Of every way to run the forward ratios 3.400 / 2.750 / 1.767 / 0.925 / 0.705 / 0.755 / 0.635 through the two outputs, only those with the top gear on 3.667 keep the overall ratios falling gear by gear, so 3.667 is the final drive behind the top gear and is the only one stored. It is stored as the rear axle ratio, the all-wheel-drive convention.",
+          "value": 3.667
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e6",
+          "notes": "The official Audi 07/2024 and 06/2025 Q3 Sportback technical data (Program for Germany) list 215/65 R17 as the basic tire for the 45 TFSI quattro.",
+          "front": {
+            "width_mm": 215.0,
+            "aspect_pct": 65.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e6",
+            "notes": "The official Audi 07/2024 and 06/2025 Q3 Sportback technical data (Program for Germany) list 215/65 R17 as the basic tire for the 45 TFSI quattro.",
+            "front": {
+              "width_mm": 215.0,
+              "aspect_pct": 65.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Basic 17\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official Audi 07/2024 and 06/2025 Q3 Sportback technical data (Program for Germany) list the 45 TFSI quattro (in-line four TFSI, 1984 cc). The 180 kW car's 07/2024 sheet is the earliest checked sheet with this gear set, so the row starts in 2024. Audi MediaCenter lists the model as 'Q3 Sportback (until 2025)' and its last sheets are dated 06/2025, so the row ends in 2025.",
+          "evidence_refs": [
+            "audi_mediacenter_sources:f3-q3-sportback-2019-ee-tech-data-pdf",
+            "audi_mediacenter_sources:f3-q3-sportback-45-tfsi-quattro-2024-07-tech-data-pdf",
+            "audi_mediacenter_sources:f3-q3-sportback-45-tfsi-quattro-2025-06-tech-data-pdf",
+            "audi_mediacenter_sources:f3-q3-sportback-until-2025-model-page"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Q3 Sportback 45 TFSI quattro optional tire sizes",
+          "reason": "The technical-data sheets list only the basic tire and no official Q3 Sportback wheel programme was checked, so no optional size is stored.",
+          "evidence_refs_ref": "e6"
+        },
+        {
+          "item": "Q3 Sportback 45 TFSI quattro before 07/2024",
+          "reason": "No official sheet between launch and 07/2024 was found for the 45 TFSI quattro. The 09/2019 launch sheet lists a 169 kW car with another gear set (3.563 / 2.526 / 1.679 / 1.022 / 0.788 / 0.761 / 0.635, final drive 1-2 4.733, 2-3 output not printed), and the change date is unknown, so the row covers only the years the checked sheets support.",
+          "evidence_refs_ref": "e8"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "audi-f3-sportback-40-tdi-quattro-eu-2025-dct7-awd",
+      "production_start_year": 2025,
+      "production_end_year": 2025,
+      "variant_name": "40 TDI quattro",
+      "engine_code": "2.0L",
+      "engine_name": "2.0L I4 Turbo Diesel",
+      "fuel_type": "ICE",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e7",
+        "notes": "The official Audi 01/2025 and 06/2025 Q3 Sportback technical data (Program for Germany) list the 40 TDI quattro with on-demand quattro all-wheel drive.",
+        "value": "AWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e7",
+        "notes": "The official Audi 01/2025 and 06/2025 Q3 Sportback technical data (Program for Germany) list a 7-speed S tronic for the 40 TDI quattro.",
+        "code": "DCT7",
+        "name": "7-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e7",
+          "notes": "The official Audi 01/2025 and 06/2025 Q3 Sportback technical data (Program for Germany) list 0.561 as the top gear for the 40 TDI quattro.",
+          "value": 0.561
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e7",
+          "notes": "The official Audi 01/2025 and 06/2025 Q3 Sportback technical data (Program for Germany) list the forward ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561 for the 40 TDI quattro.",
+          "value": [
+            3.579,
+            2.75,
+            1.677,
+            0.889,
+            0.677,
+            0.722,
+            0.561
+          ]
+        },
+        "final_drive_rear": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e7",
+          "notes": "The official Audi 01/2025 and 06/2025 Q3 Sportback technical data (Program for Germany) list the 40 TDI quattro. Audi prints two gearbox output final drives, 4.813 (1-2) and 3.667 (2-3), not front and rear axle ratios. Of every way to run the forward ratios 3.579 / 2.750 / 1.677 / 0.889 / 0.677 / 0.722 / 0.561 through the two outputs, only those with the top gear on 3.667 keep the overall ratios falling gear by gear, so 3.667 is the final drive behind the top gear and is the only one stored. It is stored as the rear axle ratio, the all-wheel-drive convention.",
+          "value": 3.667
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e7",
+          "notes": "The official Audi 01/2025 and 06/2025 Q3 Sportback technical data (Program for Germany) list 215/65 R17 as the basic tire for the 40 TDI quattro.",
+          "front": {
+            "width_mm": 215.0,
+            "aspect_pct": 65.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e7",
+            "notes": "The official Audi 01/2025 and 06/2025 Q3 Sportback technical data (Program for Germany) list 215/65 R17 as the basic tire for the 40 TDI quattro.",
+            "front": {
+              "width_mm": 215.0,
+              "aspect_pct": 65.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Basic 17\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official Audi 01/2025 and 06/2025 Q3 Sportback technical data (Program for Germany) list the 40 TDI quattro (in-line four TDI, 1968 cc). The 142 kW car's 01/2025 sheet is the earliest checked Q3 Sportback sheet for this variant, so the row covers 2025. Audi MediaCenter lists the model as 'Q3 Sportback (until 2025)' and its last sheets are dated 06/2025, so the row ends in 2025.",
+          "evidence_refs": [
+            "audi_mediacenter_sources:f3-q3-sportback-40-tdi-quattro-2025-01-tech-data-pdf",
+            "audi_mediacenter_sources:f3-q3-sportback-40-tdi-quattro-2025-06-tech-data-pdf",
+            "audi_mediacenter_sources:f3-q3-sportback-until-2025-model-page"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Q3 Sportback 40 TDI quattro optional tire sizes",
+          "reason": "The technical-data sheets list only the basic tire and no official Q3 Sportback wheel programme was checked, so no optional size is stored.",
+          "evidence_refs_ref": "e7"
+        },
+        {
+          "item": "Q3 Sportback 40 TDI quattro before 2025",
+          "reason": "No official Q3 Sportback sheet before 01/2025 was found for the 40 TDI quattro, so earlier cars have no row.",
+          "evidence_refs_ref": "e8"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    },
+    {
+      "id": "audi-f3-sportback-45-tfsi-e-eu-2024-dct6-fwd",
+      "production_start_year": 2024,
+      "production_end_year": 2024,
+      "variant_name": "45 TFSI e",
+      "engine_code": "1.4L",
+      "engine_name": "1.4L I4 Turbo PHEV",
+      "fuel_type": "PHEV",
+      "drivetrain": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e1",
+        "notes": "The official Audi 03/2024 Q3 Sportback technical data (Program for Germany) list the 45 TFSI e with front-wheel drive.",
+        "value": "FWD"
+      },
+      "transmission": {
+        "confidence": "official_exact",
+        "evidence_refs_ref": "e1",
+        "notes": "The official Audi 03/2024 Q3 Sportback technical data (Program for Germany) list a 6-speed S tronic for the 45 TFSI e.",
+        "code": "DCT6",
+        "name": "6-speed S tronic"
+      },
+      "ratios": {
+        "top_gear_ratio": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "The official Audi 03/2024 Q3 Sportback technical data (Program for Germany) list 0.840 as the top gear for the 45 TFSI e.",
+          "value": 0.84
+        },
+        "gear_ratios": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "The official Audi 03/2024 Q3 Sportback technical data (Program for Germany) list the forward ratios 3.500 / 2.773 / 1.852 / 1.020 / 1.023 / 0.840 for the 45 TFSI e.",
+          "value": [
+            3.5,
+            2.773,
+            1.852,
+            1.02,
+            1.023,
+            0.84
+          ]
+        },
+        "final_drive_front": {
+          "confidence": "official_derived",
+          "evidence_refs_ref": "e1",
+          "notes": "The official Audi 03/2024 Q3 Sportback technical data (Program for Germany) list the 45 TFSI e. Audi prints two gearbox output final drives, 4.588 (1-2) and 3.545 (2-3), not front and rear axle ratios. Of every way to run the forward ratios 3.500 / 2.773 / 1.852 / 1.020 / 1.023 / 0.840 through the two outputs, only those with the top gear on 3.545 keep the overall ratios falling gear by gear, so 3.545 is the final drive behind the top gear and is the only one stored.",
+          "value": 3.545
+        }
+      },
+      "tires": {
+        "default": {
+          "confidence": "official_exact",
+          "evidence_refs_ref": "e1",
+          "notes": "The official Audi 03/2024 Q3 Sportback technical data (Program for Germany) list 215/65 R17 as the basic tire for the 45 TFSI e.",
+          "front": {
+            "width_mm": 215.0,
+            "aspect_pct": 65.0,
+            "rim_in": 17.0
+          },
+          "default_axle_for_speed": "rear"
+        },
+        "options": [
+          {
+            "confidence": "official_exact",
+            "evidence_refs_ref": "e1",
+            "notes": "The official Audi 03/2024 Q3 Sportback technical data (Program for Germany) list 215/65 R17 as the basic tire for the 45 TFSI e.",
+            "front": {
+              "width_mm": 215.0,
+              "aspect_pct": 65.0,
+              "rim_in": 17.0
+            },
+            "default_axle_for_speed": "rear",
+            "name": "Basic 17\""
+          }
+        ]
+      },
+      "verification_notes": [
+        {
+          "note": "The official Audi 03/2024 Q3 Sportback technical data (Program for Germany) list the 45 TFSI e (plug-in hybrid with an in-line four TFSI, 1395 cc). The 03/2024 sheet is the only checked Q3 Sportback 45 TFSI e sheet, and the 06/2025 model page no longer lists the plug-in hybrid, so the row covers 2024.",
+          "evidence_refs": [
+            "audi_mediacenter_sources:f3-q3-sportback-45-tfsi-e-2024-03-tech-data-pdf",
+            "audi_mediacenter_sources:f3-q3-sportback-until-2025-model-page"
+          ]
+        }
+      ],
+      "unresolved": [
+        {
+          "item": "Q3 Sportback 45 TFSI e optional tire sizes",
+          "reason": "The technical-data sheets list only the basic tire and no official Q3 Sportback wheel programme was checked, so no optional size is stored.",
+          "evidence_refs_ref": "e1"
+        },
+        {
+          "item": "Q3 Sportback 45 TFSI e outside 2024",
+          "reason": "Only the 03/2024 official sheet was found; the plug-in hybrid's other model years are not covered.",
+          "evidence_refs_ref": "e1"
+        }
+      ],
+      "configuration_confidence": "high_confidence"
+    }
+  ]
+}
