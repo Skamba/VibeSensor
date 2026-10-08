@@ -23,11 +23,12 @@ _SOURCE_KEYS = {
 def _order(
     finding_id: str,
     source: VibrationSource,
-    order: int,
+    order: float,
     *,
     confidence: float,
     amps_g: dict[str, float],
     times: range = range(8),
+    heard: bool = True,
 ) -> Finding:
     """An order finding matched at every time in *times* on each location in *amps_g*."""
     points = tuple(
@@ -38,13 +39,14 @@ def _order(
             amp=amp,
             location=location,
             t_s=float(t_s),
+            heard=heard,
         )
         for location, amp in amps_g.items()
         for t_s in times
     )
     return make_finding(
         finding_id=finding_id,
-        finding_key=f"{_SOURCE_KEYS[source]}_{order}x",
+        finding_key=f"{_SOURCE_KEYS[source]}_{order:g}x".replace(".", "_"),
         suspected_source=source,
         confidence=confidence,
         strongest_location=max(amps_g, key=lambda location: amps_g[location]),
@@ -80,6 +82,19 @@ def test_level_over_db_ignores_windows_only_one_order_matched() -> None:
     assert first.level_over_db(few) is None
 
 
+def test_level_over_db_ignores_windows_neither_order_is_heard() -> None:
+    # Two floor-level noise peaks say nothing about which order dominates.
+    first = _order(
+        "F1", VibrationSource.ENGINE, 1, confidence=0.3, amps_g={"RL": 0.004}, heard=False
+    )
+    noise = _order(
+        "F2", VibrationSource.ENGINE, 3, confidence=0.9, amps_g={"RL": 0.003}, heard=False
+    )
+    assert noise.level_over_db(first) is None
+    loud = _order("F2", VibrationSource.ENGINE, 3, confidence=0.9, amps_g={"RL": 0.2})
+    assert loud.level_over_db(first) == pytest.approx(33.98, abs=0.01)
+
+
 def test_louder_fundamental_names_the_diagnosis_over_a_better_ranked_harmonic() -> None:
     harmonic = _order("F001", VibrationSource.DRIVELINE, 2, confidence=0.52, amps_g={"RR": 0.05})
     fundamental = _order("F002", VibrationSource.DRIVELINE, 1, confidence=0.39, amps_g={"RR": 0.15})
@@ -94,6 +109,20 @@ def test_harmonic_clearly_louder_than_the_fundamental_keeps_its_label() -> None:
     second = _order("F002", VibrationSource.ENGINE, 2, confidence=0.60, amps_g={"FL": 0.18})
     run = _run(first, second)
     assert run.diagnosis_order_finding is second
+
+
+@pytest.mark.parametrize(("firing_g", "label"), [(0.06, "E1"), (0.17, "E1.5")])
+def test_engine_firing_order_is_compared_with_e1(firing_g: float, label: str) -> None:
+    # An inline-3 fires at E1.5. Both orders saturate their confidence, so E1 can
+    # rank first on a coin toss; the louder firing order still names the diagnosis.
+    first = _order("F001", VibrationSource.ENGINE, 1, confidence=0.97, amps_g={"FL": 0.06})
+    firing = _order("F002", VibrationSource.ENGINE, 1.5, confidence=0.97, amps_g={"FL": firing_g})
+    finding = _run(first, firing).diagnosis_order_finding
+    assert finding is not None
+    assert finding.order_code == label
+    finding = _run(firing, first).diagnosis_order_finding
+    assert finding is not None
+    assert finding.order_code == label
 
 
 @pytest.mark.parametrize(("harmonic_g", "label"), [(0.141, "T1"), (0.142, "T2")])

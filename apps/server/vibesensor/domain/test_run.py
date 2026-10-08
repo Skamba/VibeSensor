@@ -96,22 +96,25 @@ class TestRun:
                 return finding
         return None
 
-    # A source's 2nd order names the diagnosis only when its peak is clearly louder
-    # than the 1st order's in the same windows: by at least 3 dB (1.4x the amplitude).
-    HARMONIC_DOMINANCE_DB: ClassVar[float] = 3.0
+    # A source's higher order names the diagnosis only when its peak is clearly louder
+    # than the lower order's in the same windows: by at least 3 dB (1.4x the amplitude).
+    HIGHER_ORDER_DOMINANCE_DB: ClassVar[float] = 3.0
 
     @property
     def diagnosis_order_finding(self) -> Finding | None:
-        """The diagnosed source's physically dominant order (T1/T2, P1/P2, E1/E2).
+        """The diagnosed source's physically dominant order (T1/T2, P1/P2, E1/E1.5/E2...).
 
         ``diagnosis_candidate`` names the source and its confidence: the order of
         that source that ranked best. A harmonic often ranks above its louder
-        fundamental (it tracks a little more consistently), but workshop advice
-        follows the dominant order, so this compares the source's 1st and 2nd
-        order by amplitude in the windows both matched, at the candidate's
+        fundamental (it tracks a little more consistently), and two orders whose
+        confidence both saturate rank on a coin toss, but workshop advice follows
+        the dominant order. So this compares the candidate with the source's best
+        other order by amplitude in the windows both matched, at the candidate's
         location when they share enough windows there, else at every location.
-        The 1st order wins unless the 2nd is ``HARMONIC_DOMINANCE_DB`` louder.
-        Without shared windows, or without the other order, the candidate stays.
+        The lower order (T1, P1, E1) wins unless the higher one (T2, P2, or an
+        engine's firing order such as an inline-3's E1.5 or an inline-6's E3) is
+        ``HIGHER_ORDER_DOMINANCE_DB`` louder. Without shared windows, or without
+        another order, the candidate stays.
         """
         candidate = self.diagnosis_candidate
         if candidate is None or candidate.order_code is None:
@@ -121,13 +124,12 @@ class TestRun:
             if candidate.location is not None
             else candidate.strongest_location
         )
-        harmonic = candidate.order_code.endswith("2")
         others = [
             finding
             for finding in self.findings
             if finding.suspected_source is candidate.suspected_source
             and finding.order_code is not None
-            and finding.order_code.endswith("2") is not harmonic
+            and finding.order_code != candidate.order_code
             and finding.should_surface
         ]
         if not others:
@@ -139,13 +141,13 @@ class TestRun:
                 f.phase_adjusted_score,
             ),
         )
-        first, second = (other, candidate) if harmonic else (candidate, other)
-        excess_db = second.level_over_db(first, location=location)
+        lower, higher = sorted((candidate, other), key=_order_multiple)
+        excess_db = higher.level_over_db(lower, location=location)
         if excess_db is None:
-            excess_db = second.level_over_db(first)
+            excess_db = higher.level_over_db(lower)
         if excess_db is None:
             return candidate
-        return second if excess_db >= self.HARMONIC_DOMINANCE_DB else first
+        return higher if excess_db >= self.HIGHER_ORDER_DOMINANCE_DB else lower
 
     def effective_top_causes(self) -> tuple[Finding, ...]:
         actionable_tc = tuple(f for f in self.top_causes if not f.is_reference and f.is_actionable)
@@ -157,3 +159,9 @@ class TestRun:
         if non_ref_tc:
             return non_ref_tc
         return self.top_causes
+
+
+def _order_multiple(finding: Finding) -> float:
+    """The multiple an order code names: 1 for T1, P1 and E1, 2 for T2, 1.5 for E1.5."""
+    assert finding.order_code is not None
+    return float(finding.order_code[1:])
