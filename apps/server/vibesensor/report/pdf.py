@@ -455,6 +455,140 @@ _ZONE_RECTS: dict[str, tuple[float, float, float, float]] = {
 }
 
 
+@dataclass(frozen=True, slots=True)
+class _DiagramLabel:
+    """Where one marker's level label goes: ``x`` is its edge next to the car."""
+
+    x: float
+    y: float
+    side: str
+    leader: bool
+
+
+# Label columns start this far out from the body's sides, clear of a wheel
+# marker at its largest (it reaches 0.8 mm past the body).
+_LABEL_PAD_MM = 1.5
+# A leader that passes this close to another marker reads as pointing at it.
+_LEADER_CLEARANCE_MM = 0.4
+# A leader stops this short of its label's text.
+_LEADER_GAP_MM = 0.6
+
+
+def _stack(desired: Sequence[float], pitch: float, low: float, high: float) -> list[float]:
+    """Centres as close to the sorted *desired* ones as allowed with *pitch* between them."""
+    ys: list[float] = []
+    for want in desired:
+        ys.append(max(want, low, ys[-1] + pitch if ys else low))
+    if ys and ys[-1] > high:
+        ys[-1] = high
+        for index in range(len(ys) - 2, -1, -1):
+            ys[index] = min(ys[index], ys[index + 1] - pitch)
+    return ys
+
+
+def _crosses(
+    start: tuple[float, float], end: tuple[float, float], circle: tuple[float, float, float]
+) -> bool:
+    """Whether the segment *start*-*end* passes within the clearance of *circle*."""
+    (x0, y0), (x1, y1), (cx, cy, r) = start, end, circle
+    dx, dy = x1 - x0, y1 - y0
+    length2 = dx * dx + dy * dy
+    t = 0.0 if length2 == 0 else max(0.0, min(1.0, ((cx - x0) * dx + (cy - y0) * dy) / length2))
+    px, py = x0 + t * dx - cx, y0 + t * dy - cy
+    return px * px + py * py < (r + _LEADER_CLEARANCE_MM) ** 2
+
+
+def _segments_cross(
+    a: tuple[tuple[float, float], tuple[float, float]],
+    b: tuple[tuple[float, float], tuple[float, float]],
+) -> bool:
+    def turn(p: tuple[float, float], q: tuple[float, float], r: tuple[float, float]) -> float:
+        return (q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0])
+
+    (p1, p2), (p3, p4) = a, b
+    return (turn(p3, p4, p1) * turn(p3, p4, p2) < 0) and (turn(p1, p2, p3) * turn(p1, p2, p4) < 0)
+
+
+# How far (in label rows) a centre-line marker's label may move up or down to
+# find a leader that passes no other marker.
+_LABEL_SEARCH_ROWS = 6
+
+
+def _diagram_labels(
+    circles: dict[str, tuple[float, float, float]],
+    *,
+    body_x0: float,
+    body_x1: float,
+    pitch: float,
+    low: float,
+    high: float,
+) -> dict[str, _DiagramLabel]:
+    """Place each marker's label in a column beside the car, so no two overlap.
+
+    *circles* maps a location code to its marker ``(cx, cy, r)`` in millimetres,
+    y down. A marker on the left or right half gets its label on that side, at
+    its own height when that is free. A marker on the centre line gets its label
+    on the side, and as close to its own height, where its leader passes no
+    other marker and crosses no other leader (else the fewest), then on the side
+    with fewer labels. Labels stack top to bottom at least *pitch* apart. The
+    app's diagram places its labels the same way (``ownerDiagram`` in
+    apps/ui/src/pages/history/history_model.ts).
+    """
+    edge = {"left": body_x0 - _LABEL_PAD_MM, "right": body_x1 + _LABEL_PAD_MM}
+    mid = (body_x0 + body_x1) / 2
+    columns: dict[str, list[str]] = {"left": [], "right": []}
+    wanted = {code: cy for code, (_cx, cy, _r) in circles.items()}
+    centre: list[str] = []
+    for code, (cx, _cy, _r) in circles.items():
+        if abs(cx - mid) < 0.01:
+            centre.append(code)
+        else:
+            columns["left" if cx < mid else "right"].append(code)
+
+    def place(side: str, codes: list[str]) -> dict[str, _DiagramLabel]:
+        ordered = sorted(codes, key=lambda code: (wanted[code], code))
+        ys = _stack([wanted[code] for code in ordered], pitch, low, high)
+        return {
+            code: _DiagramLabel(
+                x=edge[side],
+                y=y,
+                side=side,
+                leader=not code.endswith("_wheel") or abs(y - circles[code][1]) > 0.3,
+            )
+            for code, y in zip(ordered, ys, strict=True)
+        }
+
+    def clashes(labels: dict[str, _DiagramLabel]) -> int:
+        leaders = {
+            code: (circles[code][:2], (label.x, label.y))
+            for code, label in labels.items()
+            if label.leader
+        }
+        passes = sum(
+            _crosses(*leader, circles[other])
+            for code, leader in leaders.items()
+            for other in circles
+            if other != code
+        )
+        segments = list(leaders.values())
+        crossings = sum(
+            _segments_cross(a, b) for index, a in enumerate(segments) for b in segments[index + 1 :]
+        )
+        return passes + crossings
+
+    for code in sorted(centre, key=lambda code: (circles[code][1], code)):
+        cy = circles[code][1]
+        options = []
+        for side in ("left", "right"):
+            for rows in range(-_LABEL_SEARCH_ROWS, _LABEL_SEARCH_ROWS + 1):
+                wanted[code] = cy + rows * pitch
+                cost = clashes(place(side, [*columns[side], code]))
+                options.append((cost, abs(rows), len(columns[side]), side, wanted[code]))
+        _cost, _rows, _count, side, wanted[code] = min(options)
+        columns[side].append(code)
+    return {**place("left", columns["left"]), **place("right", columns["right"])}
+
+
 def _car_diagram(
     canvas: Canvas, diagram: CarDiagram, x: float, y_top: float, width: float, height: float
 ) -> None:
@@ -499,24 +633,47 @@ def _car_diagram(
         cx, cy = point(*_POSITIONS[code])
         canvas.setFillColor(BRAND if code in highlighted_wheels else colors.HexColor("#3a3d46"))
         canvas.roundRect(cx - 2.2 * MM, cy - 5 * MM, 4.4 * MM, 10 * MM, 1.2 * MM, stroke=0, fill=1)
-    for marker in diagram.markers:
-        if marker.code not in _POSITIONS:
-            continue
-        cx, cy = point(*_POSITIONS[marker.code])
+    markers = {marker.code: marker for marker in diagram.markers if marker.code in _POSITIONS}
+    # The label layout works in millimetres from the box's top-left corner, y down.
+    circles: dict[str, tuple[float, float, float]] = {}
+    for code, marker in markers.items():
+        cx, cy = point(*_POSITIONS[code])
         ratio = marker.ratio if marker.ratio is not None else 0.0
-        radius = (1.6 + 2.4 * max(0.0, min(1.0, ratio))) * MM
+        circles[code] = ((cx - x) / MM, (y_top - cy) / MM, 1.6 + 2.4 * max(0.0, min(1.0, ratio)))
+    font_size = 7
+    labels = _diagram_labels(
+        circles,
+        body_x0=(bx - x) / MM,
+        body_x1=(bx - x + body_w) / MM,
+        pitch=font_size * 1.3 / MM,
+        low=7.0,
+        high=height / MM - 2.0,
+    )
+
+    def at(mx: float, my: float) -> tuple[float, float]:
+        return x + mx * MM, y_top - my * MM
+
+    canvas.setStrokeColor(MUTED)
+    canvas.setLineWidth(0.4)
+    for code, label in labels.items():
+        if label.leader:
+            # Up to just short of the text.
+            end_x = label.x + (_LEADER_GAP_MM if label.side == "left" else -_LEADER_GAP_MM)
+            canvas.line(*at(*circles[code][:2]), *at(end_x, label.y))
+    for code, marker in markers.items():
+        cx, cy, r = circles[code]
         canvas.setStrokeColor(colors.white)
+        canvas.setLineWidth(1)
         canvas.setFillColor(BRAND if marker.strongest else colors.HexColor("#9aa0ad"))
-        canvas.circle(cx, cy, radius, stroke=1, fill=1)
-        canvas.setFont(BOLD if marker.strongest else FONT, 7)
-        canvas.setFillColor(INK)
-        if marker.code.endswith("_wheel"):
-            left = marker.code.startswith(("front_left", "rear_left"))
-            tx = cx - 4 * MM if left else cx + 4 * MM
-            draw = canvas.drawRightString if left else canvas.drawString
-            draw(tx, cy - 1 * MM, marker.value)
-        else:
-            canvas.drawCentredString(cx, cy - radius - 3 * MM, marker.value)
+        canvas.circle(*at(cx, cy), r * MM, stroke=1, fill=1)
+    canvas.setFillColor(INK)
+    for code, label in labels.items():
+        marker = markers[code]
+        canvas.setFont(BOLD if marker.strongest else FONT, font_size)
+        # The digits' middle sits on the label's centre line.
+        tx, ty = at(label.x, label.y)
+        draw = canvas.drawRightString if label.side == "left" else canvas.drawString
+        draw(tx, ty - font_size * 0.35, marker.value)
 
 
 # -- page 2 --------------------------------------------------------------------------

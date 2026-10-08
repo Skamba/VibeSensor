@@ -541,3 +541,92 @@ test("journey: a no-fault run and a run that could check nothing read as the PDF
   await expect(owner).toHaveClass(/history-owner--muted/);
   await expect(owner).toContainText("Record again with live speed");
 });
+
+test("journey: the car diagram's labels never overlap, with a sensor at every location", async ({
+  page,
+}) => {
+  const codes = [
+    "front_left_wheel",
+    "front_right_wheel",
+    "rear_left_wheel",
+    "rear_right_wheel",
+    "engine_bay",
+    "front_subframe",
+    "transmission",
+    "driveshaft_tunnel",
+    "driver_seat",
+    "front_passenger_seat",
+    "rear_left_seat",
+    "rear_center_seat",
+    "rear_right_seat",
+    "rear_subframe",
+    "trunk",
+  ];
+  const server = createServer();
+  server.runs = [run("run-full")];
+  server.insights = (runId, lang) =>
+    makeHistoryInsightsPayload({
+      run_id: runId,
+      lang,
+      diagnosis: makeDiagnosis(),
+      owner: makeOwnerPage({
+        diagram: {
+          zone: "rear_axle",
+          front_label: "FRONT",
+          markers: codes.map((code, index) => ({
+            code,
+            label: code,
+            value: `${(10 + index * 7.3).toFixed(1)} mg`,
+            ratio: (index % 3) / 2,
+            strongest: index === 12,
+          })),
+        },
+      }),
+    });
+  await bootWithHistory(page, server);
+  await openHistoryTab(page);
+  await page
+    .locator('[data-run-toggle="details"][data-run="run-full"]')
+    .click();
+  const car = page.locator(".history-owner .history-car");
+  await expect(car.locator(".history-car__marker")).toHaveCount(codes.length);
+  // The rendered text's real boxes, in the diagram's own units.
+  const problems = () =>
+    car.evaluate((svg) => {
+      const view = (svg as SVGSVGElement).viewBox.baseVal;
+      const boxes = [
+        ...svg.querySelectorAll<SVGTextElement>(".history-car__marker text"),
+      ].map((text) => ({
+        code: text.parentElement?.getAttribute("data-location-key"),
+        box: text.getBBox(),
+      }));
+      const found: string[] = [];
+      boxes.forEach(({ code, box }, index) => {
+        if (
+          box.x < view.x ||
+          box.x + box.width > view.x + view.width ||
+          box.y < view.y ||
+          box.y + box.height > view.y + view.height
+        ) {
+          found.push(`${code} clipped`);
+        }
+        for (const other of boxes.slice(index + 1)) {
+          const b = other.box;
+          if (
+            box.x < b.x + b.width &&
+            b.x < box.x + box.width &&
+            box.y < b.y + b.height &&
+            b.y < box.y + box.height
+          ) {
+            found.push(`${code}/${other.code}`);
+          }
+        }
+      });
+      return found;
+    });
+  expect(await problems()).toEqual([]);
+  await expect(car.locator(".history-car__leader")).not.toHaveCount(0);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(car).toBeVisible();
+  expect(await problems()).toEqual([]);
+});
