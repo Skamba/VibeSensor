@@ -1069,6 +1069,45 @@ describe("guidedTestModel", () => {
     expect(model.finished).toBe(false);
   });
 
+  test("asks for a tire warm-up off the recording before step 1, and drops it once the steps begin", () => {
+    const vars = '{"km":20,"minutes":15,"speed":"40","unit":"speed.unit.kmh"}';
+    // Parked: how to warm the tires up before recording.
+    expect(guidedTestModel(IDLE_STATUS, "kmh", false, null, t).warmUp).toBe(
+      `dashboard.guided.warm_up.instruction:${vars}`,
+    );
+    // Recording, before Start: the check that it was done before the run.
+    expect(guidedTestModel(recordingRun, "kmh", false, null, t).warmUp).toBe(
+      `dashboard.guided.warm_up.check:${vars}`,
+    );
+    // The threshold speed follows the speed unit.
+    expect(
+      guidedTestModel(IDLE_STATUS, "mps", false, null, t).warmUp,
+    ).toContain('"speed":"11"');
+    const started = guidedTestModel(
+      { ...recordingRun, guided_phase: "sweep" },
+      "kmh",
+      false,
+      null,
+      t,
+    );
+    expect(started.warmUp).toBeNull();
+    const finished = guidedTestModel(
+      {
+        ...recordingRun,
+        guided_phases_completed: ["sweep", "hold", "coast_down", "brake"],
+      },
+      "kmh",
+      false,
+      null,
+      t,
+    );
+    expect(finished.warmUp).toBeNull();
+    // Nothing to confirm when the test can't start on a typed-in speed.
+    expect(
+      guidedTestModel(recordingRun, "kmh", false, null, t, true).warmUp,
+    ).toBeNull();
+  });
+
   test("walks sweep, hold, the neutral coast-down, then the firm stops, then finishes", () => {
     const hold = guidedTestModel(
       {

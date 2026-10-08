@@ -518,8 +518,21 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
     one-line `dashboard.logging.keep_awake_hint` unless a wake lock holds the
     screen; its *How?* disclosure (`dashboard.logging.keep_awake_detail`) says
     to set auto-lock to Never.
-- **Guided drive (optional):** four steps posted to
+- **Guided drive (optional):** a tire warm-up, then four steps posted to
   `/api/recording/guided-phase` (`dashboard.guided.*` strings).
+  0. Warm-up, before recording (`#guidedWarmUp`,
+     `dashboard.guided.warm_up.*`): drive about 20 km (about 15 minutes),
+     mostly above 40 km/h (`GUIDED_WARM_UP_KM`, `GUIDED_WARM_UP_MINUTES`,
+     `GUIDED_WARM_UP_ABOVE_KMH`). Tires flat-spotted by overnight parking
+     shake at the wheel orders and fade over the first ~20 km
+     ([simulator_realism.md](simulator_realism.md) "Parking flat spots");
+     below about 38 km/h that comb can read as a Strong engine or driveline
+     fault ([metrics.md](metrics.md)). The whole run is analyzed, so the
+     warm-up is not a recorded step and has no number: the parked preview
+     says to drive it before pressing Start, and once recording the start
+     button reads "Tires are warm: start guided test" under a check that says
+     to stop and record again if the tires were not warmed up before the run
+     began. Free recordings do not ask for it.
   1. Sweep from 50 to 120 km/h (`GUIDED_SWEEP_FROM_KMH` /
      `GUIDED_SWEEP_TO_KMH` in `apps/ui/src/config.ts`).
   2. Hold at the worst speed for about 20 s.
@@ -534,7 +547,8 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
   - While parked, Live previews the steps with their full instructions
     (`#guidedPreview`, collapsed by default), so they can be read before
     setting off.
-  - Once recording, Start guided test sits in the recording card. From then on
+  - Once recording, the warm-up check and its start button sit in the
+    recording card. From then on
     the step in progress is a large card in the sticky header
     (`#guidedStepCard`): "Step n of N · title", a short instruction
     (`dashboard.guided.<step>.short`), the firm-stop count, and the Next /

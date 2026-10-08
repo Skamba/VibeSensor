@@ -644,10 +644,17 @@ test("journey: the guided test drive walks sweep, hold, neutral coast-down and f
   const stepState = (phase: string) =>
     panel.locator(`[data-guided-step="${phase}"]`);
   await expect(panel).toContainText("Guided test drive (optional)");
-  await expect(start).toHaveText("Start guided test");
+  // Before step 1 the driver confirms the tires were warmed up before the run.
+  const warmUp = panel.locator("#guidedWarmUp");
+  await expect(warmUp).toContainText("Before step 1: warm up the tires");
+  await expect(warmUp).toContainText(
+    "Start only if you drove about 20 km (about 15 minutes), mostly above 40 km/h, before this recording began.",
+  );
+  await expect(start).toHaveText("Tires are warm: start guided test");
   await expect(card).toBeHidden();
 
   await start.click();
+  await expect(warmUp).toBeHidden();
   await expect(stepState("sweep")).toHaveAttribute(
     "data-step-state",
     "current",
@@ -1038,6 +1045,10 @@ test.describe("on a phone", () => {
     await expect(preview).toContainText("Read them now, while parked.");
     await expect(preview).toContainText(
       "brake firmly from about 80 to 20 km/h",
+    );
+    // The tire warm-up comes first, before recording starts.
+    await expect(preview.locator("#guidedWarmUp")).toContainText(
+      "Before you start recording, drive about 20 km (about 15 minutes), mostly above 40 km/h.",
     );
 
     await page.locator("#startLoggingBtn").tap();
