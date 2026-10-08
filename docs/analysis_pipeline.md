@@ -234,8 +234,11 @@ as `brakes` when, at the sensors that hear it:
   others on regeneration alone), and
 - at least 8 spectra clear of braking (not within half an analysis window of a
   braking sample, so spectra that straddle the start or end of a stop count
-  for neither side) fall in the speed band the car braked through, and at
-  most 10 % of them hear the order within 12 dB of its median braking level.
+  for neither side) at the sensors that heard it while braking fall in the
+  speed band the car braked through, and at most 10 % of them hear the order
+  within 12 dB of that sensor's median braking level. Each sensor is judged
+  against its own level: a sensor that hears an imbalance faintly throughout
+  (across the axle) does not count as the order gone beside the loud one.
 
 Below about 35 km/h a wheel's first order lies under the 5 Hz analysis floor
 (`MIN_ANALYSIS_FREQ_HZ`), whose peaks are dropped, so the end of a stop cannot
