@@ -13,6 +13,7 @@ from test_support.synthetic_samples import make_sample
 
 from vibesensor.analysis._reference_resolution import ESTIMATED_RPM_SOURCE
 from vibesensor.analysis._run_input import normalize_run_metadata
+from vibesensor.analysis.orders.brake_attribution import only_while_braking
 from vibesensor.analysis.orders.heuristics import suppress_engine_aliases
 from vibesensor.analysis.orders.match_rate import (
     _compute_effective_match_rate,
@@ -189,6 +190,73 @@ def _make_accumulator(
         compliance=1.0,
         matched_sample_indices=sample_indices,
     )
+
+
+def _brake_check(*, front_left_clear_in_band: int, clear_amp: float) -> bool:
+    """An order heard loud at the front left in three firm stops (80 to 35 km/h).
+
+    Clear of braking, the front right hears it faintly at the same speeds (an
+    imbalance across the axle), and the front left hears it at *clear_amp* in
+    *front_left_clear_in_band* spectra at those speeds and loud at 100 km/h.
+    """
+    rows: list[tuple[float, float, str, str, float]] = []  # t_s, km/h, sensor, phase, amp
+    for start_s in (10.0, 30.0, 50.0):
+        rows += [
+            (start_s + 0.25 * i, 80.0 - 5.0 * i, "front-left", "braking", 0.1) for i in range(10)
+        ]
+    rows += [(20.0 + 0.25 * i, 60.0, "front-right", "cruise", 0.006) for i in range(16)]
+    rows += [(20.0 + 0.25 * i, 100.0, "front-left", "cruise", 0.1) for i in range(16)]
+    rows += [
+        (40.0 + 0.25 * i, 60.0, "front-left", "cruise", clear_amp)
+        for i in range(front_left_clear_in_band)
+    ]
+    samples = sensor_frames_from_mappings(
+        [{"t_s": t_s, "speed_kmh": kmh, "location": loc} for t_s, kmh, loc, _, _ in rows]
+    )
+    points = [
+        OrderMatchObservation(
+            predicted_hz=20.0,
+            matched_hz=20.0,
+            rel_error=0.0,
+            amp=amp,
+            location=loc,
+            t_s=t_s,
+            speed_kmh=kmh,
+            phase=phase,
+            heard=amp >= 0.005,
+        )
+        for t_s, kmh, loc, phase, amp in rows
+    ]
+    match = OrderMatchAccumulator(
+        possible=len(rows),
+        matched_points=points,
+        matched_floor=[0.001] * len(rows),
+        ref_sources={"speed+tire"},
+        possible_by_speed_bin={},
+        matched_by_speed_bin={},
+        possible_by_phase={},
+        matched_by_phase={},
+        possible_by_location={},
+        matched_by_location={},
+        has_phases=True,
+        compliance=1.0,
+        heard_locations=frozenset({"front-left", "front-right"}),
+        matched_sample_indices=tuple(range(len(rows))),
+        possible_samples=tuple((idx, row[2]) for idx, row in enumerate(rows)),
+    )
+    return only_while_braking(match, samples, [row[3] for row in rows])
+
+
+def test_brake_judder_is_judged_at_each_sensor_against_its_own_braking_level() -> None:
+    # Gone at the front left without braking: the brakes, though the front right
+    # hears the order faintly throughout.
+    assert _brake_check(front_left_clear_in_band=10, clear_amp=0.002)
+    # There at the front left at those speeds without braking (an imbalance),
+    # whatever the front right's faint level says: not the brakes.
+    assert not _brake_check(front_left_clear_in_band=10, clear_amp=0.1)
+    # Too few front-left spectra at those speeds to tell: not the brakes. The
+    # front right's faint spectra are no stand-in for them.
+    assert not _brake_check(front_left_clear_in_band=1, clear_amp=0.1)
 
 
 def test_variable_speed_order_in_one_speed_bin_needs_broad_frequency_tracking() -> None:

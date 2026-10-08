@@ -41,7 +41,8 @@ _MIN_BRAKING_HEARD_SHARE = 0.5
 _MIN_STOP_HEARD_SHARE = 0.25
 _PRESENT_LEVEL_RATIO = 0.25
 # ...and in at most one in ten of the other spectra at the same speeds, counting
-# only peaks within 12 dB of its braking level.
+# only peaks within 12 dB of its braking level at the same sensor, at the
+# sensors that hear it while braking.
 _MAX_CLEAR_PRESENT_SHARE = 0.1
 # Half a spectrum's span when the sample does not carry its analysis window.
 _DEFAULT_HALF_WINDOW_S = 1.28
@@ -160,18 +161,28 @@ def only_while_braking(
     def in_band(speed: float | None) -> bool:
         return speed is not None and low <= speed <= high
 
+    # Each sensor against its own braking level: a sensor that hears the order
+    # faintly throughout (an imbalance across the axle) would otherwise count
+    # as the order gone while not braking, beside the loud one that heard it.
+    amps_by_location: dict[str, list[float]] = {}
+    for point in braking_heard:
+        amps_by_location.setdefault(point.location, []).append(point.amp)
+    level_at = {location: median(amps) for location, amps in amps_by_location.items()}
+    location_of = dict(match.possible_samples)
     clear_possible = [
         idx
         for idx, is_braking in side.items()
-        if not is_braking and in_band(samples[idx].speed_kmh)
+        if not is_braking and location_of[idx] in level_at and in_band(samples[idx].speed_kmh)
     ]
     if len(clear_possible) < _MIN_SPECTRA:
         return False
-    level = median(point.amp for point in braking_heard)
     clear_present = [
         point
         for idx, point in heard
-        if not side[idx] and in_band(point.speed_kmh) and point.amp >= _PRESENT_LEVEL_RATIO * level
+        if not side[idx]
+        and point.location in level_at
+        and in_band(point.speed_kmh)
+        and point.amp >= _PRESENT_LEVEL_RATIO * level_at[point.location]
     ]
     return len(clear_present) <= _MAX_CLEAR_PRESENT_SHARE * len(clear_possible)
 

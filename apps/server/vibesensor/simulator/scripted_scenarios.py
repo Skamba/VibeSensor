@@ -12,6 +12,8 @@ from vibesensor.simulator.sim_client import SimClient
 
 __all__ = ["run_scripted_scenario"]
 
+_NOT_MARKED = object()
+
 
 def _pulse_order_key(pulse: PhasePulse) -> float:
     return pulse.at_s
@@ -33,6 +35,11 @@ async def run_scripted_scenario(
     loop = asyncio.get_running_loop()
     speed_sync_failing = False
     cycle = 0
+    # The step the server was last told of: a driver taps each step once.
+    marked: object = _NOT_MARKED
+    # Each phase starts when the one before it was scripted to end, so a slow
+    # server response never stretches the drive.
+    phase_start = loop.time()
 
     while not stop_event.is_set():
         cycle += 1
@@ -47,7 +54,7 @@ async def run_scripted_scenario(
                 f"speed={phase.speed_start_kmh:.1f}->{phase.speed_end_kmh:.1f}km/h "
                 f"duration={phase.duration_s:.1f}s"
             )
-            if guided:
+            if guided and phase.guided_phase != marked:
                 try:
                     await asyncio.to_thread(
                         mark_server_guided_phase,
@@ -58,8 +65,9 @@ async def run_scripted_scenario(
                     )
                 except (URLError, OSError, TimeoutError, ValueError) as exc:
                     print(f"[scenario] guided phase marker failed: {type(exc).__name__}: {exc}")
+                else:
+                    marked = phase.guided_phase
             pending_pulses = sorted(phase.pulses, key=_pulse_order_key)
-            phase_start = loop.time()
             last_speed_kmh: float | None = None
 
             while not stop_event.is_set():
@@ -95,3 +103,4 @@ async def run_scripted_scenario(
                 if remaining_s <= 0:
                     break
                 await asyncio.sleep(min(speed_update_period_s, remaining_s))
+            phase_start += phase.duration_s

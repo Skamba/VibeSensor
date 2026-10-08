@@ -338,3 +338,66 @@ async def test_unguided_scenario_never_marks_guided_phases(
     await task
 
     assert marks == []
+
+
+@pytest.mark.asyncio
+async def test_a_slow_guided_step_marker_marks_each_step_once_and_never_stretches_the_drive(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # A loaded server takes 0.3 s to take each mark. The drive keeps its script:
+    # four 0.2 s phases still take 0.8 s, and the brake step is marked once, as
+    # the driver taps it, not at each of its phases.
+    marks: list[tuple[str | None, float]] = []
+    started = time.monotonic()
+
+    def slow_mark(_host: str, _port: int, phase: str | None, _timeout: float) -> None:
+        marks.append((phase, time.monotonic() - started))
+        time.sleep(0.3)
+
+    monkeypatch.setattr(scripted_speed_sync, "set_server_speed_override_kmh", lambda *_args: None)
+    monkeypatch.setattr(scripted_scenarios, "mark_server_guided_phase", slow_mark)
+    override = PhaseOverride(
+        target="all",
+        profile_name="rough_road",
+        scene_gain=0.3,
+        scene_noise_gain=1.0,
+        amp_scale=0.6,
+        noise_scale=1.0,
+    )
+    monkeypatch.setitem(
+        SCRIPTED_SCENARIOS,
+        "unit-test-brake-step",
+        ScriptedScenario(
+            name="unit-test-brake-step",
+            description="A sweep, then a brake step of three phases.",
+            phases=(
+                ScenarioPhase("sweep", 0.2, 50.0, 90.0, (override,), guided_phase="sweep"),
+                ScenarioPhase("slow-down", 0.2, 90.0, 80.0, (override,), guided_phase="brake"),
+                ScenarioPhase("stop", 0.2, 80.0, 20.0, (override,), guided_phase="brake"),
+                ScenarioPhase("speed-up", 0.2, 20.0, 80.0, (override,), guided_phase="brake"),
+            ),
+        ),
+    )
+    stop_event = asyncio.Event()
+    task = asyncio.create_task(
+        run_scripted_scenario(
+            _make_clients(),
+            "unit-test-brake-step",
+            stop_event,
+            server_host="127.0.0.1",
+            server_http_port=8000,
+            server_check_timeout=0.1,
+            gps_feed=False,
+            speed_update_period_s=0.01,
+        )
+    )
+    async with asyncio.timeout(5.0):
+        while len(marks) < 3:
+            await asyncio.sleep(0.01)
+    stop_event.set()
+    await task
+
+    assert [phase for phase, _ in marks] == ["sweep", "brake", "sweep"]
+    # The second pass starts on schedule at 0.8 s; marking every phase and
+    # starting each after its mark took 2 s.
+    assert marks[2][1] < 1.4

@@ -619,8 +619,12 @@ def _record(
         assert run_id is not None
         guided = any(phase.guided_phase is not None for phase in phases)
         phase_start = drive_start = clock.now_s
-        for phase in phases:
-            _schedule_phase(loop, clients, scenario_name, phase, phase_start, guided, recorder)
+        for index, phase in enumerate(phases):
+            # The step is marked when it changes, as the driver taps it.
+            mark_step = guided and (
+                index == 0 or phase.guided_phase != phases[index - 1].guided_phase
+            )
+            _schedule_phase(loop, clients, scenario_name, phase, phase_start, mark_step, recorder)
             phase_start += phase.duration_s
         _schedule_speed_reports(
             loop,
@@ -838,14 +842,14 @@ def _schedule_phase(
     scenario_name: str,
     phase: ScenarioPhase,
     phase_start_s: float,
-    guided: bool,
+    mark_step: bool,
     recorder: RunRecorder,
 ) -> None:
     """Replay one scripted phase the way ``run_scripted_scenario`` does."""
 
     def begin() -> None:
         apply_phase(clients, scenario_name, phase)
-        if guided:
+        if mark_step:
             recorder.mark_guided_phase(phase.guided_phase)
 
     loop.at(phase_start_s, begin)
