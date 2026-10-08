@@ -164,7 +164,25 @@ the source:
     so such chance matches are common on a rough road,
   - how closely it is on frequency: none at error score 0.5, full at 0.6,
   - that it is not an alias of a wheel order: full while under 40 % of its
-    matched peaks were also matched by a wheel order, none from 50 %,
+    matched peaks were also matched by a wheel order, none from 50 %.
+    For a driveline order, and an engine order placed by top-gear RPM, it
+    also counts the wheel's 3rd to 6th orders where they sit at exact
+    multiples of a heard T1 peak in the same spectrum (within the line width
+    times the multiple plus one; `OrderAnalysisSession._wheel_harmonic_peaks`,
+    `is_harmonic_of`): a parking flat spot or a non-uniform tyre shakes at the
+    whole comb of wheel orders, and on a car whose E2 runs at about 4 per
+    wheel turn and propshaft at about 3 these used to read as a Strong engine
+    or Moderate driveline fault on a healthy car. A driveline or engine fault
+    beside a wheel imbalance stays clear unless it sits on an exact harmonic.
+    An engine order on measured RPM is not judged by the comb: it leaves it
+    in any other gear, and a four-stroke's half order can turn once per
+    wheel turn (E1 at twice the wheel's rhythm), so its own E0.5/E1/E2 would
+    look like T1/T2/T4; the neutral coast-down decides there. T2 cannot stand
+    in for T1 for the same reason, so below about 38 km/h, where T1 is under
+    the lowest frequency analysed (5 Hz), the comb is not recognised: a
+    town-only first drive on flat-spotted tyres can still read as a
+    propshaft or engine fault on such a car (an open limit; the benchmark
+    runs that drive only on a car whose orders miss the comb),
   - its strength: none at 13 dB, full at 19 dB, across the moderate band's
     edge (16 dB). Together with the light ramp this replaces a step at
     16 dB that more than doubled a faint engine tone's score (0.40 at

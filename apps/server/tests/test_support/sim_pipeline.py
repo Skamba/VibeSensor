@@ -51,6 +51,12 @@ from vibesensor.recording.lifecycle_state import RecordingStopReason
 from vibesensor.recording.recorder import RunRecorder
 from vibesensor.recording.run_schema import RunMetadata
 from vibesensor.report.view_model import ReportView, build_report_view
+from vibesensor.simulator.confounders import (
+    AccessoryTone,
+    FlatSpot,
+    SensorConfounders,
+    SensorFixing,
+)
 from vibesensor.simulator.road_surface import RoadSurface
 from vibesensor.simulator.scripted_scenario_models import ScenarioPhase, phase_speed_kmh
 from vibesensor.simulator.scripted_targeting import apply_phase, target_clients
@@ -197,6 +203,12 @@ class BenchSensor:
     # Share of DATA transmissions lost on congested Wi-Fi; the sensor retransmits
     # them (stop-and-wait), delaying the frames queued behind.
     wifi_retry_loss: float = 0.0
+    # How the sensor is fixed (``None``: firmly, ringing far above the band).
+    fixing: SensorFixing | None = None
+    # The parking flat spot of the tyre(s) this sensor feels at the start of the drive.
+    flat_spot: FlatSpot | None = None
+    # Accessories this sensor feels running (a blower, the alternator, an ABS pump).
+    accessories: tuple[AccessoryTone, ...] = ()
 
 
 @dataclass(slots=True)
@@ -569,6 +581,10 @@ def _record(
                 road=road,
             )
             sim.car = car.sim_car()
+            if spec.fixing is not None or spec.flat_spot is not None or spec.accessories:
+                sim.confounders = SensorConfounders(
+                    fixing=spec.fixing, flat_spot=spec.flat_spot, accessories=spec.accessories
+                )
             if car_start:
                 boot_rng = random.Random(client_seed * 16 + index)
                 sim.device_boot_mono_s = boot_rng.uniform(

@@ -139,3 +139,56 @@ braking).
 |--------|-------|-----------------|
 | GPS | the true speed, reported once a second and late (`Case.speed_lag_s`, `Case.speed_report_period_s`), with dropouts (`Case.speed_dropout_s`) | a receiver's Doppler speed is accurate to about 0.05 m/s (u-blox M8 datasheet), well under one FFT bin of a wheel order, so no speed noise is added |
 | OBD-II | the true speed × (1 + `Case.obd_speed_over_read`), rounded to whole km/h | PID 0x0D comes from the wheel-speed sensors and the nominal tire circumference; a speedometer may read high but never low, up to 10 % + 4 km/h (UN ECE Regulation 39), and worn tires read high too. 3-5 % is typical |
+
+## Confounders
+
+`simulator/confounders.py` adds what a real first drive brings that can fool
+the diagnosis or hide a fault. A `SimClient` gets them through
+`SimClient.confounders` (`SensorConfounders`); the accuracy bench sets them
+per sensor location (`Case.fixings`, `Case.flat_spots`, `Case.accessories`).
+They act on the sensor's motion before its own noise (idealised path) or
+before the ADXL345 front end (road path). Their tones skip the front end's
+first-order roll-off, which is under 1 dB below 150 Hz.
+
+### Sensor fixing (`SensorFixing`)
+
+| Parameter | Value in the bench | Source / reason |
+|-----------|--------------------|-----------------|
+| Transmissibility | `(2ζωs + ω²) / (s² + 2ζωs + ω²)`, bilinear, pre-warped at the resonance | base-excited single-degree-of-freedom system, absolute acceleration (Rao, *Mechanical Vibrations*, ch. 3.6) |
+| Firm fixing | no filter | a bolted or glued accelerometer rings far above the band (ISO 5348) |
+| Springy bracket | 60 Hz, ζ 0.05 (×10 at resonance) | *assumption*: a sheet-metal bracket or foam pad brings the mount's ring into the band; ζ 0.02-0.1 for bolted steel structures (Rao ch. 3) |
+| Loose (cable ties) | 35 Hz, ζ 0.06, hold-down 0.1 g along z | *assumption*: loosened ties hold the housing down only to a fraction of a g |
+| Rattle | beyond the hold-down the reading clips at it; on landing, an impulse equal to the excess velocity gained rings the housing at 250 Hz, ζ 0.1 | rattle starts where the excitation exceeds the preload (Trapp & Chen, *Automotive Buzz, Squeak and Rattle*, 2012); impacts excite the housing's own high modes |
+
+### Parking flat spots (`FlatSpot`)
+
+| Parameter | Value | Source / reason |
+|-----------|-------|-----------------|
+| Level at the start | T1 about 85 mg at a wheel sensor (25, 15, 80 mg on x, y, z) | about 60 N of radial force variation over a 40 kg wheel corner: flat-spotted tyres measure tens of lbf (US 7,377,155 B2) |
+| Flat length | 8 % of the circumference (about one contact patch) | a flat forms where the tyre stood on its contact patch |
+| Harmonics | T1-T4 at 1, 0.99, 0.97, 0.94 | Fourier series of a raised-cosine dip one contact patch long |
+| Recovery | half over 2 km, half over 8 km (two exponentials) | US 7,377,155 B2: rubber recovers fast, the cords slowly; Tire Rack: flat-spot vibration is gone after about 15 miles (24 km) |
+| Phase | each tyre its own | the four tyres turn at slightly different rates through corners |
+
+### Accessories (`AccessoryTone`)
+
+| Accessory | Rhythm | Bench level (worst sensor) | Source / reason |
+|-----------|--------|----------------------------|-----------------|
+| HVAC blower | 45 Hz (2700 rpm) | 10 mg at the seats | fixed-speed motor |
+| Alternator | 2.8 × crank | 8 mg in the engine bay | belt ratio 2.2-3 (Bosch *Automotive Handbook*) |
+| A/C compressor | 1.25 × crank, clutch 20 s on / 10 s off | 8 mg in the engine bay | pulley ratio 1.1-1.4; the clutch cycles to hold the evaporator temperature |
+| ABS/ESC pump | 60 Hz (3600 rpm), only while braking at 0.5 g or more | 20 mg at the front wheels | pump motor runs only during ABS control |
+
+Levels are those of worn rotors, about five times ISO 21940-11 balance
+grade G6.3 (new rotors give 1-3 mg at these mounts, which no analysis would
+see). On a car whose top gear is 0.8, a 1.25 × crank compressor turns exactly
+at propshaft speed: without a coast-down nothing tells it from a propshaft
+imbalance.
+
+### Driving patterns
+
+The bench's `_wobbly_cruise` holds a cruise within ±2 km/h over about 10 s
+(cruise control and a steady foot), `_real_traffic` adds a short stop, and
+`_town_only` never passes 80 km/h. Two faults at once are layered on one
+road (`_road_with`); a non-uniform tyre carries T1-T4 falling as 1/n
+(Gent & Walter, *The Pneumatic Tire*, NHTSA 2006, ch. 9).
