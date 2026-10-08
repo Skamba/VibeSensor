@@ -952,6 +952,20 @@
       "title": "ADAC Autokatalog BMW 218i Gran Coupe Sport Line Steptronic (03/20-09/20)",
       "note": "ADAC catalogue entry of the Germany-market 218i Gran Coupe Steptronic sold from 03/20. Used for year ranges only.",
       "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:g05-adac-catalogue",
+      "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/bmw/x5/g05-f95/",
+      "title": "ADAC Autokatalog BMW X5 G05 (2018-2023)",
+      "note": "ADAC catalogue of the Germany-market G05 variants before the facelift with their sales periods: xDrive25d 08/19-02/23; xDrive30d from 11/18; xDrive40i 11/18-02/23; xDrive40d 08/20-02/23; xDrive45e 08/19-02/23. Used for year ranges only.",
+      "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:g05-lci-adac-catalogue",
+      "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/bmw/x5/g05-f95-facelift/",
+      "title": "ADAC Autokatalog BMW X5 G05 facelift (2023-2026)",
+      "note": "ADAC catalogue of the Germany-market facelifted G05 variants with their sales periods: xDrive30d 04/23-06/25; xDrive40i 04/23-07/26; xDrive40d 08/23-07/26; xDrive50e 04/23-07/26. The successor X5 (G65) is listed from 2026. Used for year ranges only.",
+      "confidence": "medium"
     }
   ]
 }
