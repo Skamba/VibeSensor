@@ -2114,6 +2114,62 @@
       "title": "BMW PressClub F44 2 Series Gran Coupe 03/2021 specifications PDF",
       "note": "Official BMW specifications of the 2 Series Gran Coupe valid from 03/2021 (T0327029EN). 218i: manual as 10/2019, final drive 4.118; dual-clutch overall ratios 16.385 ... 2.158, final drive 3.944; 205/55 R16. 220i: dual-clutch overall 15.304 ... 2.016, final drive 3.684; 225/45 R17. 220i xDrive: eight-speed Steptronic 5.519 / 3.184 / 2.050 / 1.492 / 1.235 / 1.000 / 0.801 / 0.673, final drive 3.075; 225/45 R17. M235i xDrive: Steptronic Sport, same ratios, final drive 3.075; 225/40 R18. 216d: dual-clutch overall 16.385 ... 2.158, final drive 3.944; 205/55 R16. 218d: manual 3.923 / 2.136 / 1.276 / 0.919 / 0.725 / 0.605, final drive 3.389, or eight-speed Steptronic, final drive 2.666; 205/55 R16. 220d: Steptronic, final drive 2.666; 225/45 R17. 220d xDrive: Steptronic, final drive 2.666; 225/40 R18.",
       "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g05-2018-06-short-version",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0281455EN/416378",
+      "title": "BMW PressClub G05 X5 06/2018 short version PDF",
+      "note": "Official BMW 06/2018 short press release on the all-new X5: production at Spartanburg, worldwide market launch from November 2018.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g05-2018-09-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0286577EN/419609",
+      "title": "BMW PressClub G05 X5 specifications valid from 09/2018 PDF",
+      "note": "Official BMW specifications of the X5 valid from September 2018 (T0286577EN). xDrive40i: eight-speed Steptronic 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, final drive 3.385, 255/55 R18. xDrive30d: 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640, final drive 2.929, 255/55 R18. M50d: same ratios, final drive 3.154, 275/40 R21 front and 315/35 R21 rear.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g05-m50i-2019-release",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0295928EN/450991",
+      "title": "BMW PressClub X5 M50i and X7 M50i 05/2019 press release PDF",
+      "note": "Official BMW press release of 22 May 2019: the X5 M50i and X7 M50i are produced from August 2019 at Spartanburg and available from autumn 2019.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g05-40d-2020-release",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0305409EN/445922",
+      "title": "BMW PressClub X5 and X6 xDrive40d 02/2020 press release PDF",
+      "note": "Official BMW press release of 11 February 2020: the X5 xDrive40d and X6 xDrive40d with the 48-volt mild-hybrid straight-six diesel are offered from May 2020.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g05-2021-03-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0326836EN/472818",
+      "title": "BMW PressClub G05 X5 specifications valid from 03/2021 PDF",
+      "note": "Official BMW specifications of the X5 valid from 03/2021 (T0326836EN). xDrive40i and xDrive25d: eight-speed Steptronic 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, final drive 3.385, 255/55 R18. M50i: 5.500 / 3.520 / 2.200 / 1.720 / 1.317 / 1.000 / 0.823 / 0.640, final drive 3.154, 275/40 R21 front and 315/35 R21 rear. xDrive45e: 4.714 / 3.143 / 2.106 / 1.667 / 1.285 / 1.000 / 0.839 / 0.667, final drive 3.636, 265/50 R19. xDrive30d: 5.500 set, final drive 2.929, 255/55 R18. xDrive40d: 5.500 set, final drive 3.077, 255/55 R18.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g05-2023-02-short-version",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0408159EN/649225",
+      "title": "BMW PressClub G05 X5 and X6 facelift 02/2023 short version PDF",
+      "note": "Official BMW 02/2023 short press release on the facelifted X5 and X6: global launch from April 2023 with the X5 xDrive50e, xDrive40i, M60i xDrive and xDrive30d.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g05-2023-02-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0408159EN/649226",
+      "title": "BMW PressClub G05 X5 facelift 02/2023 specifications PDF",
+      "note": "Official BMW 02/2023 specifications of the facelifted X5 (T0408159EN). xDrive50e: eight-speed Steptronic 5.500 / 3.520 / 2.200 / 1.720 / 1.301 / 1.000 / 0.833 / 0.640, final drive 3.636. xDrive40i: 5.250 / 3.360 / 2.172 / 1.720 / 1.316 / 1.000 / 0.822 / 0.640, final drive 3.385. M60i xDrive: 5.501 / 3.520 / 2.200 / 1.720 / 1.301 / 1.000 / 0.833 / 0.640, final drive 3.154, 275/40 R21 front and 315/35 R21 rear. xDrive30d: 5.501 set, final drive 2.929. Standard tyres otherwise 265/50 R19.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:g05-2026-04-de-price-list",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0444270DE/643370",
+      "title": "BMW PressClub G05 X5 04/2026 Germany price list PDF",
+      "note": "Official BMW Germany X5 price list of April 2026 (T0444270DE): xDrive50e, xDrive40i, xDrive30d, xDrive40d and M60i xDrive on sale. Wheels for the four non-M variants: standard 265/50 R19 (9J x 19); options 275/45 R20 front with 305/40 R20 rear (9J / 10.5J x 20), 275/40 R21 front with 315/35 R21 rear (9.5J / 10.5J x 21) and 275/35 R22 front with 315/30 R22 rear (9.5J / 10.5J x 22).",
+      "confidence": "high"
     }
   ]
 }
