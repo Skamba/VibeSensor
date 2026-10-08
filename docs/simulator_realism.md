@@ -176,14 +176,10 @@ first-order roll-off, which is under 1 dB below 150 Hz.
 |-----------|--------|----------------------------|-----------------|
 | HVAC blower | 45 Hz (2700 rpm) | 10 mg at the seats | fixed-speed motor |
 | Alternator | 2.8 × crank | 8 mg in the engine bay | belt ratio 2.2-3 (Bosch *Automotive Handbook*) |
-| A/C compressor | 1.25 × crank, clutch 20 s on / 10 s off | 8 mg in the engine bay | pulley ratio 1.1-1.4; the clutch cycles to hold the evaporator temperature |
-| ABS/ESC pump | 60 Hz (3600 rpm), only while braking at 0.5 g or more | 20 mg at the front wheels | pump motor runs only during ABS control |
 
 Levels are those of worn rotors, about five times ISO 21940-11 balance
 grade G6.3 (new rotors give 1-3 mg at these mounts, which no analysis would
-see). On a car whose top gear is 0.8, a 1.25 × crank compressor turns exactly
-at propshaft speed: without a coast-down nothing tells it from a propshaft
-imbalance.
+see).
 
 ### Driving patterns
 

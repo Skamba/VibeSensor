@@ -11,8 +11,8 @@ physical model with a cited basis (see "Confounders" in
 - ``FlatSpot``: a tyre parked overnight keeps a flat where it stood; once per
   turn it presses the wheel like a short bump, with harmonics, and the flat
   creeps back out over the first kilometres as the tyre warms.
-- ``AccessoryTone``: a blower, alternator, air-con compressor or ABS pump
-  shaking at its own rhythm, which no wheel, shaft or engine fault explains.
+- ``AccessoryTone``: a blower or alternator shaking at its own rhythm, which
+  no wheel, shaft or engine fault explains.
 
 ``SensorConfounders`` holds the effects one sensor gets and their running state
 (filter memories, distance driven), so they stay continuous across frames.
@@ -109,20 +109,15 @@ class AccessoryTone:
     """Something running in a healthy car that shakes at its own rhythm, felt at one sensor.
 
     It turns at a fixed speed (*hz*: a blower or fuel-pump motor) or off the
-    crank through its pulley (*engine_order*: an alternator or air-con
-    compressor), so it is no wheel, shaft or engine-order fault. *level_mg*
-    per axis is what the sensor feels of the rotor's residual imbalance
-    (``m e w^2`` over the mass it shakes, ISO 21940-11 balance grades).
-    A compressor clutch cycles: on for *on_s*, then off for *off_s*. An ABS
-    pump runs only while the car decelerates at *min_decel_g* or more.
+    crank through its pulley (*engine_order*: an alternator), so it is no
+    wheel, shaft or engine-order fault. *level_mg* per axis is what the sensor
+    feels of the rotor's residual imbalance (``m e w^2`` over the mass it
+    shakes, ISO 21940-11 balance grades).
     """
 
     level_mg: tuple[float, float, float]
     hz: float | None = None
     engine_order: float | None = None
-    on_s: float | None = None
-    off_s: float = 0.0
-    min_decel_g: float | None = None
     phase_rad: float = 0.0
 
 
@@ -168,12 +163,8 @@ class SensorConfounders:
     flat_spot: FlatSpot | None = None
     accessories: tuple[AccessoryTone, ...] = ()
     distance_km: float = 0.0
-    drive_s: float = 0.0
     flat_spot_angle_rad: float = 0.0
     _accessory_angles: list[float] = field(default_factory=list, repr=False)
-    _last_speed_kmh: float | None = field(default=None, repr=False)
-    # Deceleration (g), smoothed over about half a second.
-    _decel_g: float = field(default=0.0, repr=False)
     _fixing_state: np.ndarray | None = field(default=None, repr=False)
     _ring_state: np.ndarray | None = field(default=None, repr=False)
     # Whether the housing was floating at the end of the last frame, and the
@@ -187,7 +178,6 @@ class SensorConfounders:
         """What the car adds at this sensor this frame (counts): flat spots and accessories."""
         out = np.zeros((samples, 3), dtype=np.float64)
         frame_s = samples * dt
-        self._track_deceleration(speed_kmh, frame_s)
         if self.accessories:
             out += self._accessories(engine_hz, samples, dt)
         spot = self.flat_spot
@@ -203,17 +193,7 @@ class SensorConfounders:
                 self.flat_spot_angle_rad + _TWO_PI * wheel_hz * frame_s
             ) % _TWO_PI
         self.distance_km += max(0.0, speed_kmh) / 3600.0 * frame_s
-        self.drive_s += frame_s
         return out
-
-    def _track_deceleration(self, speed_kmh: float, frame_s: float) -> None:
-        last = self._last_speed_kmh
-        self._last_speed_kmh = speed_kmh
-        if last is None:
-            return
-        decel_g = (last - speed_kmh) / 3.6 / frame_s / _G_MPS2
-        smoothing = min(1.0, frame_s / 0.5)
-        self._decel_g += smoothing * (decel_g - self._decel_g)
 
     def _accessories(self, engine_hz: float, samples: int, dt: float) -> np.ndarray:
         out = np.zeros((samples, 3), dtype=np.float64)
@@ -224,18 +204,11 @@ class SensorConfounders:
             hz = tone.hz if tone.hz is not None else engine_hz * (tone.engine_order or 0.0)
             angle = self._accessory_angles[index]
             self._accessory_angles[index] = (angle + _TWO_PI * hz * samples * dt) % _TWO_PI
-            if hz <= 0 or not self._running(tone):
+            if hz <= 0:
                 continue
             wave = np.sin(angle + _TWO_PI * hz * offsets)
             out += wave[:, None] * (np.asarray(tone.level_mg) * _COUNTS_PER_MG)[None, :]
         return out
-
-    def _running(self, tone: AccessoryTone) -> bool:
-        if tone.min_decel_g is not None and self._decel_g < tone.min_decel_g:
-            return False
-        if tone.on_s is None:
-            return True
-        return self.drive_s % (tone.on_s + tone.off_s) < tone.on_s
 
     def through_fixing(self, signal: np.ndarray, sample_rate_hz: int) -> np.ndarray:
         """The car's motion at the fixing, as the housing on that fixing reads it (counts)."""
