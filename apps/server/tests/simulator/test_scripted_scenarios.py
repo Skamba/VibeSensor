@@ -78,7 +78,7 @@ def test_fault_free_scenario_injects_no_tones() -> None:
     for phase in SCRIPTED_SCENARIOS["pothole-recovery-loop"].phases:
         for override in phase.overrides:
             profile = PROFILE_LIBRARY[override.profile_name]
-            assert not profile.tones and not profile.order_tones, (phase.name, override.target)
+            assert not profile.tones and not profile.order_forces, (phase.name, override.target)
 
 
 def test_scripted_scenarios_include_explicit_steady_speed_hold_phases() -> None:

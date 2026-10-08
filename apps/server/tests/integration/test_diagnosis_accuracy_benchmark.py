@@ -48,8 +48,8 @@ from vibesensor.report.i18n import tr
 from vibesensor.report.pdf import render_report_pdf
 from vibesensor.report.view_model import build_report_view
 from vibesensor.simulator.confounders import AccessoryTone, FlatSpot, MountSlip, SensorFixing
+from vibesensor.simulator.fault_forces import OrderForce
 from vibesensor.simulator.profiles import (
-    DEFAULT_SPEED_KMH,
     PROFILE_LIBRARY,
     ROAD_RESONANCES,
     Profile,
@@ -460,53 +460,67 @@ def _phase(
     )
 
 
-# An engine whose first order dominates (crank pulley or flywheel imbalance). On
-# the default car E1 sits on T2, so only the neutral coast-down can tell it from
-# a wheel. Benchmark-only simulator profile, registered by ``_bench_profiles``.
+# An engine whose first order dominates: a flywheel or crank pulley out by
+# 50 g at 0.1 m (25 times ISO 21940-11 G6.3). On the default car E1 sits on T2,
+# so only the neutral coast-down can tell it from a wheel. Benchmark-only
+# simulator profile, registered by ``_bench_profiles``.
 _ENGINE_FIRST_ORDER = Profile(
     name="bench_engine_first_order",
     tones=(),
-    order_tones=(("engine_1x", 1.0, (190.0, 130.0, 250.0)),),
+    order_forces=(OrderForce("engine_1x", unbalance_g=50.0, radius_m=0.1),),
     noise_std=18.0,
     bump_probability=0.001,
     bump_decay=0.96,
     bump_strength=(16.0, 13.0, 24.0),
     modulation_hz=0.24,
     modulation_depth=0.10,
-    reference_speed_kmh=DEFAULT_SPEED_KMH,
 )
+# An engine's firing pulses rock it on its mounts: about 150 N·m of torque at
+# the firing order (about the mean torque at part load), reacted by mounts
+# about 0.3 m apart, so about 500 N at each, the same at every speed.
+_FIRING_FORCE_N = 500.0
 
 
-def _engine_firing(name: str, *tones: tuple[float, tuple[float, float, float]]) -> Profile:
-    """The engine_order profile's sound at the crank orders *tones* ``(multiple, amps_xyz)``."""
-    return replace(
-        PROFILE_LIBRARY["engine_order"],
-        name=f"bench_{name}",
-        order_tones=tuple(("engine_1x", multiple, amps) for multiple, amps in tones),
-    )
+def _engine_firing(name: str, *forces: OrderForce) -> Profile:
+    """The engine_order profile with the crank-order *forces* instead of its own."""
+    return replace(PROFILE_LIBRARY["engine_order"], name=f"bench_{name}", order_forces=forces)
 
 
 # A rough-running six or worn engine mounts: the firing rhythm (E3) shakes the car.
-_SIX_FIRING = _engine_firing("six_firing", (3.0, (185.0, 128.0, 248.0)))
-# An inline-3's firing rhythm (E1.5) over its built-in rocking couple (E1).
+_SIX_FIRING = _engine_firing("six_firing", OrderForce("engine_1x", 3.0, force_n=_FIRING_FORCE_N))
+# An inline-3's firing rhythm (E1.5) over the rocking couple its counterweights
+# leave at E1 (about 60 g at the crank radius at the mounts).
 _THREE_FIRING = _engine_firing(
-    "three_firing", (1.5, (185.0, 128.0, 248.0)), (1.0, (62.0, 46.0, 92.0))
+    "three_firing",
+    OrderForce("engine_1x", 1.5, force_n=_FIRING_FORCE_N),
+    OrderForce("engine_1x", unbalance_g=60.0, radius_m=0.045),
 )
 # A V8's firing rhythm (E4).
-_V8_FIRING = _engine_firing("v8_firing", (4.0, (185.0, 128.0, 248.0)))
-# A propshaft joint working at an angle: twice per shaft turn (P2) dominates.
+_V8_FIRING = _engine_firing("v8_firing", OrderForce("engine_1x", 4.0, force_n=_FIRING_FORCE_N))
+# A propshaft joint working at too steep an angle pulses the shaft's torque
+# twice per turn (P2): about 30 N at its bearings, over a 5 g residual at P1.
 _PROPSHAFT_JOINT = replace(
     PROFILE_LIBRARY["driveshaft_imbalance"],
     name="bench_propshaft_joint",
-    order_tones=(("shaft_1x", 2.0, (150.0, 120.0, 190.0)), ("shaft_1x", 1.0, (45.0, 36.0, 60.0))),
+    order_forces=(
+        OrderForce("shaft_1x", 2.0, force_n=30.0),
+        OrderForce("shaft_1x", unbalance_g=5.0, radius_m=0.04),
+    ),
 )
+# A tyre's radial force variation (non-uniform stiffness or runout) is a force
+# its shape fixes, the same at every speed: an OEM tyre passes uniformity
+# grading under about 100 N at the first harmonic (Gent & Walter, *The
+# Pneumatic Tire*, NHTSA 2006, ch. 9); a faulty one is well over.
+_RFV_FAULT_N = 150.0
+# A radial force pushes up through the contact patch.
+_RADIAL = (0.0, 0.0, 1.0)
 # An out-of-round tire: twice per wheel turn dominates, well over 3 dB above T1.
 _TIRE_OUT_OF_ROUND = Profile(
     name="bench_tire_out_of_round",
     tones=(),
-    order_tones=(
-        ("wheel_2x", 1.0, (210.0, 120.0, 165.0)),
-        ("wheel_1x", 1.0, (60.0, 35.0, 48.0)),
+    order_forces=(
+        OrderForce("wheel_2x", force_n=_RFV_FAULT_N, direction=_RADIAL),
+        OrderForce("wheel_1x", force_n=_RFV_FAULT_N / 3.0, direction=_RADIAL),
     ),
     noise_std=24.0,
     bump_probability=0.004,
@@ -514,17 +528,16 @@ _TIRE_OUT_OF_ROUND = Profile(
     bump_strength=(30.0, 24.0, 45.0),
     modulation_hz=0.22,
     modulation_depth=0.12,
-    reference_speed_kmh=DEFAULT_SPEED_KMH,
 )
 # An unbalanced tire that is also oval: once and twice per turn about equally
-# strong (T2 ~1 dB above T1). Balancing is the cheap first fix, so the diagnosis
-# stays on the fundamental unless the 2nd order clearly dominates.
+# strong. Balancing is the cheap first fix, so the diagnosis stays on the
+# fundamental unless the 2nd order clearly dominates.
 _IMBALANCED_OVAL_TIRE = Profile(
     name="bench_imbalanced_oval_tire",
     tones=(),
-    order_tones=(
-        ("wheel_1x", 1.0, (150.0, 85.0, 115.0)),
-        ("wheel_2x", 1.0, (165.0, 95.0, 127.0)),
+    order_forces=(
+        OrderForce("wheel_1x", unbalance_g=30.0),
+        OrderForce("wheel_2x", force_n=_RFV_FAULT_N / 2.0, direction=_RADIAL),
     ),
     noise_std=24.0,
     bump_probability=0.004,
@@ -532,40 +545,40 @@ _IMBALANCED_OVAL_TIRE = Profile(
     bump_strength=(30.0, 24.0, 45.0),
     modulation_hz=0.22,
     modulation_depth=0.12,
-    reference_speed_kmh=DEFAULT_SPEED_KMH,
 )
-# An even engine tone (E2 over E1) that every sensor feels alike, 12 dB under a
-# front-left imbalance at that corner. Each sensor plays one profile, so the
-# tone rides on the road noise everywhere and on the imbalance at front-left,
-# scaled so the sensors read it at the same level after their override gains.
-_ENGINE_HUM_TONES = (("engine_2x", 1.0, (36.0, 25.0, 48.0)), ("engine_1x", 1.0, (12.0, 9.0, 18.0)))
+# An even engine hum (E2 over E1) every sensor hears: an inline-4 whose
+# balance shafts cancel most of its second-order force (about 20 g at the crank
+# radius left) and a crankshaft balanced to G6.3 (5 g at 0.1 m). Each sensor
+# plays one profile, so the hum rides on the road noise everywhere and on the
+# imbalance at front-left, scaled so it is the same force after the override gains.
+_ENGINE_HUM = (
+    OrderForce("engine_2x", unbalance_g=20.0, radius_m=0.045),
+    OrderForce("engine_1x", unbalance_g=5.0, radius_m=0.1),
+)
 
 
 def _with_engine_hum(base: str, gain: float) -> Profile:
-    hum = tuple((key, mult, tuple(a / gain for a in amps)) for key, mult, amps in _ENGINE_HUM_TONES)
     profile = PROFILE_LIBRARY[base]
+    hum = tuple(force.scaled(1.0 / gain) for force in _ENGINE_HUM)
     return replace(
-        profile,
-        name=f"bench_{base}_engine_hum",
-        order_tones=profile.order_tones + hum,
-        reference_speed_kmh=DEFAULT_SPEED_KMH,
+        profile, name=f"bench_{base}_engine_hum", order_forces=profile.order_forces + hum
     )
 
 
 # Brake judder: a brake disc with thickness variation or runout pulses the brake
 # torque once per wheel turn, so the wheel's first order shows up while braking
-# and only then.
+# and only then: about 50 N·m of brake torque variation (Jacobsson, *Proc.
+# IMechE D* 217, 2003: tens of N·m), about 150 N fore-aft at the tyre.
 _BRAKE_JUDDER = Profile(
     name="bench_brake_judder",
     tones=(),
-    order_tones=(("wheel_1x", 1.0, (220.0, 125.0, 170.0)),),
+    order_forces=(OrderForce("wheel_1x", force_n=150.0, direction=(1.0, 0.0, 0.0)),),
     noise_std=24.0,
     bump_probability=0.004,
     bump_decay=0.94,
     bump_strength=(30.0, 24.0, 45.0),
     modulation_hz=0.22,
     modulation_depth=0.12,
-    reference_speed_kmh=DEFAULT_SPEED_KMH,
 )
 
 # -- realistic cars: layered sensor signals --------------------------------------
@@ -607,10 +620,10 @@ def _road_with(
     at *gain*, moved to *hz*.
     """
     road = PROFILE_LIBRARY["rough_road"]
-    order_tones = tuple(
-        (key, multiple * layer.hz_scale, tuple(a * layer.gain / _ROAD_GAIN for a in amps))
+    order_forces = tuple(
+        force.scaled(layer.gain / _ROAD_GAIN, layer.hz_scale)
         for layer in layers
-        for key, multiple, amps in PROFILE_LIBRARY[layer.profile].order_tones
+        for force in PROFILE_LIBRARY[layer.profile].order_forces
     )
     tones: tuple[tuple[float, tuple[float, float, float]], ...] = ()
     if resonance is not None:
@@ -621,12 +634,8 @@ def _road_with(
         road,
         name=f"bench_{name}",
         tones=tones,
-        order_tones=order_tones,  # type: ignore[arg-type]
-        reference_speed_kmh=DEFAULT_SPEED_KMH if order_tones else None,
+        order_forces=order_forces,
         noise_speed_exponent=_ROAD_NOISE_SPEED_EXPONENT,
-        order_speed_exponent=max(
-            (PROFILE_LIBRARY[layer.profile].order_speed_exponent for layer in layers), default=0.0
-        ),
         **speed_laws,  # type: ignore[arg-type]
     )
     _LAYERED_PROFILES[profile.name] = profile
@@ -1502,13 +1511,13 @@ _ACCESSORIES = {
 # A tyre with radial force variation (non-uniform stiffness or runout): a force
 # fixed by its shape, so the same at every speed, at the first four wheel
 # orders falling off about as 1/n (Gent & Walter, *The Pneumatic Tire*, NHTSA
-# 2006, ch. 9). Its first order is as strong as the front-left imbalance's.
-_IMBALANCE_T1 = PROFILE_LIBRARY["wheel_imbalance"].order_tones[0][2]
+# 2006, ch. 9).
 _NON_UNIFORM_TYRE = Profile(
     name="bench_non_uniform_tyre",
     tones=(),
-    order_tones=tuple(
-        ("wheel_1x", float(n), tuple(a / n for a in _IMBALANCE_T1)) for n in (1, 2, 3, 4)
+    order_forces=tuple(
+        OrderForce("wheel_1x", float(n), force_n=_RFV_FAULT_N / n, direction=_RADIAL)
+        for n in (1, 2, 3, 4)
     ),
     noise_std=24.0,
     bump_probability=0.004,
@@ -1516,7 +1525,6 @@ _NON_UNIFORM_TYRE = Profile(
     bump_strength=(30.0, 24.0, 45.0),
     modulation_hz=0.22,
     modulation_depth=0.12,
-    reference_speed_kmh=DEFAULT_SPEED_KMH,
 )
 _LAYERED_PROFILES[_NON_UNIFORM_TYRE.name] = _NON_UNIFORM_TYRE
 
@@ -2451,7 +2459,6 @@ def _turns_per_wheel_turn(car: BenchCar, order_code: str, gear: float | None = N
     return shaft * (car.current_gear_ratio if gear is None else gear)
 
 
-_SIM_MG_PER_COUNT = 1000.0 / 256.0  # ADXL345 full-resolution counts
 _FRAME_SAMPLES = 200  # samples per simulated DATA frame (test_support.sim_pipeline)
 # A slow, one-sided sync exchange on busy Wi-Fi can step a sensor clock by up to
 # half its extra delay (30 ms here).
@@ -2483,6 +2490,7 @@ def injected_order_mg(
             server_data_port=0,
             server_control_port=0,
             profile_name="rough_road",
+            car=car.sim_car(CI_SEED),
         )
         for index, sensor in enumerate(layout)
     ]
@@ -2492,19 +2500,24 @@ def injected_order_mg(
         apply_phase(clients, "ground-truth", phase)
         speeds = _phase_speeds_kmh(phase)
         for sensor, client in zip(layout, clients, strict=True):
-            profile = PROFILE_LIBRARY[client.profile_name]
-            counts = sum(
-                math.hypot(*amps)
-                for key, multiple, amps in profile.order_tones
-                if _is_tone(key, multiple, tones)
-            )
-            counts *= max(profile.order_amplitude_gain(speed) for speed in speeds)
-            mg = counts * client.scene_gain * client.amp_scale * _SIM_MG_PER_COUNT
+            forces = [
+                force
+                for force in PROFILE_LIBRARY[client.profile_name].order_forces
+                if _is_tone(force.order_key, force.multiple, tones)
+            ]
+            mg = max(_order_forces_mg(client, forces, speed) for speed in speeds)
+            mg *= client.scene_gain * client.amp_scale
             mg += _flat_spot_mg(sensor.flat_spot, car, order_code, phase.gear_ratio)
             mg += _accessory_mg(sensor.accessories, car, order_code, phase.gear_ratio)
             mg *= max(_fixing_gain(sensor.fixing, car, order_code, speed) for speed in speeds)
             injected[sensor.location_code] = max(injected[sensor.location_code], mg)
     return injected
+
+
+def _order_forces_mg(client: SimClient, forces: list[OrderForce], speed_kmh: float) -> float:
+    """Level (mg, 3-axis vector) at which *client* reads *forces* at *speed_kmh*."""
+    client.current_speed_kmh = speed_kmh
+    return sum(math.hypot(*client.order_force_tone(force)[1]) for force in forces)
 
 
 def _flat_spot_mg(
@@ -2921,9 +2934,9 @@ def injected_sweep_kmh(
             and (
                 _flat_spot_mg(flat_spot, car, order_code, phase.gear_ratio) > 0
                 or any(
-                    _is_tone(key, multiple, _phase_tones(phase, order_code, car))
+                    _is_tone(force.order_key, force.multiple, _phase_tones(phase, order_code, car))
                     for override in phase.overrides
-                    for key, multiple, _amps in PROFILE_LIBRARY[override.profile_name].order_tones
+                    for force in PROFILE_LIBRARY[override.profile_name].order_forces
                 )
             )
         ),
@@ -3196,10 +3209,10 @@ def _assert_report_view(
         # Measured RPM tells the engine's tone from a road-speed order it passes
         # in one gear: the worksheet lists only orders the drive really carried.
         carried = {
-            _tone(key, multiple)[0]
+            _tone(force.order_key, force.multiple)[0]
             for phase in case.phases
             for override in phase.overrides
-            for key, multiple, _amps in PROFILE_LIBRARY[override.profile_name].order_tones
+            for force in PROFILE_LIBRARY[override.profile_name].order_forces
         }
         listed = {row["order_code"] for row in diagnosis["order_findings"]}
         uncarried = {code for code in listed if _order_tone(code)[0] not in carried}

@@ -2,13 +2,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from vibesensor.simulator.fault_forces import OrderForce
 from vibesensor.simulator.wheel_kinematics import SimCar
 
 DEFAULT_SPEED_KMH = 100.0
-# An unbalanced mass m at radius r turning at w pulls with F = m r w^2, and w
-# follows the road speed, so a wheel's or propshaft's unbalance shakes with the
-# square of the speed (ISO 21940-11 / ISO 1940-1).
-UNBALANCE_SPEED_EXPONENT = 2.0
 
 
 @dataclass(frozen=True, slots=True)
@@ -45,6 +42,23 @@ the 20-50 mg whole-body level ISO 2631 surveys find on normal roads (see
 "Simulated road resonances" in ``docs/testing.md``)."""
 
 
+# Fault sizes (the basis of each: "Fault amplitudes" in docs/simulator_realism.md).
+# A wheel that lost a balancing weight, or was fitted unbalanced: 40 g at the rim.
+WHEEL_IMBALANCE_G = 40.0
+# A wheel a little out of balance: 15 g at the rim.
+WHEEL_MILD_IMBALANCE_G = 15.0
+# A propshaft that lost a balance weight: 15 g on its 40 mm tube radius.
+PROPSHAFT_IMBALANCE_G = 15.0
+PROPSHAFT_RADIUS_M = 0.04
+# An inline-4's second-order free force (0.5 kg reciprocating per cylinder,
+# 45 mm crank radius, 0.3 crank-to-rod ratio) as an unbalance at E2.
+I4_SECOND_ORDER_G = 150.0
+CRANK_RADIUS_M = 0.045
+# Crankshaft and flywheel balanced four times worse than ISO 21940-11 G6.3.
+CRANK_RESIDUAL_G = 20.0
+FLYWHEEL_RADIUS_M = 0.1
+
+
 SIMULATOR_CAR = SimCar.square(285.0, 30.0, 21.0, final_drive_ratio=3.08, top_gear_ratio=0.64)
 """The simulated car, used until the server's active car gives its own tire size and ratios."""
 
@@ -61,22 +75,13 @@ class Profile:
     bump_strength: tuple[float, float, float]
     modulation_hz: float
     modulation_depth: float
-    # Order-locked tones as ``(order_key, multiple, amps_xyz)``: ``order_key``
-    # names the order (``wheel_1x``, ``wheel_2x``, ``shaft_1x``, ``engine_1x``,
-    # ``engine_2x``; a wheel order may name its wheel, ``wheel_1x@front-left``)
-    # and the tone turns at the speed the car's wheel kinematics give it
-    # (``SimClient.order_tone_hz``).
-    order_tones: tuple[tuple[str, float, tuple[float, float, float]], ...] = ()
-    # Speed at which the order tones' amplitudes are ``amps_xyz``; ``None``
-    # means the profile has only absolute tones (e.g. engine_idle, rough_road).
-    reference_speed_kmh: float | None = None
+    # The fault's forces, each turning with its order at the speed the car's
+    # wheel kinematics give it (``SimClient.order_tone_hz``); a sensor reads
+    # each through the car to its mount (``simulator/fault_forces.py``).
+    order_forces: tuple[OrderForce, ...] = ()
     # Road noise grows with speed: the broadband noise is scaled by
     # ``(speed / DEFAULT_SPEED_KMH) ** noise_speed_exponent`` (0: flat).
     noise_speed_exponent: float = 0.0
-    # An unbalanced mass shakes harder the faster it turns: order-tone
-    # amplitudes are scaled by ``(speed / reference_speed) ** order_speed_exponent``
-    # (0: the same amplitude at every speed).
-    order_speed_exponent: float = 0.0
     # ``(low_kmh, high_kmh, gain)``: a suspension or body resonance the order
     # passes through amplifies its tones by ``gain`` inside that speed band.
     order_resonance_kmh: tuple[float, float, float] | None = None
@@ -85,16 +90,12 @@ class Profile:
     road_resonances: tuple[RoadResonance, ...] = ROAD_RESONANCES
     road_roughness: float = 1.0
 
-    def order_amplitude_gain(self, speed_kmh: float) -> float:
-        """How much the order tones are amplified at *speed_kmh* (1 at the reference speed)."""
-        gain = 1.0
-        if self.order_speed_exponent and self.reference_speed_kmh:
-            gain = (max(0.0, speed_kmh) / self.reference_speed_kmh) ** self.order_speed_exponent
-        if self.order_resonance_kmh is not None:
-            low_kmh, high_kmh, resonance_gain = self.order_resonance_kmh
-            if low_kmh <= speed_kmh <= high_kmh:
-                gain *= resonance_gain
-        return gain
+    def order_resonance_gain(self, speed_kmh: float) -> float:
+        """How much ``order_resonance_kmh`` amplifies the order tones at *speed_kmh*."""
+        if self.order_resonance_kmh is None:
+            return 1.0
+        low_kmh, high_kmh, resonance_gain = self.order_resonance_kmh
+        return resonance_gain if low_kmh <= speed_kmh <= high_kmh else 1.0
 
     def resonance_gain(self, speed_kmh: float) -> float:
         """How strongly the road excites the resonances at *speed_kmh* (none at a standstill)."""
@@ -129,11 +130,13 @@ PROFILE_LIBRARY: dict[str, Profile] = {
     "engine_order": Profile(
         name="engine_order",
         tones=(),
-        # A 4-stroke 4-cylinder fires twice per crank revolution, so its
-        # load-dependent vibration is dominated by the 2nd engine order (E2).
-        order_tones=(
-            ("engine_2x", 1.0, (185.0, 128.0, 248.0)),
-            ("engine_1x", 1.0, (62.0, 46.0, 92.0)),
+        # An inline-4 without (or with a failed) balance shaft: its pistons'
+        # second-order free force, the equivalent of an unbalance turning at
+        # twice the crank speed (E2), over the crankshaft's own residual
+        # unbalance at E1.
+        order_forces=(
+            OrderForce("engine_2x", unbalance_g=I4_SECOND_ORDER_G, radius_m=CRANK_RADIUS_M),
+            OrderForce("engine_1x", unbalance_g=CRANK_RESIDUAL_G, radius_m=FLYWHEEL_RADIUS_M),
         ),
         noise_std=18.0,
         bump_probability=0.001,
@@ -141,7 +144,6 @@ PROFILE_LIBRARY: dict[str, Profile] = {
         bump_strength=(16.0, 13.0, 24.0),
         modulation_hz=0.24,
         modulation_depth=0.10,
-        reference_speed_kmh=DEFAULT_SPEED_KMH,
     ),
     "rough_road": Profile(
         name="rough_road",
@@ -156,41 +158,30 @@ PROFILE_LIBRARY: dict[str, Profile] = {
     "wheel_imbalance": Profile(
         name="wheel_imbalance",
         tones=(),
-        order_tones=(
-            ("wheel_1x", 1.0, (220.0, 125.0, 170.0)),
-            ("wheel_2x", 1.0, (80.0, 52.0, 72.0)),
-        ),
+        order_forces=(OrderForce("wheel_1x", unbalance_g=WHEEL_IMBALANCE_G),),
         noise_std=24.0,
         bump_probability=0.004,
         bump_decay=0.94,
         bump_strength=(30.0, 24.0, 45.0),
         modulation_hz=0.22,
         modulation_depth=0.12,
-        reference_speed_kmh=DEFAULT_SPEED_KMH,
-        order_speed_exponent=UNBALANCE_SPEED_EXPONENT,
     ),
     "wheel_mild_imbalance": Profile(
         name="wheel_mild_imbalance",
         tones=(),
-        order_tones=(
-            ("wheel_1x", 1.0, (105.0, 62.0, 80.0)),
-            ("wheel_2x", 1.0, (28.0, 18.0, 24.0)),
-        ),
+        order_forces=(OrderForce("wheel_1x", unbalance_g=WHEEL_MILD_IMBALANCE_G),),
         noise_std=14.0,
         bump_probability=0.001,
         bump_decay=0.96,
         bump_strength=(10.0, 8.0, 14.0),
         modulation_hz=0.18,
         modulation_depth=0.08,
-        reference_speed_kmh=DEFAULT_SPEED_KMH,
-        order_speed_exponent=UNBALANCE_SPEED_EXPONENT,
     ),
     "driveshaft_imbalance": Profile(
         name="driveshaft_imbalance",
         tones=(),
-        order_tones=(
-            ("shaft_1x", 1.0, (150.0, 120.0, 190.0)),
-            ("shaft_1x", 2.0, (45.0, 36.0, 60.0)),
+        order_forces=(
+            OrderForce("shaft_1x", unbalance_g=PROPSHAFT_IMBALANCE_G, radius_m=PROPSHAFT_RADIUS_M),
         ),
         noise_std=20.0,
         bump_probability=0.002,
@@ -198,8 +189,6 @@ PROFILE_LIBRARY: dict[str, Profile] = {
         bump_strength=(18.0, 15.0, 26.0),
         modulation_hz=0.2,
         modulation_depth=0.10,
-        reference_speed_kmh=DEFAULT_SPEED_KMH,
-        order_speed_exponent=UNBALANCE_SPEED_EXPONENT,
     ),
     "rear_body": Profile(
         name="rear_body",

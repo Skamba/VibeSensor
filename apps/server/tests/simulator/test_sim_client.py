@@ -87,8 +87,8 @@ def test_speed_following_tone_stays_phase_continuous_across_frames() -> None:
     once the speed changed, splitting a driveshaft order into peaks 4 Hz away
     that other orders then matched.
     """
-    client = _make_client(seed=3, name="rear-left")
-    client.profile_name = "driveshaft_imbalance"
+    client = _make_client(seed=3, name="engine")
+    client.profile_name = "engine_order"
     client.phase_s = 20.0
     frames = []
     for index in range(16):
@@ -98,8 +98,8 @@ def test_speed_following_tone_stays_phase_continuous_across_frames() -> None:
     freqs = np.fft.rfftfreq(signal.size, d=1.0 / client.sample_rate_hz)
     spectrum = np.abs(np.fft.rfft(signal * np.hanning(signal.size)))
     frame_rate_hz = client.sample_rate_hz / client.frame_samples
-    shaft_hz = SIMULATOR_CAR.shaft_hz(DriveState(92.0 - 0.5 * 7.5))
-    offset_hz = np.abs(freqs - shaft_hz)
+    engine_2x_hz = 2.0 * SIMULATOR_CAR.engine_hz(DriveState(92.0 - 0.5 * 7.5))
+    offset_hz = np.abs(freqs - engine_2x_hz)
 
     main = spectrum[offset_hz <= 1.5].max()
     sidebands = spectrum[np.abs(offset_hz - frame_rate_hz) <= 1.0].max()
