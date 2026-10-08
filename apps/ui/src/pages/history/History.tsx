@@ -204,6 +204,18 @@ function CarDiagram(props: { diagram: DiagramModel }) {
           rx={1.2}
         />
       ))}
+      {diagram.markers.map((marker) =>
+        marker.leader ? (
+          <line
+            key={`leader:${marker.code}`}
+            class="history-car__leader"
+            x1={marker.leader.x1}
+            y1={marker.leader.y1}
+            x2={marker.leader.x2}
+            y2={marker.leader.y2}
+          />
+        ) : null,
+      )}
       {diagram.markers.map((marker) => (
         <g
           key={marker.code}

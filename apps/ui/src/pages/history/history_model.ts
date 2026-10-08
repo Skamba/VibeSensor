@@ -948,8 +948,10 @@ export interface DiagramModel {
     cy: number;
     r: number;
     strongest: boolean;
-    /** Wheel values sit outboard of the wheel; others below the circle. */
-    text: { x: number; y: number; anchor: "start" | "middle" | "end" };
+    /** The level label, in a column beside the car (see `diagramLabels`). */
+    text: { x: number; y: number; anchor: "start" | "end" };
+    /** A line from the marker to its label, unless the label sits at its wheel. */
+    leader: { x1: number; y1: number; x2: number; y2: number } | null;
   }>;
 }
 
@@ -963,10 +965,210 @@ function diagramBox(x0: number, y0: number, x1: number, y1: number): Box {
   return { x: px0, y: py0, width: px1 - px0, height: py1 - py0 };
 }
 
+// Label layout, as report/pdf.py `_diagram_labels` places the PDF's labels.
+// The labels are drawn at this size (history-detail.css), in diagram mm.
+const LABEL_FONT = 3.7;
+const LABEL_PITCH = LABEL_FONT * 1.3;
+const LABEL_PAD = 1.5;
+const LEADER_CLEARANCE = 0.4;
+const LEADER_GAP = 0.6;
+const LABEL_SEARCH_ROWS = 6;
+const LABEL_LOW = 7;
+const LABEL_HIGH = DIAGRAM_H - 2;
+
+type Side = "left" | "right";
+type Circle = { cx: number; cy: number; r: number };
+type Point = [number, number];
+interface LabelSpot {
+  x: number;
+  y: number;
+  side: Side;
+  leader: boolean;
+}
+
+/** Centres as close to the sorted `desired` ones as allowed, `pitch` apart. */
+function stackLabels(desired: number[]): number[] {
+  const ys: number[] = [];
+  for (const want of desired) {
+    ys.push(
+      Math.max(
+        want,
+        LABEL_LOW,
+        ys.length ? ys[ys.length - 1] + LABEL_PITCH : LABEL_LOW,
+      ),
+    );
+  }
+  if (ys.length && ys[ys.length - 1] > LABEL_HIGH) {
+    ys[ys.length - 1] = LABEL_HIGH;
+    for (let index = ys.length - 2; index >= 0; index -= 1) {
+      ys[index] = Math.min(ys[index], ys[index + 1] - LABEL_PITCH);
+    }
+  }
+  return ys;
+}
+
+function keyBefore(a: number[], b: number[]): boolean {
+  const index = a.findIndex((value, i) => value !== b[i]);
+  return index >= 0 && a[index] < b[index];
+}
+
+/** Whether the segment `a`-`b` passes within the clearance of `circle`. */
+function passesNear(a: Point, b: Point, circle: Circle): boolean {
+  const [dx, dy] = [b[0] - a[0], b[1] - a[1]];
+  const length2 = dx * dx + dy * dy;
+  const t =
+    length2 === 0
+      ? 0
+      : Math.max(
+          0,
+          Math.min(
+            1,
+            ((circle.cx - a[0]) * dx + (circle.cy - a[1]) * dy) / length2,
+          ),
+        );
+  const px = a[0] + t * dx - circle.cx;
+  const py = a[1] + t * dy - circle.cy;
+  return px * px + py * py < (circle.r + LEADER_CLEARANCE) ** 2;
+}
+
+function segmentsCross(a: [Point, Point], b: [Point, Point]): boolean {
+  const turn = (p: Point, q: Point, r: Point) =>
+    (q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0]);
+  return (
+    turn(b[0], b[1], a[0]) * turn(b[0], b[1], a[1]) < 0 &&
+    turn(a[0], a[1], b[0]) * turn(a[0], a[1], b[1]) < 0
+  );
+}
+
+/**
+ * Each marker's label in a column beside the car, so no two overlap. A marker
+ * on the left or right half gets its label on that side, at its own height
+ * when free; one on the centre line gets the side, and the height nearest its
+ * own, where its leader passes no other marker and crosses no other leader
+ * (else the fewest), then the side with fewer labels.
+ */
+function diagramLabels(
+  circles: ReadonlyMap<string, Circle>,
+): Map<string, LabelSpot> {
+  const edge = { left: BODY_X - LABEL_PAD, right: BODY_X + BODY_W + LABEL_PAD };
+  const mid = BODY_X + BODY_W / 2;
+  const columns: Record<Side, string[]> = { left: [], right: [] };
+  const wanted = new Map<string, number>();
+  const centre: string[] = [];
+  for (const [code, circle] of circles) {
+    wanted.set(code, circle.cy);
+    if (Math.abs(circle.cx - mid) < 0.01) {
+      centre.push(code);
+    } else {
+      columns[circle.cx < mid ? "left" : "right"].push(code);
+    }
+  }
+  const byWanted = (a: string, b: string) =>
+    (wanted.get(a) ?? 0) - (wanted.get(b) ?? 0) || (a < b ? -1 : a > b ? 1 : 0);
+  const place = (side: Side, codes: string[]) => {
+    const ordered = [...codes].sort(byWanted);
+    const ys = stackLabels(ordered.map((code) => wanted.get(code) ?? 0));
+    return new Map(
+      ordered.map((code, index): [string, LabelSpot] => {
+        const circle = circles.get(code) as Circle;
+        return [
+          code,
+          {
+            x: edge[side],
+            y: ys[index],
+            side,
+            leader:
+              !code.endsWith("_wheel") || Math.abs(ys[index] - circle.cy) > 0.3,
+          },
+        ];
+      }),
+    );
+  };
+  const clashes = (labels: Map<string, LabelSpot>) => {
+    const leaders: Array<[string, [Point, Point]]> = [];
+    for (const [code, label] of labels) {
+      const circle = circles.get(code) as Circle;
+      if (label.leader) {
+        leaders.push([
+          code,
+          [
+            [circle.cx, circle.cy],
+            [label.x, label.y],
+          ],
+        ]);
+      }
+    }
+    let count = 0;
+    for (const [code, [a, b]] of leaders) {
+      for (const [other, circle] of circles) {
+        if (other !== code && passesNear(a, b, circle)) {
+          count += 1;
+        }
+      }
+    }
+    leaders.forEach(([, a], index) => {
+      for (const [, b] of leaders.slice(index + 1)) {
+        if (segmentsCross(a, b)) {
+          count += 1;
+        }
+      }
+    });
+    return count;
+  };
+  const centreOrder = [...centre].sort(
+    (a, b) =>
+      (circles.get(a)?.cy ?? 0) - (circles.get(b)?.cy ?? 0) ||
+      (a < b ? -1 : a > b ? 1 : 0),
+  );
+  for (const code of centreOrder) {
+    const cy = circles.get(code)?.cy ?? 0;
+    // Fewest clashes, then nearest its own height, then the emptier side.
+    let best: { key: number[]; side: Side; y: number } | null = null;
+    for (const side of ["left", "right"] as const) {
+      for (
+        let rows = -LABEL_SEARCH_ROWS;
+        rows <= LABEL_SEARCH_ROWS;
+        rows += 1
+      ) {
+        const y = cy + rows * LABEL_PITCH;
+        wanted.set(code, y);
+        const key = [
+          clashes(place(side, [...columns[side], code])),
+          Math.abs(rows),
+          columns[side].length,
+          side === "left" ? 0 : 1,
+          y,
+        ];
+        if (!best || keyBefore(key, best.key)) {
+          best = { key, side, y };
+        }
+      }
+    }
+    const { side, y } = best as { side: Side; y: number };
+    wanted.set(code, y);
+    columns[side].push(code);
+  }
+  return new Map([
+    ...place("left", columns.left),
+    ...place("right", columns.right),
+  ]);
+}
+
 export function ownerDiagram(diagram: OwnerPage["diagram"]): DiagramModel {
   const zone = diagram.zone ?? "";
   const highlighted = new Set(ZONE_WHEELS[zone] ?? [zone]);
   const zoneRect = DIAGRAM_ZONES[zone];
+  const placed = diagram.markers.filter(
+    (marker) => DIAGRAM_POSITIONS[marker.code],
+  );
+  const circles = new Map(
+    placed.map((marker): [string, Circle] => {
+      const [cx, cy] = diagramPoint(...DIAGRAM_POSITIONS[marker.code]);
+      const r = 1.6 + 2.4 * Math.max(0, Math.min(1, marker.ratio ?? 0));
+      return [marker.code, { cx, cy, r }];
+    }),
+  );
+  const labels = diagramLabels(circles);
   return {
     width: DIAGRAM_W,
     height: DIAGRAM_H,
@@ -994,33 +1196,31 @@ export function ownerDiagram(diagram: OwnerPage["diagram"]): DiagramModel {
         highlighted: highlighted.has(code),
       };
     }),
-    markers: diagram.markers.flatMap((marker) => {
-      const position = DIAGRAM_POSITIONS[marker.code];
-      if (!position) {
-        return [];
-      }
-      const [cx, cy] = diagramPoint(...position);
-      const r = 1.6 + 2.4 * Math.max(0, Math.min(1, marker.ratio ?? 0));
-      const wheel = marker.code.endsWith("_wheel");
-      const left = marker.code.includes("_left_");
-      const anchor = !wheel ? "middle" : left ? "end" : "start";
-      const text = {
-        x: !wheel ? cx : left ? cx - 4 : cx + 4,
-        y: wheel ? cy + 1 : cy + r + 3,
-        anchor,
-      } as const;
-      return [
-        {
-          code: marker.code,
-          label: marker.label,
-          value: marker.value,
-          cx,
-          cy,
-          r,
-          strongest: marker.strongest,
-          text,
+    markers: placed.map((marker) => {
+      const circle = circles.get(marker.code) as Circle;
+      const label = labels.get(marker.code) as LabelSpot;
+      const left = label.side === "left";
+      return {
+        code: marker.code,
+        label: marker.label,
+        value: marker.value,
+        ...circle,
+        strongest: marker.strongest,
+        // The digits' middle sits on the label's centre line.
+        text: {
+          x: label.x,
+          y: label.y + LABEL_FONT * 0.35,
+          anchor: left ? "end" : "start",
         },
-      ];
+        leader: label.leader
+          ? {
+              x1: circle.cx,
+              y1: circle.cy,
+              x2: label.x + (left ? LEADER_GAP : -LEADER_GAP),
+              y2: label.y,
+            }
+          : null,
+      };
     }),
   };
 }

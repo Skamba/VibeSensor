@@ -65,7 +65,10 @@ file.pdf]` (`vibesensor.cli.report`) renders the same report from a stored run.
    - One plain sentence: what repeats (order), at which frequency and speed,
      where, and over which speeds.
    - Car diagram: sensor dots sized by ratio to the strongest location, with the
-     corner or zone highlighted.
+     corner or zone highlighted. Each dot's level sits in a column beside the
+     car, never overlapping another (`_diagram_labels`; the app's
+     `history_model.ts` places them the same way): a wheel's level beside its
+     wheel, any other with a leader line that avoids the other dots.
    - What to do next, by verdict:
      - Fault: the next step, a fallback step ("If that doesn't fix it: ..."),
        the cheap confirming check when the level is Moderate, and how to check

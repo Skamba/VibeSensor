@@ -478,14 +478,17 @@ test("draws the PDF's car diagram: the zone, its wheels and a sized marker per s
   expect(frontLeft.cx).toBeCloseTo(14.88 + 0.1 * 32.24);
   expect(frontLeft.cy).toBeCloseTo(9 + 0.2 * 94);
   expect(frontLeft.r).toBeCloseTo(4);
-  expect(frontLeft.text).toEqual({
-    x: frontLeft.cx - 4,
-    y: frontLeft.cy + 1,
-    anchor: "end",
-  });
+  // A wheel's label sits level with it, just outboard of the body: no leader.
+  expect(frontLeft.text.x).toBeCloseTo(14.88 - 1.5);
+  expect(frontLeft.text.y).toBeCloseTo(frontLeft.cy + 3.7 * 0.35);
+  expect(frontLeft.text.anchor).toBe("end");
+  expect(frontLeft.leader).toBeNull();
+  // A centre-line marker's label goes beside the car, on the emptier side,
+  // with a leader to it.
   expect(trunk.r).toBeCloseTo(1.6 + 2.4 * 0.02);
-  expect(trunk.text.anchor).toBe("middle");
-  expect(trunk.text.y).toBeCloseTo(trunk.cy + trunk.r + 3);
+  expect(trunk.text.anchor).toBe("start");
+  expect(trunk.text.x).toBeCloseTo(14.88 + 32.24 + 1.5);
+  expect(trunk.leader).toMatchObject({ x1: trunk.cx, y1: trunk.cy });
 
   const axle = ownerDiagram({
     zone: "rear_axle",
@@ -506,6 +509,113 @@ test("draws the PDF's car diagram: the zone, its wheels and a sized marker per s
   ).toEqual(["rear_left_wheel", "rear_right_wheel"]);
   // A location the diagram has no place for is left out, as on the PDF.
   expect(axle.markers).toEqual([]);
+});
+
+const DIAGRAM_CODES = [
+  "front_left_wheel",
+  "front_right_wheel",
+  "rear_left_wheel",
+  "rear_right_wheel",
+  "engine_bay",
+  "front_subframe",
+  "transmission",
+  "driveshaft_tunnel",
+  "driver_seat",
+  "front_passenger_seat",
+  "rear_left_seat",
+  "rear_center_seat",
+  "rear_right_seat",
+  "rear_subframe",
+  "trunk",
+];
+const REAR_CLUSTER = [
+  "rear_left_seat",
+  "rear_center_seat",
+  "rear_right_seat",
+  "rear_subframe",
+  "trunk",
+  "rear_left_wheel",
+  "rear_right_wheel",
+];
+
+/** Every mix of two or more of the rear locations, and all of them together. */
+const CROWDED = [
+  DIAGRAM_CODES,
+  ...Array.from({ length: 2 ** REAR_CLUSTER.length }, (_, mask) =>
+    REAR_CLUSTER.filter((_, index) => mask & (2 ** index)),
+  ).filter((codes) => codes.length >= 2),
+];
+
+/** The diagram with a sensor at each of `codes`, of mixed sizes. */
+function crowdedDiagram(codes: string[]) {
+  return ownerDiagram({
+    zone: null,
+    front_label: "FRONT",
+    markers: codes.map((code, index) => ({
+      code,
+      label: code,
+      value: `${1000 + index}\u00a0mg`,
+      ratio: (index % 3) / 2,
+      strongest: index === 0,
+    })),
+  });
+}
+
+test("no two of the diagram's labels overlap, however the sensors crowd", () => {
+  for (const codes of CROWDED) {
+    const { markers } = crowdedDiagram(codes);
+    expect(markers).toHaveLength(codes.length);
+    // A generous box: a full em tall, 0.6 em per character (digits are ~0.55).
+    const boxes = markers.map((marker) => {
+      const width = marker.value.length * 0.6 * 3.7;
+      const x0 =
+        marker.text.anchor === "end" ? marker.text.x - width : marker.text.x;
+      const middle = marker.text.y - 3.7 * 0.35;
+      return { code: marker.code, x0, x1: x0 + width, y0: middle - 1.85 };
+    });
+    const overlaps = boxes.flatMap((a, index) =>
+      boxes
+        .slice(index + 1)
+        .filter(
+          (b) =>
+            a.x0 < b.x1 &&
+            b.x0 < a.x1 &&
+            a.y0 < b.y0 + 3.7 &&
+            b.y0 < a.y0 + 3.7,
+        )
+        .map((b) => `${a.code}/${b.code}`),
+    );
+    expect(overlaps, codes.join("+")).toEqual([]);
+  }
+});
+
+test("a diagram label's leader passes no other sensor's marker", () => {
+  for (const codes of CROWDED) {
+    const { markers } = crowdedDiagram(codes);
+    for (const marker of markers.filter((item) => item.leader)) {
+      const { x1, y1, x2, y2 } = marker.leader as NonNullable<
+        typeof marker.leader
+      >;
+      for (const other of markers.filter((item) => item !== marker)) {
+        // The leader's nearest point to the other marker stays off it.
+        const [dx, dy] = [x2 - x1, y2 - y1];
+        const t = Math.max(
+          0,
+          Math.min(
+            1,
+            ((other.cx - x1) * dx + (other.cy - y1) * dy) / (dx * dx + dy * dy),
+          ),
+        );
+        const distance = Math.hypot(
+          x1 + t * dx - other.cx,
+          y1 + t * dy - other.cy,
+        );
+        expect(distance, `${marker.code} over ${other.code}`).toBeGreaterThan(
+          other.r,
+        );
+      }
+    }
+  }
 });
 
 type SourceChecks = HistoryInsightsPayload["diagnosis"]["source_checks"];

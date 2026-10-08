@@ -194,6 +194,12 @@
   fill: var(--brand-600);
 }
 
+/* From a marker to its label in the column beside the car. */
+.history-car__leader {
+  stroke: var(--md-sys-color-on-surface-variant);
+  stroke-width: 0.25;
+}
+
 .history-car__marker circle {
   fill: #9aa0ad;
   stroke: var(--md-sys-color-surface);
