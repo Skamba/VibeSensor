@@ -1946,6 +1946,55 @@
       "title": "BMW PressClub: BMW model update measures for summer 2023 (05/2023)",
       "note": "Official BMW 05/2023 article: the BMW i7 eDrive50 (335 kW, rear-wheel drive) is available from July 2023. Used for the model-year start of the G70 i7 eDrive50 row.",
       "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f40-2019-05-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0296071EN/441777",
+      "title": "BMW PressClub F40 1 Series 05/2019 specifications PDF",
+      "note": "Official BMW 05/2019 specifications of the all-new BMW 1 Series (T0296071EN). 118i: six-speed manual 3.615 / 1.952 / 1.179 / 0.853 / 0.711 / 0.585, final drive 4.118; seven-speed Steptronic dual-clutch overall ratios 16.385 ... 2.158, final drive 3.944; 205/55 R16. M135i xDrive: eight-speed Steptronic Sport 5.519 / 3.184 / 2.050 / 1.492 / 1.235 / 1.000 / 0.801 / 0.673, final drive 3.075; 225/40 R18. 116d: manual 3.923 / 2.136 / 1.276 / 0.919 / 0.725 / 0.605, final drive 3.389; dual-clutch overall 16.385 ... 2.158, final drive 3.944; 205/55 R16. 118d: same manual, final drive 3.389; eight-speed Steptronic, final drive 2.666; 205/55 R16. 120d xDrive: eight-speed Steptronic, final drive 2.666; 225/45 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f40-2019-05-launch-press-kit",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0296071EN/441774",
+      "title": "BMW PressClub F40 1 Series 05/2019 launch press kit",
+      "note": "Official BMW press kit for the all-new BMW 1 Series (T0296071EN): front-wheel drive with optional BMW xDrive, three- and four-cylinder engines, eight-speed Steptronic Sport on the M135i xDrive, market launch in September 2019. Prints no gear ratios.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f40-128ti-2020-10-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0318069EN/462567",
+      "title": "BMW PressClub F40 128ti 10/2020 specifications PDF",
+      "note": "Official BMW 10/2020 specifications of the BMW 128ti (T0318069EN): in-line four, 1998 cc, front-wheel drive, eight-speed Steptronic Sport 5.519 / 3.184 / 2.050 / 1.492 / 1.235 / 1.000 / 0.801 / 0.673, final drive 2.955, 225/40 R18 92Y XL on 8J x 18.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f40-128ti-2020-10-uk-release",
+      "url": "https://www.press.bmwgroup.com/united-kingdom/article/attachment/T0318330EN_GB/507436",
+      "title": "BMW UK press release: The new BMW 128ti (7 October 2020)",
+      "note": "Official BMW UK release for the BMW 128ti: exclusively front-wheel drive, eight-speed Steptronic Sport, launch in November 2020. Prints no gear ratios.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f40-116i-120i-2020-11-de-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/attachment/T0318649DE/462889",
+      "title": "BMW PressClub F40 116i and 120i 11/2020 technical data PDF (DE)",
+      "note": "Official BMW Germany 11/2020 technical data (T0318649DE). 116i (in-line three, 1499 cc): six-speed manual 3.615 / 1.952 / 1.241 / 0.969 / 0.806 / 0.683, final drive 3.882; seven-speed Steptronic dual-clutch overall ratios 16.324 ... 2.747, final drive 3.789; 205/55 R16. 120i (in-line four, 1998 cc): seven-speed Steptronic dual-clutch overall ratios 15.304 / 9.026 / 5.735 / 4.015 / 3.108 / 2.487 / 2.016, final drive 3.684; 225/45 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f40-2021-03-spec-pdf",
+      "url": "https://www.press.bmwgroup.com/global/article/attachment/T0327030EN/473056",
+      "title": "BMW PressClub specifications of the BMW 1 Series, valid from 03/2021",
+      "note": "Official BMW specifications of the F40 1 Series valid from 03/2021 (T0327030EN), covering 116i, 118i, 120i, 128ti, M135i xDrive, 116d, 118d, 120d and 120d xDrive. Gearbox data and standard tyres equal the 05/2019, 10/2020 and 11/2020 sheets; the 120d (front-wheel drive) has the eight-speed Steptronic, final drive 2.666, 225/45 R17.",
+      "confidence": "high"
+    },
+    {
+      "id": "bmw_pressclub_sources:f70-2024-06-de-launch-article",
+      "url": "https://www.press.bmwgroup.com/deutschland/article/detail/T0442625DE",
+      "title": "BMW PressClub Germany: Der neue BMW 1er (06/2024)",
+      "note": "Official BMW Germany launch article for the new BMW 1 Series (F70), built in Plant Leipzig like its predecessor; market launch from October 2024. Used for the end of the F40 rows.",
+      "confidence": "high"
     }
   ]
 }

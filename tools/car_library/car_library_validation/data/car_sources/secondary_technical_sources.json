@@ -903,6 +903,13 @@
       "title": "ADAC Autokatalog Audi Q2 GA facelift (2020-2026)",
       "note": "ADAC catalogue of the Germany-market facelifted Q2 GA variants with their sales periods: 30 TFSI manual 11/20-02/24 (81 kW), then 02/24-06/25 and 06/25-04/26 (85 kW); 35 TFSI manual and 35 TFSI S tronic 10/20-02/24, 02/24-06/25 and 06/25-04/26. No front-wheel-drive 30 TFSI S tronic is listed after the facelift.",
       "confidence": "medium"
+    },
+    {
+      "id": "secondary_technical_sources:f40-adac-catalogue",
+      "url": "https://www.adac.de/rund-ums-fahrzeug/autokatalog/marken-modelle/bmw/1er-reihe/f40/",
+      "title": "ADAC Autokatalog BMW 1 Series F40 (2019-2024)",
+      "note": "ADAC catalogue of the Germany-market F40 variants with their sales periods: 116i manual and Steptronic 11/20-06/24; 118i manual 09/19-02/21, 118i Steptronic 09/19-06/24; 120i Steptronic 11/20-06/24; 116d manual and Steptronic 09/19-03/24; 118d manual 09/19-02/21, 118d Steptronic 09/19-03/24; 120d Steptronic 09/19-05/20; 120d xDrive Steptronic 09/19-03/24. Used for year ranges only.",
+      "confidence": "medium"
     }
   ]
 }
