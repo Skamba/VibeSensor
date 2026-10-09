@@ -10,6 +10,7 @@ from typing import Any
 
 import pytest
 from pypdf import PdfReader
+from reportlab.lib.rl_accel import fp_str
 from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.pdfgen.canvas import Canvas
 from test_support.analysis import run_analysis
@@ -17,8 +18,10 @@ from test_support.core import ALL_WHEEL_SENSORS
 from test_support.report_rendering import report_pdf_for
 from test_support.synthetic_samples import make_fault_samples, make_noise_samples
 
+from vibesensor.analysis.mount_tilt import LooseMount, loose_mount_warnings
 from vibesensor.report import pdf as report_pdf
 from vibesensor.report.view_model import CarDiagram, DiagramMarker
+from vibesensor.summary.warning_fields import summary_warning_payloads
 
 _FORBIDDEN = ("None", "nan", "{", "}", "_i18n_key")
 
@@ -125,6 +128,27 @@ def test_a_quality_warning_adds_the_data_quality_page() -> None:
     assert "Data quality and traceability" in pages[2]
     assert "Part of the raw sensor data was missing" in " ".join(pages[2].split())
     assert "Page 3 of 3" in pages[2]
+
+
+def _page_one_fills(pdf: bytes) -> str:
+    return PdfReader(BytesIO(pdf)).pages[0].get_contents().get_data().decode("latin-1")
+
+
+def test_a_clean_run_with_a_loose_sensor_draws_its_verdict_box_amber() -> None:
+    """A loose sensor can hide a fault: page 1 is not drawn as all clear."""
+    loose = _passing(_HEALTHY)
+    loose["warnings"] = summary_warning_payloads(
+        loose_mount_warnings([LooseMount("sensor-rl", "Rear Left Wheel", 12.4)])
+    )
+    amber, green = (
+        f"{fp_str(*color.rgb())} rg" for color in (report_pdf.WARN_SOFT, report_pdf.GOOD_SOFT)
+    )
+
+    clean_page, loose_page = (_page_one_fills(report_pdf_for(s)) for s in (_HEALTHY, loose))
+    assert green in clean_page
+    assert amber not in clean_page
+    assert amber in loose_page
+    assert green not in loose_page
 
 
 @pytest.mark.parametrize(

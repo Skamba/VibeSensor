@@ -3607,6 +3607,7 @@ def _assert_loose_mount_warnings(result: SimPipelineResult, case: Case) -> None:
             assert tr("en", f"LOC_{location.upper()}") in page_one, page_one
         hidden = "a loose sensor can hide a fault" in page_one
         assert hidden == ("sensor may be loosely mounted" in warnings), page_one
+        assert (result.report.owner.tone == "caution") == hidden, result.report.owner.tone
 
 
 def _assert_sensor_identity(result: SimPipelineResult) -> None:

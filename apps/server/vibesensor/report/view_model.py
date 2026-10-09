@@ -302,7 +302,7 @@ class CarDiagram:
     front_label: str
 
 
-OwnerTone = Literal["good", "strong", "moderate", "muted"]
+OwnerTone = Literal["good", "caution", "strong", "moderate", "muted"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -319,7 +319,8 @@ class OwnerPage:
     result: str
     # The verdict box's color: "good" only when the run checked something and
     # found nothing; a run that checked nothing, or felt a vibration nothing
-    # checked explains, is never shown as all clear.
+    # checked explains, is never shown as all clear. "caution" (amber): no
+    # fault, but a sensor may be loose, which can hide one.
     tone: OwnerTone
     headline: str
     level: str | None
@@ -772,11 +773,13 @@ def _owner_page(
     next_step = ctx.t("STEP_NO_FAULT")
     result = ctx.t("RESULT_NO_FAULT")
     felt = _felt(ctx, diagnosis)
+    tone = _owner_tone(diagnosis)
     if verdict == "no_fault":
         description, covered, not_covered = _coverage(ctx, analysis, diagnosis)
         loose = _loose_sensors(ctx, analysis)
         if loose is not None:
             description = f"{description} {loose}"
+            tone = "caution"
         strongest = _unexplained_row(diagnosis)
         if not _checked_anything(diagnosis):
             # Nothing was compared with any rhythm: no result, and what fixes that.
@@ -831,7 +834,7 @@ def _owner_page(
     return OwnerPage(
         verdict=verdict,
         result=result,
-        tone=_owner_tone(diagnosis),
+        tone=tone,
         headline=headline,
         confidence_label=ctx.t("CONFIDENCE"),
         level=level,
@@ -899,7 +902,10 @@ def _cause(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str:
 
 
 def _owner_tone(diagnosis: DiagnosisPayload) -> OwnerTone:
-    """The verdict's color: green only for a clean run that checked something."""
+    """The verdict's color: green only for a clean run that checked something.
+
+    A no-fault run with a loose sensor is amber instead (``_owner_page``).
+    """
     if diagnosis["verdict"] == "no_fault":
         clear = _checked_anything(diagnosis) and _unexplained_row(diagnosis) is None
         return "good" if clear else "muted"

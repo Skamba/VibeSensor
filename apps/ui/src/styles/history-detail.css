@@ -23,7 +23,8 @@
   --owner-soft: var(--pill-bad-bg);
 }
 
-.history-owner--moderate {
+.history-owner--moderate,
+.history-owner--caution {
   --owner-accent: var(--pill-warn-text);
   --owner-soft: var(--pill-warn-bg);
 }

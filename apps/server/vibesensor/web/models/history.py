@@ -175,7 +175,7 @@ class HistoryOwnerPageResponse(TypedDict):
 
     verdict: Literal["fault", "weak_evidence", "no_fault"]
     result: str
-    tone: Literal["good", "strong", "moderate", "muted"]
+    tone: Literal["good", "caution", "strong", "moderate", "muted"]
     headline: str
     level: Literal["strong", "moderate", "weak"] | None
     confidence_label: str

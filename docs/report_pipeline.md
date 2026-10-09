@@ -30,7 +30,9 @@ History opens a run's diagnosis with the same page 1. The insights response
 page 1 comes from, so the app never words a verdict itself. `owner.result` is
 the run's result in a few words ("Front-left wheel", "No result"), which the
 History list titles each run with, and `owner.tone` is the verdict box color
-both draw: green only when the run checked something and found nothing.
+both draw: green only when the run checked something and found nothing, and
+amber (`caution`) instead when a sensor may be loosely mounted, because a loose
+sensor can hide a fault.
 
 The report language is the requested `lang`, falling back to the run's
 language. `vibesensor-report <history.db> <run_id> [--lang en|nl] [--output
