@@ -326,6 +326,9 @@ orders are matched:
   an order and its harmonic meeting one frequency at two speeds is not a
   tone.
 
+The order-tracked reads skip a window whose read band takes in one of its
+sensor's fixed tones (`near_fixed_tone()`; see "Order-tracked reads" below).
+
 An engine order placed from measured RPM is matched on every peak: the
 engine's revs cycle through the same range on each gear while the speed
 climbs, so a real engine order can look fixed against the speed. With RPM
@@ -403,6 +406,109 @@ stops' braking windows on a wheel imbalance. Within a real order's group the
 off-line windows are mostly a hump the order passes at other speeds. The line
 width and share are set from simulated drives; real drives with a known mode
 near an order are needed to confirm them.
+
+## Order-tracked reads
+
+A window keeps its 8 strongest peaks (`top_peaks`). On a real road the wheel
+hop rings every wheel sensor as a broad hump around 12 Hz, 30-37 dB over the
+band's floor (see `unexplained_vibration` in [metrics.md](metrics.md)), and
+fills those 8 places with its own local maxima. A wheel or driveline order is
+then ranked out of the window at a sensor that does feel it, or matched on a
+hump peak at one that does not, and the median of the matched peaks at each
+sensor tells the corners apart no better than the hump does. So each
+order's level at each sensor is read at its own line instead, in every
+window, whatever louder content the window holds elsewhere
+(`analysis/orders/tracking.py`, `dsp/window_spectrum.py`).
+
+**Where the spectra come from.** The post-stop raw replay
+([analysis_pipeline.md](analysis_pipeline.md)) keeps each window's combined
+spectrum (`sqrt(mean(axis_amp²))`, 5-200 Hz, the one its peaks come from) in
+memory beside its peaks (`SensorFrame.spectrum`, a `WindowSpectrum`). It is
+never persisted. A run with no raw capture, or a window the replay could not
+rebuild, has no spectrum and no reads.
+
+**One read** (`WindowSpectrum.line_read()`), for each window the order could
+be looked for in, the masked ones included (a window whose match is off the
+line holds the order's line all the same; what hides its peak is subtracted
+as floor):
+
+- The line is at `k ×` the prediction, `k` placed by the clear matches as in
+  "Order lines" above (`_tracked_line_scale()`, the median over the judged
+  clear matches when 12 or more are judged, else 1).
+- The band is `PEAK_BANDWIDTH_HZ` (±1.2 Hz) about it, or the band the line
+  swept through in the window where that is wider: `f·|dv/dt|·T / (2v)`
+  either side (`line_half_width_hz()`), with `T` the window's length (2.56 s)
+  and `dv/dt` from the same sensor's neighbouring samples up to 2 s apart
+  (`speed_rates_kmh_per_s()`). Braking from 100 km/h at 5 m/s² sweeps a
+  45 Hz order ±10.4 Hz within one window: read over ±1.2 Hz it shows a
+  quarter of its level, at 2 m/s² 70 %; read over its sweep, all of it.
+- The floor is the mean power per bin of two flanks, each 1.8 Hz wide,
+  starting 0.8 Hz past the line's swept half-width (one bin for a steady
+  line, so past the Hann window's main lobe). A floor that slopes straight
+  across the band cancels between them; a curved one does not (see Limits).
+  At the ends of the spectrum only the flank that exists is used; with
+  neither, or with the band outside the spectrum, there is no read.
+- The read is the band's power above that floor, per bin of a peak band
+  (`excess`, g²): a steady tone's is its peak level squared over the floor, a
+  swept one's adds up the same way. In a window the order is absent from, it
+  is below zero about as often as above.
+- A window whose band takes in one of its sensor's fixed tones (see "Fixed
+  tones" above; widened by the band) is not read: a body mode's level is no
+  part of the order's. An engine order placed from measured RPM has no fixed
+  tones, as in matching.
+
+**The level at each sensor** (`TrackedCells.sensor_levels()`). The reads are
+summed per sensor, 10 km/h speed bin and braking or not. An order's level at
+a sensor is `sqrt(mean excess)` over the cells at the speed bins and braking
+side where a heard sensor's clear match was ("Heard matches"), over every
+cell when it had none. Averaging the power before taking the root leaves an
+absent order near 0 over a smooth floor: on the idealised road (CI seed),
+the knuckles a corner's imbalance does not reach read a median 0.7 mg at its
+order (see Limits for a broad resonance). Its floor is `sqrt(mean flanks)`.
+A finding put down to the brakes ("Brake judder" below) is read over the
+braking cells alone (`braking_sensor_levels`): averaged with the windows
+between stops, a judder present in a quarter of the windows would read at
+half its level.
+
+**Where the levels are.** `Finding.sensor_levels` (domain,
+`SensorOrderLevel`: `location`, `level_g`, `floor_g`, `windows`, strongest
+first) for every order finding; in the persisted analysis, each order
+finding's `sensor_levels[]` (`findings[]`, `top_causes[]`; g); and for the
+diagnosed order, `diagnosis.location_amplitudes[].amplitude_mg` and
+`db_above_floor` (see "Diagnosis amplitude (mg)" in
+[metrics.md](metrics.md)). The diagnosis falls back to the median of the
+matched peaks when any sensor with matched peaks has no reads (its spectra
+were not rebuilt), or when no sensor's level is above 0.
+
+**What the reads do not decide.** Whether an order is there, its
+confidence, and its strength stay on the ranked peaks ("Heard matches").
+Counting a window as heard when its read stood clear of the floor, on the
+benchmark with the ISO 8608 road on every case (CI seed), gave 166 passes
+against 169 without, and 5 healthy cars with a fault verdict against 3: it
+heard a healthy car's residual wheel imbalance in town and called it a
+Moderate fault on both cars. That imbalance is real; how much of it is a
+fault is a severity decision, not a detection one. Matching against
+unranked locally prominent peaks as well as the 8 ranked ones gave 169
+passes either way. Neither was kept. The peak search also keeps finding
+vibration no checked order explains.
+
+**Limits.** A line within its band plus 0.5 Hz (or 2 %) of its sensor's
+fixed tone is not read there. Two orders whose lines share a band (an engine
+order on a wheel harmonic in one gear) read the same power. A floor that
+bends across the band and its flanks reads as a level: the flank of a narrow
+resonance, or a broad resonance under the line. On the ISO 8608 road
+(seeds 1-6) the wheel-hop hump's curvature gives the knuckles a corner's
+imbalance does not reach a median 51 mg at its wheel order, a quarter of the
+faulty corner's level (90th percentile, about half). The faulty corner still
+reads strongest, but the ratio the report states to the next sensor is lower
+than the fault's. The levels are for the speeds the order was heard at: an
+order heard nowhere is averaged over the whole drive.
+
+**Cost.** On x86, the 30-minute benchmark drive (4 sensors,
+`make benchmark-post-analysis-30min`): post-analysis 11.7 s on main and
+13.4 s with the reads (0.94 s of it in 120,000 reads, about 8 µs each); peak
+traced memory 92 MB and 118 MB, the spectra kept (about 2 KB per window).
+The live view does not keep or read spectra.
 
 ## Engine tone through a near-1:1 gear
 
@@ -501,7 +607,9 @@ The same reference math serves both runtime and diagnostics:
 - live telemetry calls `vehicle_orders_hz()` and `build_order_bands()` so the
   UI can annotate the current spectrum without duplicating the formulas
 - the post-stop summary analysis asks whether the run's sample peaks keep
-  recurring in the predicted wheel/driveshaft/engine bands
+  recurring in the predicted wheel/driveshaft/engine bands, and reads each
+  order's level at its line inside the same band ("Order-tracked reads";
+  the line's factor `k` comes from matches within the band's tolerance)
 
 The saved per-sample peak/floor inputs consumed by order matching come from the
 same canonical live-processing FFT/strength pipeline
@@ -522,6 +630,8 @@ That shared ownership is why `dsp/order_bands.py` exists outside
 | `apps/server/vibesensor/dsp/order_bands.py` | Shared order-match tolerance and live band-payload helpers. |
 | `apps/server/vibesensor/analysis/orders/physics.py` | Fixed hypothesis catalog and per-sample predicted-Hz helpers. |
 | `apps/server/vibesensor/analysis/orders/matching.py` | Match predicted order bands against stored sample peaks and classify each match as heard. |
+| `apps/server/vibesensor/analysis/orders/tracking.py` | Order-tracked reads: speed rates, swept line widths, and per-sensor order levels. |
+| `apps/server/vibesensor/dsp/window_spectrum.py` | A replayed window's combined spectrum and one read at an order's line. |
 | `apps/server/vibesensor/analysis/orders/scoring.py` | Convert matched evidence into confidence and ranking score. |
 | `apps/server/vibesensor/analysis/orders/finding_builder.py` | Project scored evidence into domain `Finding` objects. |
 | `apps/server/vibesensor/analysis/orders/pipeline.py` | Coordinate the full order-analysis pass. |

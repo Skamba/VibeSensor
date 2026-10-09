@@ -33,13 +33,19 @@ from vibesensor.analysis.constants import (
     SPEED_BIN_WIDTH_KMH,
 )
 from vibesensor.analysis.math_utils import _corr_abs_clamped, _ramp
+from vibesensor.analysis.orders.fixed_tones import near_fixed_tone
 from vibesensor.analysis.orders.physics import OrderHypothesis
 from vibesensor.analysis.orders.settings import ORDER_CONFIDENCE_SETTINGS
+from vibesensor.analysis.orders.tracking import (
+    TrackedCells,
+    line_half_width_hz,
+    window_duration_s,
+)
 from vibesensor.analysis.speed_profile_helpers import _phase_to_str
 from vibesensor.domain.driving_segment import DrivingPhase
 from vibesensor.domain.finding import speed_bin_label
-from vibesensor.domain.order_match import OrderMatchObservation
-from vibesensor.dsp.constants import FFT_N, SAMPLE_RATE_HZ
+from vibesensor.domain.order_match import OrderMatchObservation, SensorOrderLevel
+from vibesensor.dsp.constants import FFT_N, PEAK_BANDWIDTH_HZ, SAMPLE_RATE_HZ
 from vibesensor.dsp.order_bands import order_peak_tolerance_hz
 from vibesensor.recording.run_schema import RunMetadata
 
@@ -77,6 +83,11 @@ class OrderMatchAccumulator:
     matched_sample_indices: tuple[int, ...] = ()
     # The samples the order could be looked for in, with their sensor location.
     possible_samples: tuple[tuple[int, str], ...] = ()
+    # The order's own level at each sensor whose spectra were kept, at the
+    # speeds it is heard (``TrackedCells.sensor_levels``).
+    sensor_levels: tuple[SensorOrderLevel, ...] = ()
+    # The same over the braking windows only, for a finding put down to the brakes.
+    braking_sensor_levels: tuple[SensorOrderLevel, ...] = ()
 
     @property
     def matched(self) -> int:
@@ -381,11 +392,13 @@ class _Window:
 def match_samples_for_hypothesis(
     samples: Sequence[Sample],
     cached_peaks: list[list[tuple[float, float]]],
+    tones: Sequence[Sequence[float]],
     hypothesis: OrderHypothesis,
     context: RunMetadata,
     tire_circumference_m: float | None,
     per_sample_phases: PhaseLabels | None,
     lang: str,
+    speed_rates: Sequence[float],
 ) -> OrderMatchAccumulator:
     """Match one hypothesis against all samples, then classify each match as heard or not.
 
@@ -462,7 +475,11 @@ def match_samples_for_hypothesis(
             )
         )
 
-    masked = _masked(windows, fft_bin_hz(context), compliance)
+    bin_hz = fft_bin_hz(context)
+    masked = _masked(windows, bin_hz, compliance)
+    cells = _line_reads(
+        samples, windows, masked, _LineReadContext(context, tones, speed_rates, bin_hz, compliance)
+    )
     windows = [window for index, window in enumerate(windows) if index not in masked]
 
     possible_by_speed_bin: dict[str, int] = defaultdict(int)
@@ -488,6 +505,11 @@ def match_samples_for_hypothesis(
     shares = _clear_shares(possible_by_location, clear_by_location)
     heard_locations = _sensors_that_hear(shares)
     matched_windows = [window for window in windows if window.match is not None]
+    heard_speeds = {
+        (window.speed_bin, window.phase_key == BRAKING_PHASE)
+        for window in matched_windows
+        if window.clear and window.location in heard_locations and window.speed_bin is not None
+    }
     return OrderMatchAccumulator(
         possible=len(windows),
         matched_points=[
@@ -511,7 +533,80 @@ def match_samples_for_hypothesis(
         corroboration=_corroboration(shares),
         matched_sample_indices=tuple(window.sample_idx for window in matched_windows),
         possible_samples=tuple((window.sample_idx, window.location) for window in windows),
+        sensor_levels=cells.sensor_levels(heard_speeds),
+        braking_sensor_levels=cells.sensor_levels(
+            {speed for speed in heard_speeds if speed[1]}, braking_only=True
+        ),
     )
+
+
+@dataclass(frozen=True, slots=True)
+class _LineReadContext:
+    context: RunMetadata
+    tones: Sequence[Sequence[float]]
+    speed_rates: Sequence[float]
+    bin_hz: float
+    compliance: float
+
+
+def _line_reads(
+    samples: Sequence[Sample],
+    windows: Sequence[_Window],
+    masked: set[int],
+    read: _LineReadContext,
+) -> TrackedCells:
+    """Every window read at the order's line, grouped by sensor, speed bin and braking.
+
+    Every window whose spectrum the post-stop analysis rebuilt from the raw
+    capture is read at the order's line, whatever louder content the window
+    holds: the prediction times the line's factor where the clear matches place
+    one (``_tracked_line_scale``), else the prediction itself, over the band
+    the line swept while the speed changed (``line_half_width_hz``). A window
+    whose band takes in one of its sensor's fixed tones (*tones*, see
+    ``fixed_tones``) is not read: the tone's level is no part of the order's.
+    See "Order-tracked reads" in docs/order_tracking.md.
+    """
+    cells = TrackedCells()
+    if not any(samples[window.sample_idx].spectrum is not None for window in windows):
+        return cells
+    scale = _tracked_line_scale(windows, masked, read.bin_hz, read.compliance)
+    window_s = window_duration_s(read.context)
+    band_hz = PEAK_BANDWIDTH_HZ
+    for window in windows:
+        sample = samples[window.sample_idx]
+        spectrum = sample.spectrum
+        if spectrum is None or not window.location or window.speed_bin is None:
+            continue
+        line_hz = scale * window.predicted_hz
+        half_width_hz = line_half_width_hz(
+            line_hz, sample.speed_kmh, read.speed_rates[window.sample_idx], window_s
+        )
+        if near_fixed_tone(line_hz, max(band_hz, half_width_hz), read.tones[window.sample_idx]):
+            continue
+        line = spectrum.line_read(line_hz, half_width_hz)
+        if line is not None:
+            cells.add((window.location, window.speed_bin, window.phase_key == BRAKING_PHASE), line)
+    return cells
+
+
+def _tracked_line_scale(
+    windows: Sequence[_Window], masked: set[int], bin_hz: float, compliance: float
+) -> float:
+    """The order line's factor over its prediction where the clear matches place one, else 1."""
+    points = [
+        _LinePoint(window.predicted_hz, window.match.matched_hz)
+        for index, window in enumerate(windows)
+        if window.match is not None and window.clear and index not in masked
+    ]
+    judged = [
+        point
+        for point in points
+        if order_peak_tolerance_hz(predicted_hz=point.predicted_hz, path_compliance=compliance)
+        >= ORDER_LINE_MIN_TOLERANCE_WIDTHS * _line_half_width_hz(point.predicted_hz, bin_hz)
+    ]
+    if len(judged) < ORDER_LINE_MIN_POINTS:
+        return 1.0
+    return _line_scale(judged, pulling=False)
 
 
 def _nonzero(counts: dict[str, int]) -> dict[str, int]:

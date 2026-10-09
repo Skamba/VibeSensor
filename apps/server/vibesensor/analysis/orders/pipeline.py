@@ -20,7 +20,7 @@ from vibesensor.analysis.orders.brake_attribution import as_brake_finding, only_
 from vibesensor.analysis.orders.finding_builder import (
     assemble_order_finding,
 )
-from vibesensor.analysis.orders.fixed_tones import without_fixed_tones
+from vibesensor.analysis.orders.fixed_tones import fixed_tones, without_fixed_tones
 from vibesensor.analysis.orders.heuristics import suppress_engine_aliases
 from vibesensor.analysis.orders.match_rate import (
     _compute_effective_match_rate,
@@ -42,6 +42,7 @@ from vibesensor.analysis.orders.scoring import (
     score_order_finding,
 )
 from vibesensor.analysis.orders.settings import ORDER_CONFIDENCE_SETTINGS
+from vibesensor.analysis.orders.tracking import speed_rates_kmh_per_s
 from vibesensor.domain.finding import Finding as DomainFinding
 from vibesensor.domain.finding_types import VibrationSource
 from vibesensor.domain.order_match import frequency_tracking_slope, trend_moves
@@ -213,6 +214,8 @@ class OrderAnalysisSession:
         "_speed_following_peaks",
         "_order_reference_spec",
         "_speed_moves",
+        "_speed_rates",
+        "_speed_following_tones",
     )
 
     def __init__(self, request: OrderAnalysisRequest) -> None:
@@ -234,13 +237,15 @@ class OrderAnalysisSession:
             for sample in self._samples
             if sample.t_s is not None and sample.speed_kmh is not None and sample.speed_kmh > 0
         )
+        self._speed_rates = speed_rates_kmh_per_s(self._samples)
         self._cached_peaks: list[list[tuple[float, float]]] = [
             _sample_top_peaks(sample) for sample in self._samples
         ]
         # A hypothesis placed from the speed is matched without the sensors'
         # fixed-frequency tones; an engine order placed from measured RPM may
         # ring steadily while the speed changes, so it keeps every peak.
-        road_peaks = without_fixed_tones(self._samples, self._cached_peaks)
+        tones = fixed_tones(self._samples, self._cached_peaks)
+        road_peaks = without_fixed_tones(self._cached_peaks, tones)
         self._speed_following_peaks = {
             "road": road_peaks,
             "engine": [
@@ -248,6 +253,13 @@ class OrderAnalysisSession:
                 for sample, raw, road in zip(
                     self._samples, self._cached_peaks, road_peaks, strict=True
                 )
+            ],
+        }
+        self._speed_following_tones: dict[str, list[tuple[float, ...]]] = {
+            "road": tones,
+            "engine": [
+                () if _rpm_measured(sample) else sample_tones
+                for sample, sample_tones in zip(self._samples, tones, strict=True)
             ],
         }
 
@@ -390,11 +402,13 @@ class OrderAnalysisSession:
         return match_samples_for_hypothesis(
             self._samples,
             self._speed_following_peaks["engine" if engine else "road"],
+            self._speed_following_tones["engine" if engine else "road"],
             hypothesis,
             self._context,
             self._tire_circumference_m,
             self._per_sample_phases,
             self._lang,
+            self._speed_rates,
         )
 
     def _evaluate_hypothesis(
@@ -467,7 +481,7 @@ class OrderAnalysisSession:
         if hypothesis.suspected_source is VibrationSource.WHEEL_TIRE and only_while_braking(
             match, self._samples, self._per_sample_phases
         ):
-            finding = as_brake_finding(finding)
+            finding = as_brake_finding(finding, match.braking_sensor_levels)
         return ranking_score, finding
 
 

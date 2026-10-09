@@ -371,6 +371,10 @@
     "en": "about {ratio} stronger at the {location} than at the next sensor",
     "nl": "ongeveer {ratio} sterker bij {location} dan bij de volgende sensor"
   },
+  "DESC_ONLY_MEASURED_AT": {
+    "en": "measurable only at the {location}, at no other sensor",
+    "nl": "alleen meetbaar bij {location}, bij geen andere sensor"
+  },
   "DESC_STRONGEST_AT": {
     "en": "strongest at the {location}",
     "nl": "het sterkst bij {location}"

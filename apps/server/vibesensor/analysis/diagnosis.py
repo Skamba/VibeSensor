@@ -698,9 +698,26 @@ def _order_location_amplitudes(
         and (in_braking is None or in_braking(sample.t_s))
     )
     locations = sorted({location for _sample, location in located} | set(amps))
+    # The order's own level read at its line at every sensor (``sensor_levels``),
+    # comparable between sensors whatever road noise each one carries. Where a
+    # sensor that matched the order has no reads (its spectra were not rebuilt),
+    # or the reads place the order over the floor at no sensor, the peaks it
+    # matched are all there is to compare: the median of those at each sensor.
+    levels = {level.location: level for level in candidate.sensor_levels}
+    if set(amps) - set(levels) or not any(level.level_g > 0 for level in levels.values()):
+        levels = {}
     medians: dict[str, float | None] = {
-        location: median(amps[location]) if amps.get(location) else None for location in locations
+        location: (
+            levels[location].level_g
+            if location in levels
+            else median(amps[location])
+            if amps.get(location) and not levels
+            else None
+        )
+        for location in locations
     }
+    if levels:
+        floors = {**floors, **{location: level.floor_g for location, level in levels.items()}}
     presence: dict[str, float | None] = {
         location: (
             min(1.0, heard[location] / speed_samples[location]) if speed_samples[location] else None

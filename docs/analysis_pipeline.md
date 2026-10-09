@@ -50,7 +50,10 @@ summary row's FFT peaks and strength metrics from the raw window the row was
 analysed over, so the summary analysis reasons over unfiltered diagnostic
 evidence. Each window is laid out as the live tick's FFT block (three axes,
 each contiguous), so the FFT's per-axis passes read contiguous memory and the
-replay computes a block as the live tick does.
+replay computes a block as the live tick does. The replay also keeps each
+window's combined spectrum in memory (never persisted), so order tracking can
+read each order's level at its line at every sensor ("Order-tracked reads" in
+`docs/order_tracking.md`).
 
 The summary analysis is the single diagnosis: the UI insights endpoint and the
 PDF report both read its `findings`, `top_causes`, and `most_likely_origin`.

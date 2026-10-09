@@ -65,8 +65,8 @@ def test_peaks_must_clear_the_floor_threshold_and_be_separated() -> None:
 
 
 def test_the_combined_strength_alone_matches_the_full_spectrum() -> None:
-    # Post-stop replay needs only the combined strength; it must be the full
-    # (live) spectrum's, value for value.
+    # Post-stop replay needs only the combined strength and spectrum; they must
+    # be the full (live) spectrum's, value for value.
     rng = np.random.default_rng(11)
     computer = SpectralAnalysisComputer(fft_n=_N, spectrum_min_hz=5.0, spectrum_max_hz=200.0)
     t = np.arange(_N) / _FS
@@ -78,7 +78,11 @@ def test_the_combined_strength_alone_matches_the_full_spectrum() -> None:
         combined = computer.compute_combined_strength_metrics(block, _FS)
 
         assert full["has_valid_analysis_bins"]
-        assert combined == full["strength_metrics"]
+        assert combined is not None
+        metrics, spectrum = combined
+        assert metrics == full["strength_metrics"]
+        np.testing.assert_array_equal(spectrum.freq_hz, full["freq_slice"])
+        np.testing.assert_array_equal(spectrum.amp_g, full["combined_amp"])
 
 
 def test_no_combined_strength_without_analysis_bins() -> None:

@@ -12,6 +12,7 @@ from vibesensor.summary.analysis_views import (
     LocationHotspotPayload,
     MatchedPoint,
     PhaseEvidence,
+    SensorLevel,
 )
 from vibesensor.summary.diagnosis_contracts import ConfidenceLevelValue
 
@@ -44,6 +45,7 @@ class FindingCorePayload(TypedDict, total=False):
     finding_kind: str | None
     severity: str | None
     matched_points: list[MatchedPoint]
+    sensor_levels: list[SensorLevel]
     location_hotspot: LocationHotspotPayload | None
     strongest_location: str | None
     strongest_speed_band: str | None

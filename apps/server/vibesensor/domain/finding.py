@@ -14,7 +14,7 @@ from vibesensor.domain.finding_types import ConfidenceLevel, FindingKind, Vibrat
 
 if TYPE_CHECKING:
     from vibesensor.domain.location_hotspot import LocationHotspot
-    from vibesensor.domain.order_match import OrderMatchObservation
+    from vibesensor.domain.order_match import OrderMatchObservation, SensorOrderLevel
     from vibesensor.domain.vibration_origin import VibrationOrigin
 
 __all__ = [
@@ -82,6 +82,8 @@ class Finding:
     cruise_fraction: float = 0.0
     phases_detected: tuple[str, ...] = ()
     matched_points: tuple[OrderMatchObservation, ...] = ()
+    # The order's own level at every sensor that has spectra (strongest first).
+    sensor_levels: tuple[SensorOrderLevel, ...] = ()
 
     evidence: FindingEvidence | None = None
     location: LocationHotspot | None = None
