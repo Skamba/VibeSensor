@@ -453,7 +453,10 @@ the raw capture and three or more sensors. A run where it found a loose
 sensor also gets a warning row "Sensor mounting" in the run-suitability
 checks (`SUITABILITY_CHECK_SENSOR_MOUNTS`, `loose_sensors`), so the quality
 table never reads all OK above the warning. A run where it found none gets no
-row: it may not have been checked.
+row: it may not have been checked. A run with no fault also names the loose
+sensor in its page-1 verdict (report, History and PDF): "…; check its mount
+and record again, because a loose sensor can hide a fault." A fault strongest
+at a loose sensor is capped at Moderate and says so in its description instead.
 
 1. Each replayed raw window's mean per axis is that window's 0 Hz reading:
    gravity plus the car's own acceleration (`RawReplayWindowCoverage.mean_xyz`).

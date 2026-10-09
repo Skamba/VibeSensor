@@ -40,7 +40,10 @@ from vibesensor.summary.diagnosis_contracts import (
     TestConditions,
 )
 from vibesensor.summary.phases import PHASE_I18N_KEYS
-from vibesensor.summary.run_context_warning import WARNING_CODE_SPEED_MISSING
+from vibesensor.summary.run_context_warning import (
+    WARNING_CODE_SENSOR_LOOSE_MOUNT,
+    WARNING_CODE_SPEED_MISSING,
+)
 
 __all__ = [
     "AmplitudeRow",
@@ -771,6 +774,9 @@ def _owner_page(
     felt = _felt(ctx, diagnosis)
     if verdict == "no_fault":
         description, covered, not_covered = _coverage(ctx, analysis, diagnosis)
+        loose = _loose_sensors(ctx, analysis)
+        if loose is not None:
+            description = f"{description} {loose}"
         strongest = _unexplained_row(diagnosis)
         if not _checked_anything(diagnosis):
             # Nothing was compared with any rhythm: no result, and what fixes that.
@@ -1323,6 +1329,23 @@ def _speed_missing_gap(ctx: _Ctx, analysis: AnalysisSummary) -> str | None:
                 source=str(title.get("source", "?")),
             )
     return None
+
+
+def _loose_sensors(ctx: _Ctx, analysis: AnalysisSummary) -> str | None:
+    """Which sensors may be loose, from the ``sensor_loose_mount`` warnings.
+
+    A no-fault run states it on page 1: a loose sensor can hide a fault.
+    """
+    locations = [
+        resolve_i18n(ctx.lang, title.get("location"), tr=ctx.t)
+        for warning in analysis["warnings"]
+        if warning["code"] == WARNING_CODE_SENSOR_LOOSE_MOUNT
+        and isinstance(title := warning["title"], dict)
+    ]
+    if not locations:
+        return None
+    key = "VERDICT_NO_FAULT_LOOSE_MOUNT" if len(locations) == 1 else "VERDICT_NO_FAULT_LOOSE_MOUNTS"
+    return ctx.t(key, locations=ctx.join(locations))
 
 
 def _checked_anything(diagnosis: DiagnosisPayload) -> bool:
