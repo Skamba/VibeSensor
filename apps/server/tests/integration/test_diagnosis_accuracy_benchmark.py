@@ -3363,24 +3363,26 @@ def _expected_check(
 
 
 def _assert_order_amplitude_mg(diagnosis: dict, case: Case, car: BenchCar) -> None:
-    """The strongest location's mg level is on the scale of the tone the simulator injected.
+    """The first location's mg is the peak of the tone the simulator injected there.
 
-    It is the order's tracked level: the band power over the local floor at its
-    line, averaged over the windows at the speeds it was heard and read over the
-    line's sweep while the speed changes. A tone on one axis of the combined
-    spectrum reads a fraction of the injected peak, and the road's floor
-    partly hides a faint one; a unit error is off by 10x or more.
+    It is the order's tracked level (the band power over the local floor at its
+    line, averaged over the windows at the speeds it was heard and read over
+    the line's sweep while the speed changes) shown as the peak of a tone, the
+    three axes as a vector: the scale of the injected levels. A sweep spreads
+    the tone and the road's floor partly hides a faint one, so it reads up to
+    the injected peak (0.25-1.05x on the CI seed); the level unconverted is
+    off by 3.7x.
     """
     assert diagnosis["amplitude_basis"] == "order"
     strongest = diagnosis["location_amplitudes"][0]
     code = location_code_for_label(strongest["location"])
     injected = injected_order_mg(case.phases, diagnosis["order_code"], case.sensors(), car)[code]
     assert injected > 0, (strongest, diagnosis["order_code"])
-    assert injected / 40.0 <= strongest["amplitude_mg"], (strongest, injected)
+    assert injected / 10.0 <= strongest["amplitude_mg"], (strongest, injected)
     fixing = case.fixings.get(code)
     if fixing is None or fixing.rattle_g is None:
         # A rattling sensor's landings add broadband energy to every band.
-        assert strongest["amplitude_mg"] <= injected / 3.0, (strongest, injected)
+        assert strongest["amplitude_mg"] <= 1.25 * injected, (strongest, injected)
 
 
 def _assert_felt(diagnosis: dict, case: Case, car: BenchCar) -> None:

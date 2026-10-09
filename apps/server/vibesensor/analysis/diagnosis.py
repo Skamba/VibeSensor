@@ -39,6 +39,7 @@ from vibesensor.analysis.felt_ranking import (
     felt_ranking,
 )
 from vibesensor.analysis.guided_steps import guided_step_done
+from vibesensor.analysis.location_scoring import NEAR_TIE_DOMINANCE_THRESHOLD
 from vibesensor.analysis.orders.tracking import window_duration_s
 from vibesensor.analysis.phase_segmentation import BRAKING_MIN_DURATION_S, TimeSpanLookup
 from vibesensor.analysis.speed_profile_helpers import run_speed_source, speed_typed_in
@@ -64,6 +65,7 @@ from vibesensor.domain.order_reference import wheel_hz_from_speed_kmh
 from vibesensor.dsp.order_bands import ORDER_TOLERANCE_REL
 from vibesensor.dsp.strength_bands import BANDS
 from vibesensor.dsp.vibration_strength import percentile, vibration_strength_db_scalar
+from vibesensor.dsp.window_spectrum import tone_line_level_g
 from vibesensor.summary.diagnosis_contracts import (
     AmplitudeBasis,
     DiagnosisAlternative,
@@ -185,6 +187,7 @@ def build_diagnosis(
     candidate = None if verdict is DiagnosisVerdict.NO_FAULT else test_run.diagnosis_order_finding
     located = [(sample, _location_label(sample, metadata=metadata)) for sample in samples]
     floors = _location_floors(located)
+    bin_hz = 1.0 / window_duration_s(metadata)
     braking = _braking_spans(test_run)
     presence = _presence_ratio(candidate, located, braking)
     refs = _references(
@@ -239,14 +242,18 @@ def build_diagnosis(
         findings = tuple(_on_road(finding, refs) for finding in findings)
         candidate = _on_road(candidate, refs)
     alternative = None if speed_dependence is not None else _alternative(candidate, refs)
-    rows, basis = _location_amplitudes(candidate, located, floors, braking)
+    rows, basis = _location_amplitudes(candidate, located, floors, braking, bin_hz)
     road = _road_felt_away_from_engine(candidate, alternative, rows, findings)
     if road is not None:
         # The same peaks, felt strongest away from the engine (at the rear axle,
         # along the propshaft): the road-speed order is named first.
         candidate, alternative = road, _alternative(road, refs)
-        rows, basis = _location_amplitudes(candidate, located, floors, braking)
+        rows, basis = _location_amplitudes(candidate, located, floors, braking, bin_hz)
         presence = _presence_ratio(candidate, located, braking)
+    location = candidate.strongest_location if candidate is not None else None
+    if candidate is not None and candidate.location is not None:
+        location = candidate.location.strongest_location or location
+    rows = _location_first_on_a_tie(rows, location)
     wheels = _wheel_sensors(row["location"] for row in rows)
     zone = _zone(candidate, rows, refs, wheels) if candidate is not None else None
     weak_reasons = _weak_reasons(
@@ -276,9 +283,6 @@ def build_diagnosis(
     ):
         level = _at_most_moderate(level)
     weak_reasons = _kept_weak_reasons(weak_reasons)
-    location = candidate.strongest_location if candidate is not None else None
-    if candidate is not None and candidate.location is not None:
-        location = candidate.location.strongest_location or location
     hz_per_kmh = _hz_per_kmh(candidate)
     reference_speed = _reference_speed_kmh(candidate)
     speed_min, speed_max = _matched_speed_range(candidate)
@@ -339,9 +343,10 @@ def build_diagnosis(
         "unexplained_vibration": (
             verdict is DiagnosisVerdict.NO_FAULT and basis == "overall" and _elevated(located)
         ),
-        "amplitude_vs_speed": _amplitude_vs_speed(candidate),
+        "amplitude_vs_speed": _amplitude_vs_speed(candidate, bin_hz),
         "spectrum": _spectrum(
             located,
+            bin_hz,
             location=spectrum_location,
             centre_speed_kmh=reference_speed,
             refs=refs,
@@ -352,7 +357,7 @@ def build_diagnosis(
         "felt": _felt(
             test_run,
             findings,
-            metadata,
+            bin_hz,
             _felt_attribution(candidate, findings, refs, source_checks),
             no_fault=verdict is DiagnosisVerdict.NO_FAULT,
         ),
@@ -392,7 +397,7 @@ def _felt_attribution(
 def _felt(
     test_run: TestRun,
     findings: Sequence[Finding],
-    metadata: RunMetadata,
+    bin_hz: float,
     attribution: FeltAttribution,
     *,
     no_fault: bool,
@@ -406,7 +411,6 @@ def _felt(
     attributed = {finding.finding_id: finding for finding in findings}
     top_causes = [attributed.get(cause.finding_id, cause) for cause in test_run.top_causes]
     ranking = felt_ranking(top_causes, findings, attribution)
-    bin_hz = 1.0 / window_duration_s(metadata)
     causes = () if no_fault else ranking.causes
     return {
         "reference": ranking.reference,
@@ -423,8 +427,7 @@ def _felt_row(cause: FeltCause, bin_hz: float) -> FeltCauseRow:
         "finding_id": finding.finding_id,
         "source": str(finding.suspected_source),
         "order_codes": [cast(OrderCodeValue, code) for code, _level in cause.order_levels_g],
-        "level_mg": _mg(cause.level_g),
-        "peak_mg": _mg(cause.peak_g(bin_hz)),
+        "level_mg": _mg(cause.peak_g(bin_hz)),
         "share": cause.share,
         "speed_min_kmh": speeds[0] if speeds is not None else None,
         "speed_max_kmh": speeds[1] if speeds is not None else None,
@@ -736,6 +739,16 @@ def _mg(amp_g: float) -> float:
     return amp_g * _G_TO_MG
 
 
+def _tone_mg(level_g: float, bin_hz: float) -> float:
+    """A level read on the combined spectrum as the peak of a steady tone, in mg.
+
+    The scale workshop limits and vibration analysers read (``docs/metrics.md``,
+    "Diagnosis amplitude (mg)"): the three axes' peaks as a vector. *bin_hz*:
+    the spectrum's bin width the level was read at.
+    """
+    return _mg(level_g / tone_line_level_g(1.0, bin_hz))
+
+
 def _location_floors(located: Iterable[tuple[Sample, str]]) -> dict[str, float]:
     floors: dict[str, list[float]] = defaultdict(list)
     for sample, location in located:
@@ -750,6 +763,7 @@ def _with_ratios(
     *,
     floors: dict[str, float],
     presence: dict[str, float | None],
+    bin_hz: float,
 ) -> list[LocationAmplitudeRow]:
     strongest = max((amp for amp in amplitudes.values() if amp is not None), default=None)
     rows: list[LocationAmplitudeRow] = []
@@ -758,7 +772,7 @@ def _with_ratios(
         rows.append(
             {
                 "location": location,
-                "amplitude_mg": _mg(amp) if amp is not None else None,
+                "amplitude_mg": _tone_mg(amp, bin_hz) if amp is not None else None,
                 "db_above_floor": (
                     vibration_strength_db_scalar(peak_band_rms_amp_g=amp, floor_amp_g=floor_amp)
                     if amp is not None and floor_amp is not None
@@ -777,6 +791,7 @@ def _order_location_amplitudes(
     located: Sequence[tuple[Sample, str]],
     floors: dict[str, float],
     braking: Sequence[tuple[float, float]],
+    bin_hz: float,
 ) -> list[LocationAmplitudeRow]:
     amps: dict[str, list[float]] = defaultdict(list)
     heard: Counter[str] = Counter()
@@ -820,12 +835,13 @@ def _order_location_amplitudes(
         )
         for location in locations
     }
-    return _with_ratios(medians, floors=floors, presence=presence)
+    return _with_ratios(medians, floors=floors, presence=presence, bin_hz=bin_hz)
 
 
 def _overall_location_amplitudes(
     located: Sequence[tuple[Sample, str]],
     floors: dict[str, float],
+    bin_hz: float,
 ) -> list[LocationAmplitudeRow]:
     peaks: dict[str, list[float]] = defaultdict(list)
     for sample, location in located:
@@ -837,7 +853,7 @@ def _overall_location_amplitudes(
         location: percentile(sorted(peaks[location]), 0.95) if peaks.get(location) else None
         for location in locations
     }
-    return _with_ratios(p95, floors=floors, presence=dict.fromkeys(locations))
+    return _with_ratios(p95, floors=floors, presence=dict.fromkeys(locations), bin_hz=bin_hz)
 
 
 def _elevated(located: Sequence[tuple[Sample, str]]) -> bool:
@@ -861,18 +877,44 @@ def _location_amplitudes(
     located: Sequence[tuple[Sample, str]],
     floors: dict[str, float],
     braking: Sequence[tuple[float, float]],
+    bin_hz: float,
 ) -> tuple[list[LocationAmplitudeRow], AmplitudeBasis]:
     """Per-location amplitudes at the candidate's order, or overall without one."""
     if candidate is not None and candidate.matched_points:
-        return _order_location_amplitudes(candidate, located, floors, braking), "order"
-    return _overall_location_amplitudes(located, floors), "overall"
+        return _order_location_amplitudes(candidate, located, floors, braking, bin_hz), "order"
+    return _overall_location_amplitudes(located, floors, bin_hz), "overall"
+
+
+def _location_first_on_a_tie(
+    rows: list[LocationAmplitudeRow], location: str | None
+) -> list[LocationAmplitudeRow]:
+    """*rows* with the diagnosis's location first when it ties the strongest.
+
+    Location scoring calls two locations within ``NEAR_TIE_DOMINANCE_THRESHOLD``
+    of each other a tie and names its own winner; within that margin the rows
+    follow it, so the table, the car diagram and the findings name one location.
+    """
+    index = next(
+        (
+            index
+            for index, row in enumerate(rows)
+            if row["location"] == location and row["amplitude_mg"]
+        ),
+        None,
+    )
+    if not index or rows[0]["amplitude_mg"] is None:
+        return rows
+    amplitude = rows[index]["amplitude_mg"] or 0.0
+    if rows[0]["amplitude_mg"] >= amplitude * NEAR_TIE_DOMINANCE_THRESHOLD:
+        return rows
+    return [rows[index], *rows[:index], *rows[index + 1 :]]
 
 
 def _strongest_row_location(rows: Sequence[LocationAmplitudeRow]) -> str | None:
     return rows[0]["location"] if rows and rows[0]["amplitude_mg"] is not None else None
 
 
-def _amplitude_vs_speed(candidate: Finding | None) -> list[SpeedAmplitudePoint]:
+def _amplitude_vs_speed(candidate: Finding | None, bin_hz: float) -> list[SpeedAmplitudePoint]:
     if candidate is None:
         return []
     bins: dict[tuple[str, float], list[float]] = defaultdict(list)
@@ -883,7 +925,7 @@ def _amplitude_vs_speed(candidate: Finding | None) -> list[SpeedAmplitudePoint]:
         centre = floor(speed / _SPEED_BIN_KMH) * _SPEED_BIN_KMH + _SPEED_BIN_KMH / 2
         bins[(point.location, centre)].append(point.amp)
     return [
-        {"speed_kmh": centre, "location": location, "amplitude_mg": _mg(median(amps))}
+        {"speed_kmh": centre, "location": location, "amplitude_mg": _tone_mg(median(amps), bin_hz)}
         for (location, centre), amps in sorted(bins.items(), key=lambda item: item[0])
         if len(amps) >= _MIN_POINTS_PER_SPEED_BIN
     ]
@@ -1693,6 +1735,7 @@ def _order_markers(
 
 def _spectrum(
     located: Sequence[tuple[Sample, str]],
+    bin_hz: float,
     *,
     location: str | None,
     centre_speed_kmh: float | None,
@@ -1736,7 +1779,8 @@ def _spectrum(
     recurring = [(hz, median(amps)) for hz, amps in bins.items() if len(amps) >= min_count]
     recurring.sort(key=lambda item: -item[1])
     peaks: list[SpectrumPeak] = [
-        {"hz": hz, "amplitude_mg": _mg(amp)} for hz, amp in sorted(recurring[:_SPECTRUM_MAX_PEAKS])
+        {"hz": hz, "amplitude_mg": _tone_mg(amp, bin_hz)}
+        for hz, amp in sorted(recurring[:_SPECTRUM_MAX_PEAKS])
     ]
     floors = [
         floor_amp
@@ -1748,7 +1792,7 @@ def _spectrum(
         "location": location,
         "speed_min_kmh": min(window_speeds),
         "speed_max_kmh": max(window_speeds),
-        "floor_mg": _mg(median(floors)) if floors else None,
+        "floor_mg": _tone_mg(median(floors), bin_hz) if floors else None,
         "peaks": peaks,
         "order_markers": _order_markers(refs, window_centre, _measured_rpm(window), location),
     }

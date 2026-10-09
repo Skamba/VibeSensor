@@ -488,7 +488,8 @@ half its level.
 `SensorOrderLevel`: `location`, `level_g`, `floor_g`, `windows`, strongest
 first) for every order finding; in the persisted analysis, each order
 finding's `sensor_levels[]` (`findings[]`, `top_causes[]`; g); and for the
-diagnosed order, `diagnosis.location_amplitudes[].amplitude_mg` and
+diagnosed order, `diagnosis.location_amplitudes[].amplitude_mg` (the level
+as the peak of a tone, about 3.7x the levels in mg on this page) and
 `db_above_floor` (see "Diagnosis amplitude (mg)" in
 [metrics.md](metrics.md)); every top cause's level at the sensor nearest the
 occupants ranks the top causes and fills `diagnosis.felt` ("What the driver

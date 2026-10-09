@@ -496,8 +496,8 @@
     "nl": "T.o.v. werkplaatsniveau"
   },
   "FELT_COL_LEVEL": {
-    "en": "Level (one-axis peak)",
-    "nl": "Niveau (piek op één as)"
+    "en": "Level",
+    "nl": "Niveau"
   },
   "FELT_COL_SHARE": {
     "en": "Share",
@@ -568,8 +568,8 @@
     "nl": "een deel"
   },
   "FELT_TABLE_BASIS": {
-    "en": "Level: the cause's orders at this sensor, the three axes together, as the peak one axis would carry. Workshop levels on the driver's seat track: wheels 25 mg (GM bulletins 19-NA-240 and 20-NA-192); engine 12 mg, normal up to 2 mg (GM rough-idle diagnosis); driveline and brakes take the wheel level, an assumption. Share: of the causes found at the same speeds.",
-    "nl": "Niveau: de orden van de oorzaak bij deze sensor, de drie assen samen, als de piek die één as zou dragen. Werkplaatsniveaus op de stoelrail van de bestuurder: wielen 25 mg (GM-bulletins 19-NA-240 en 20-NA-192); motor 12 mg, normaal tot 2 mg (GM-diagnose stationair lopen); aandrijflijn en remmen krijgen het wielniveau, een aanname. Aandeel: van de oorzaken gevonden bij dezelfde snelheden."
+    "en": "Level: the cause's orders at this sensor added together (a wheel's T1 and T2, for example), as a peak with the three axes together, the scale of every mg in this report. Workshop levels on the driver's seat track: wheels 25 mg (GM bulletins 19-NA-240 and 20-NA-192); engine 12 mg, normal up to 2 mg (GM rough-idle diagnosis); driveline and brakes take the wheel level, an assumption. Share: of the causes found at the same speeds.",
+    "nl": "Niveau: de orden van de oorzaak bij deze sensor opgeteld (bij een wiel bijvoorbeeld T1 en T2), als piek met de drie assen samen, de schaal van elke mg in dit rapport. Werkplaatsniveaus op de stoelrail van de bestuurder: wielen 25 mg (GM-bulletins 19-NA-240 en 20-NA-192); motor 12 mg, normaal tot 2 mg (GM-diagnose stationair lopen); aandrijflijn en remmen krijgen het wielniveau, een aanname. Aandeel: van de oorzaken gevonden bij dezelfde snelheden."
   },
   "FELT_TABLE_TITLE": {
     "en": "What the driver feels",

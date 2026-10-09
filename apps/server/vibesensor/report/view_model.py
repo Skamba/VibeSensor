@@ -1026,7 +1026,8 @@ def _description(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str:
             # The order's own level is over the floor at no other sensor: no ratio to give.
             parts.append(ctx.t("DESC_ONLY_MEASURED_AT", location=location))
         elif len(top) == 2 and top[1]["ratio_to_strongest"]:
-            ratio = 1.0 / top[1]["ratio_to_strongest"]
+            # The diagnosis's location leads a near tie, so it may be a little weaker.
+            ratio = (top[0]["amplitude_mg"] or 0.0) / (top[1]["amplitude_mg"] or 1.0)
             if ratio >= _DOMINANT_RATIO:
                 parts.append(ctx.t("DESC_STRONGER", ratio=ctx.ratio(ratio), location=location))
             else:
@@ -1175,7 +1176,7 @@ def _felt_row(ctx: _Ctx, row: FeltCauseRow, *, first: bool) -> FeltRow:
     severity = row["severity"]
     return FeltRow(
         cause=f"{source} ({', '.join(row['order_codes'])})",
-        level=ctx.mg(row["peak_mg"]) if measured else ctx.t("FELT_NOT_MEASURABLE"),
+        level=ctx.mg(row["level_mg"]) if measured else ctx.t("FELT_NOT_MEASURABLE"),
         share=ctx.share(row["share"]) if row["share"] is not None and measured else "-",
         judged=ctx.t(f"FELT_JUDGED_{severity.upper()}") if severity else "-",
         workshop=workshop,
@@ -1435,8 +1436,8 @@ def _mechanic_page(
         ),
         amplitude_header=(ctx.t("AMP_LOCATION"), ctx.t("AMP_LEVEL"), ctx.t("AMP_RATIO")),
         amplitudes=tuple(
-            _amplitude_row(ctx, row)
-            for row in diagnosis["location_amplitudes"][:_MAX_AMPLITUDE_ROWS]
+            _amplitude_row(ctx, row, first=index == 0)
+            for index, row in enumerate(diagnosis["location_amplitudes"][:_MAX_AMPLITUDE_ROWS])
         ),
         spectrum=_spectrum(ctx, diagnosis),
         speed_chart=_speed_chart(ctx, diagnosis),
@@ -1619,7 +1620,7 @@ def _detected_mg(row: LocationAmplitudeRow) -> float | None:
     return amplitude if amplitude else None
 
 
-def _amplitude_row(ctx: _Ctx, row: LocationAmplitudeRow) -> AmplitudeRow:
+def _amplitude_row(ctx: _Ctx, row: LocationAmplitudeRow, *, first: bool) -> AmplitudeRow:
     amplitude, db, ratio = _detected_mg(row), row["db_above_floor"], row["ratio_to_strongest"]
     if amplitude is None:
         text = ctx.t("AMP_NOT_DETECTED")
@@ -1631,7 +1632,7 @@ def _amplitude_row(ctx: _Ctx, row: LocationAmplitudeRow) -> AmplitudeRow:
         location=ctx.location(row["location"]),
         amplitude=text,
         ratio=ctx.ratio(ratio) if ratio is not None and amplitude is not None else "-",
-        strongest=ratio == 1.0,
+        strongest=first and amplitude is not None,
     )
 
 

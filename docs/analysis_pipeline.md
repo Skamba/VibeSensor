@@ -346,7 +346,8 @@ the PDF both show:
   explains, not that none was found.
 - `felt`: the causes by their level at the sensor nearest the occupants (the
   felt `reference`: a seat, the trunk or the propshaft tunnel), each with its
-  orders, level (`level_mg`, and `peak_mg` on the scale of workshop limits),
+  orders, level (`level_mg`, on the tone-peak scale of every diagnosis mg and
+  of workshop limits),
   `share` of what the causes heard at the same speeds shake there, speed range
   and `severity` against the workshop limit of its source (`workshop_mg`,
   `normal_mg`). Without such a sensor, or without order levels, `reference`

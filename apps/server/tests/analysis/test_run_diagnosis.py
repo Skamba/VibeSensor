@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import Any
 
 import pytest
@@ -11,12 +12,14 @@ from test_support.findings import make_finding
 from test_support.synthetic_samples import make_engine_order_samples, make_sample
 
 from vibesensor.analysis.diagnosis import build_diagnosis
+from vibesensor.analysis.orders.tracking import window_duration_s
 from vibesensor.domain.finding import Finding
 from vibesensor.domain.finding_evidence import FindingEvidence
 from vibesensor.domain.finding_types import VibrationSource
 from vibesensor.domain.order_match import OrderMatchObservation
 from vibesensor.domain.run_capture import RunCapture
 from vibesensor.domain.test_run import TestRun
+from vibesensor.dsp.window_spectrum import tone_line_level_g
 from vibesensor.recording.run_metadata import run_metadata_from_mapping
 
 SENSORS = ["front-left", "front-right", "rear-left", "rear-right"]
@@ -130,6 +133,47 @@ def test_wheel_zone_needs_two_corners_for_an_axle(
     )
 
     assert _diagnosis(finding)["zone"] == zone
+
+
+def test_amplitudes_are_shown_as_the_peak_of_the_tone_that_reads_them() -> None:
+    """Every mg is on the scale workshop limits are on: the level a 30 mg tone
+    reads on the combined spectrum shows as 30 mg."""
+    metadata = run_metadata_from_mapping({"run_id": "run-1", **standard_metadata()})
+    level_g = tone_line_level_g(0.030, 1.0 / window_duration_s(metadata))
+    finding = _order_finding(
+        "wheel_1x", VibrationSource.WHEEL_TIRE, confidence=0.6, amps={"Front Left Wheel": level_g}
+    )
+    diagnosis = _diagnosis(finding)
+
+    assert diagnosis["location_amplitudes"][0]["amplitude_mg"] == pytest.approx(30.0)
+    assert [point["amplitude_mg"] for point in diagnosis["amplitude_vs_speed"]] == [
+        pytest.approx(30.0)
+    ]
+
+
+@pytest.mark.parametrize(
+    ("diagnosed_amp", "first"),
+    [
+        # Within location scoring's near tie the diagnosis's location leads.
+        (0.160, "Front Right Wheel"),
+        # Clearly weaker, it does not.
+        (0.140, "Rear Right Wheel"),
+    ],
+)
+def test_the_amplitude_rows_lead_with_the_diagnosed_location_on_a_near_tie(
+    diagnosed_amp: float, first: str
+) -> None:
+    finding = _order_finding(
+        "wheel_1x",
+        VibrationSource.WHEEL_TIRE,
+        confidence=0.6,
+        amps={"Rear Right Wheel": 0.171, "Front Right Wheel": diagnosed_amp, "Driver Seat": 0.05},
+    )
+    diagnosis = _diagnosis(replace(finding, strongest_location="Front Right Wheel"))
+
+    assert diagnosis["location"] == "Front Right Wheel"
+    assert [row["location"] for row in diagnosis["location_amplitudes"]][0] == first
+    assert max(row["ratio_to_strongest"] for row in diagnosis["location_amplitudes"]) == 1.0
 
 
 @pytest.mark.parametrize("source", [VibrationSource.WHEEL_TIRE, VibrationSource.BRAKES])
