@@ -101,35 +101,41 @@ broadband content than the simulator does.
 
 Every benchmark case drives on `generated_road(seed)`, as every real car has a
 road under it, unless it names why it stays on the idealised floor
-(`Case.idealised_floor`, an `IdealisedFloor`): 82 of the 121 cases CI runs
-(147 of the 222 case and car runs) drive on the road and pass the CI seed and the
-matrix rule there. The other 39 are expectations the analysis does not meet
-on the road yet, for reasons that need a product decision, not a simulator or
-test change (seeds 1-6 with every case on the road, 1362 runs):
+(`Case.idealised_floor`, an `IdealisedFloor`): 96 of the 122 cases CI runs
+(174 of the 224 case and car runs) drive on the road and pass the CI seed and
+the matrix rule there. The other 26 are expectations the analysis does not
+meet on the road yet (seeds 1-6 with every case on the road, 1344 runs;
+failing runs of each group's, main's in brackets):
 
-- `MISSED_UNDER_WHEEL_HOP` (14 cases): mild and barely-there wheel
-  imbalances, brake judder and faint engine tones are missed (`no_fault`,
-  about 150 runs): at 80-120 km/h a wheel order runs at 11-17 Hz, right on
-  the knuckle's wheel-hop hump (about 0.1 g in each spectrum bin on a class A
-  road at 100 km/h), and each window's eight strongest peaks are the hump's.
-- `HUMP_MATCHES_IN_TOWN` (8): healthy cars driven in town, or stopping in
-  traffic, are given a moderate wheel or brake fault (19 runs) or a weak guess
-  (29), and a faulty corner reads spread over all four: hump peaks near the
-  wheel order at city speeds match it in about a quarter of the windows at
-  every corner.
-- `LEVEL_UNDER_THE_HUMP` (3): a clear wheel fault in traffic or in the brake
-  step's stops, or brake judder in the guided brake step, reads a confidence
-  level lower than on the idealised floor: the hump's matches at the other
-  corners count as evidence spread over them.
-- `HUMP_SCATTER` (13): on more than one seed in five the hump moves what the
-  report names: the wheel order's second harmonic instead of the first (a
-  flat-spotted tyre, a coast-down), another corner (with a loose sensor at
-  the next corner), one of two equal front corners alone, a level over a
-  third of the injected tone's, or a healthy car's hump matched as a Strong
-  wheel fault (the pothole loop, 2 of 12 runs).
-- `UNEXPLAINED_BAR` (1): the case checks the unexplained-vibration wording,
-  which needs a body mode over its 26 dB bar; on the road its fixed-amplitude
-  13 Hz mode stands 23 dB over the trunk's local floor.
+- `MISSED_UNDER_WHEEL_HOP` (14 cases, 141 of 162 runs fail, main 151): mild
+  and barely-there wheel imbalances, brake judder and faint engine tones are
+  missed (`no_fault`). At 80-120 km/h a wheel order runs at 11-17 Hz, right on
+  the knuckle's wheel-hop hump (about 1 g there at motorway speed on a class A
+  road): a mild imbalance's 113 mg line carries about 1 % of the floor's power
+  beside it, where a sweep's reads need about half to stand out
+  ("Order-tracked reads" in `docs/order_tracking.md`).
+- `HUMP_MATCHES_IN_TOWN` (3, 24 of 36, main 30): in town the wheel order runs
+  at 5-7 Hz, at the bottom of the stored spectra and on the hump's flank. A
+  front-left imbalance in town, alone or under a seat mode, is missed on 18 of
+  24 runs (main: read spread over all four corners); a healthy car with worn
+  accessories on every mount is given a weak wheel guess at the engine bay or
+  gearbox on 3 of 12 (main: a moderate or weak wheel fault on 11).
+- `LEVEL_UNDER_THE_HUMP` (1, 5 of 12, main 8): brake judder in the guided brake
+  step is missed on 4 runs and called a wheel on 1 (main: a weak brake guess).
+- `HUMP_SCATTER` (7, 38 of 84, main 33): on more than one seed in five the hump
+  moves what the report names: the wheel order's second harmonic instead of
+  the first (a flat-spotted tyre), one of two equal front corners alone,
+  another corner (with a loose sensor at the next corner, a lane change), or
+  a healthy car's seat mode matched as a wheel fault (a lossy sensor).
+- `UNEXPLAINED_BAR` (1, 6 of 6): the case checks the unexplained-vibration
+  wording, which needs a body mode over its 26 dB bar; on the road its
+  fixed-amplitude 13 Hz mode stands 23 dB over the trunk's local floor.
+
+13 cases left the idealised floor when the order-tracked reads began to decide
+the matches ("What the reads decide" in `docs/order_tracking.md`): they pass
+on the road for every car. Every case on the road, the CI rule passes 177 of
+224 case and car runs against main's 158, and of 318 healthy runs 3 are given
+a fault and 3 a weak guess, against 22 and 35.
 
 Two expectations were not true of a road and changed with it:
 
@@ -143,10 +149,9 @@ Two expectations were not true of a road and changed with it:
   wording turns at, and the weaker corner's level carries its share of the
   road's scatter.
 
-On the road the benchmark (seeds 1-6) passes 1294 of 1314 runs against 1360
-of 1362 on the idealised floor, and two healthy runs of 306 are given a fault
-(a Strong rear wheel on the inline-six sweep, a Moderate T2 under a fixed
-resonance), each on one seed in six. It takes about 13 % longer.
+In the CI configuration the benchmark (seeds 1-6) passes 1305 of 1344 runs;
+of 318 healthy runs one is given a fault (the pothole loop, on one seed in
+six).
 
 The unexplained-vibration check judges a peak against its local floor
 (`docs/metrics.md`), so a healthy car on this road is no longer reported as

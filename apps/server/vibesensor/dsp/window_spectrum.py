@@ -10,15 +10,21 @@ import numpy.typing as npt
 
 from vibesensor.dsp.constants import PEAK_BANDWIDTH_HZ
 
-__all__ = ["LineRead", "WindowSpectrum", "peak_band_bins", "tone_line_level_g"]
+__all__ = [
+    "LineRead",
+    "WindowSpectrum",
+    "line_reach_hz",
+    "peak_band_bins",
+    "tone_line_level_g",
+]
 
 # A Hann window spreads a steady tone over its main lobe, two bins either side
 # of the tone's nearest bin: 99.95 % of its power whatever its offset from the
 # bin centre.
 _MAIN_LOBE_BINS = 2
 # The floor a line is compared with is read in this many bins either side, just
-# past its band: the closer they sit, the less a broad resonance's curvature
-# under the line reads as the line's level.
+# past its band: enough to place the floor's bend under a broad resonance, few
+# enough to sit on the same stretch of it.
 _FLANK_BINS = 3
 # A steady tone's power over a Hann window's bins is its peak amplitude squared
 # times the window's equivalent noise bandwidth, 1.5 bins (Harris, *Proc. IEEE*
@@ -29,6 +35,11 @@ _HANN_ENBW_BINS = 1.5
 def peak_band_bins(bin_hz: float) -> int:
     """The bins of a peak's band: its centre bin and ``PEAK_BANDWIDTH_HZ`` either side."""
     return 2 * int(PEAK_BANDWIDTH_HZ / bin_hz + 1e-9) + 1
+
+
+def line_reach_hz(half_width_hz: float, bin_hz: float) -> float:
+    """How far either side of a line's centre its read takes in: the band and the flanks past it."""
+    return half_width_hz + (_MAIN_LOBE_BINS + _FLANK_BINS) * bin_hz
 
 
 def tone_line_level_g(peak_g: float, bin_hz: float, *, axes: int = 3) -> float:
@@ -51,10 +62,12 @@ class LineRead:
     it, widened by the band its frequency swept through in the window) above
     the local floor, per bin of a peak's band: a steady tone's ``excess`` is
     its peak level squared (band RMS, ``PEAK_BANDWIDTH_HZ``) over the floor,
-    and a swept one's adds up the same way. ``flanks`` is the local floor, the
-    mean power per bin of the few bins either side of the band. ``excess``
-    comes out below zero in a window where the order is absent about as often
-    as above: it is meant to be averaged.
+    and a swept one's adds up the same way. The floor under the band follows
+    a parabola through the few bins either side of it, so a body resonance
+    the line sits on is not read as the order. ``flanks`` is the local floor,
+    the mean power per bin of those bins. ``excess`` comes out below zero in
+    a window where the order is absent about as often as above: it is meant
+    to be judged over many windows.
     """
 
     excess: float
@@ -74,6 +87,10 @@ class WindowSpectrum:
     freq_hz: npt.NDArray[np.float32]
     amp_g: npt.NDArray[np.float32]
 
+    @property
+    def bin_hz(self) -> float:
+        return float(self.freq_hz[1] - self.freq_hz[0]) if self.freq_hz.size > 1 else 0.0
+
     def line_read(self, hz: float, half_width_hz: float) -> LineRead | None:
         """The power in the band about a line at *hz* swept over ``±half_width_hz``, and beside it.
 
@@ -85,16 +102,40 @@ class WindowSpectrum:
         size = freq.size
         if size < 2:
             return None
-        start, bin_hz = float(freq[0]), float(freq[1] - freq[0])
+        start, bin_hz = float(freq[0]), self.bin_hz
         centre = int(round((hz - start) / bin_hz))
         half = int(round(half_width_hz / bin_hz)) + _MAIN_LOBE_BINS
         if centre - half < 0 or centre + half >= size:
             return None
-        lower = self.amp_g[max(0, centre - half - _FLANK_BINS) : centre - half]
-        upper = self.amp_g[centre + half + 1 : centre + half + 1 + _FLANK_BINS]
-        if max(lower.size, upper.size) < _FLANK_BINS:
+        # The flanks are a few bins: plain floats are faster than numpy here.
+        amp_g = self.amp_g
+        lower = [
+            amp * amp for amp in amp_g[max(0, centre - half - _FLANK_BINS) : centre - half].tolist()
+        ]
+        upper = [
+            amp * amp for amp in amp_g[centre + half + 1 : centre + half + 1 + _FLANK_BINS].tolist()
+        ]
+        if max(len(lower), len(upper)) < _FLANK_BINS:
             return None
-        flanks = float(np.mean(np.square(np.concatenate((lower, upper)), dtype=np.float64)))
-        band = np.square(self.amp_g[centre - half : centre + half + 1], dtype=np.float64)
-        excess = (float(np.sum(band)) - band.size * flanks) / peak_band_bins(bin_hz)
+        flanks = sum(lower + upper) / (len(lower) + len(upper))
+        band = float(
+            np.sum(np.square(self.amp_g[centre - half : centre + half + 1], dtype=np.float64))
+        )
+        bins = 2 * half + 1
+        under = bins * flanks
+        if len(lower) == len(upper):
+            # The floor bends under a resonance: fit a + c x^2 through the flanks
+            # (paired by distance x from the centre) and sum it over the band.
+            distance = [float(half + 1 + offset) ** 2 for offset in range(_FLANK_BINS)]
+            paired = [0.5 * (low + up) for low, up in zip(reversed(lower), upper, strict=True)]
+            mean_distance = sum(distance) / _FLANK_BINS
+            mean_paired = sum(paired) / _FLANK_BINS
+            spread = [value - mean_distance for value in distance]
+            bend = sum(
+                step * (value - mean_paired) for step, value in zip(spread, paired, strict=True)
+            ) / sum(step * step for step in spread)
+            level = mean_paired - bend * mean_distance
+            # The sum of x^2 over the band's offsets -half..half.
+            under = bins * level + bend * half * (half + 1) * (2 * half + 1) / 3.0
+        excess = (band - under) / peak_band_bins(bin_hz)
         return LineRead(excess=excess, flanks=flanks)

@@ -310,7 +310,11 @@ the PDF both show:
   at one speed does not make that speed the strongest. The band is picked from
   the heard matches inside the matched speed range, by amplitude over each
   window's floor, so a floor-level match in loud road noise, or a few matches
-  at the edge of the drive, cannot name it. The diagnosed row carries the diagnosis level. Rows are
+  at the edge of the drive, cannot name it. `frequency_hz` is that speed
+  times the median Hz per km/h of the heard matches in the same band: an
+  engine order heard through the gears runs at another Hz per km/h in each,
+  and the drive's median put a band in third gear at fifth gear's frequency.
+  The diagnosed row carries the diagnosis level. Rows are
   listed from Moderate up, plus the diagnosed source's other order once even
   when it is Weak on its own.
 - `zone`: a corner or axle is named only where the sensors could compare

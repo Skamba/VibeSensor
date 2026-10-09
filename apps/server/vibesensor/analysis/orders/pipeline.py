@@ -20,7 +20,12 @@ from vibesensor.analysis.orders.brake_attribution import as_brake_finding, only_
 from vibesensor.analysis.orders.finding_builder import (
     assemble_order_finding,
 )
-from vibesensor.analysis.orders.fixed_tones import fixed_tones, without_fixed_tones
+from vibesensor.analysis.orders.fixed_tones import (
+    RingingTone,
+    fixed_tones,
+    ringing_tones,
+    without_fixed_tones,
+)
 from vibesensor.analysis.orders.heuristics import suppress_engine_aliases
 from vibesensor.analysis.orders.match_rate import (
     _compute_effective_match_rate,
@@ -42,7 +47,7 @@ from vibesensor.analysis.orders.scoring import (
     score_order_finding,
 )
 from vibesensor.analysis.orders.settings import ORDER_CONFIDENCE_SETTINGS
-from vibesensor.analysis.orders.tracking import speed_rates_kmh_per_s
+from vibesensor.analysis.orders.tracking import speed_rates_kmh_per_s, window_duration_s
 from vibesensor.domain.finding import Finding as DomainFinding
 from vibesensor.domain.finding_types import VibrationSource
 from vibesensor.domain.order_match import frequency_tracking_slope, trend_moves
@@ -255,11 +260,13 @@ class OrderAnalysisSession:
                 )
             ],
         }
-        self._speed_following_tones: dict[str, list[tuple[float, ...]]] = {
-            "road": tones,
+        # The order-tracked reads skip only the tones that ring as a line.
+        ringing = ringing_tones(self._samples, tones, window_duration_s(self._context))
+        self._speed_following_tones: dict[str, list[tuple[RingingTone, ...]]] = {
+            "road": ringing,
             "engine": [
                 () if _rpm_measured(sample) else sample_tones
-                for sample, sample_tones in zip(self._samples, tones, strict=True)
+                for sample, sample_tones in zip(self._samples, ringing, strict=True)
             ],
         }
 
@@ -440,6 +447,12 @@ class OrderAnalysisSession:
                 match.matched_by_speed_bin,
                 match.possible_by_location,
                 match.matched_by_location,
+                {
+                    phase: count
+                    for phase, count in match.possible_by_phase.items()
+                    if phase in match.rescue_phases
+                },
+                match.matched_by_phase,
             )
         )
         if effective_match_rate < min_match_rate:

@@ -935,12 +935,17 @@ def _amplitude_vs_speed(candidate: Finding | None, bin_hz: float) -> list[SpeedA
 
 
 def _hz_per_kmh(candidate: Finding | None) -> float | None:
+    """The finding's Hz per km/h where its speed is stated (``_reference_points``).
+
+    Over its strongest speed band alone: an engine order heard through the
+    gears runs at another Hz per km/h in each.
+    """
     if candidate is None:
         return None
     ratios = [
-        point.matched_hz / point.speed_kmh
-        for point in _heard_points(candidate)
-        if point.speed_kmh is not None and point.speed_kmh > 0 and point.matched_hz > 0
+        point.matched_hz / cast(float, point.speed_kmh)
+        for point in _reference_points(candidate)
+        if point.matched_hz > 0
     ]
     return median(ratios) if ratios else None
 
@@ -963,9 +968,22 @@ def _reference_speed_kmh(candidate: Finding | None) -> float | None:
     """
     if candidate is None:
         return None
+    points = _reference_points(candidate)
+    if points:
+        return median(cast(float, point.speed_kmh) for point in points)
+    bounds = _speed_band_bounds(candidate.strongest_speed_band)
+    return (bounds[0] + bounds[1]) / 2 if bounds is not None else None
+
+
+def _reference_points(candidate: Finding) -> list[OrderMatchObservation]:
+    """The heard matches the finding's speed is stated at: in its strongest speed band.
+
+    All of them where none is in that band. Only those inside the speed range
+    the order was heard across, with a speed.
+    """
     heard_range = heard_speed_range(candidate.matched_points)
-    speeds = [
-        point.speed_kmh
+    points = [
+        point
         for point in _heard_points(candidate)
         if point.speed_kmh is not None
         and point.speed_kmh > 0
@@ -973,12 +991,12 @@ def _reference_speed_kmh(candidate: Finding | None) -> float | None:
     ]
     bounds = _speed_band_bounds(candidate.strongest_speed_band)
     if bounds is not None:
-        in_band = [speed for speed in speeds if bounds[0] <= speed < bounds[1]]
+        in_band = [
+            point for point in points if bounds[0] <= cast(float, point.speed_kmh) < bounds[1]
+        ]
         if in_band:
-            return median(in_band)
-        if not speeds:
-            return (bounds[0] + bounds[1]) / 2
-    return median(speeds) if speeds else None
+            return in_band
+    return points
 
 
 def _matched_speed_range(candidate: Finding | None) -> tuple[float | None, float | None]:

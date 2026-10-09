@@ -79,18 +79,20 @@ the same scale so the peaks stand out of it as on the spectrum.
 - `location_amplitudes[].amplitude_mg`: the order's level at that location,
   read at its line in every window at the speeds it was heard
   (`Finding.sensor_levels[].level_g`; "Order-tracked reads" in
-  `docs/order_tracking.md`). A sensor whose mean read does not stand two
-  standard errors out of its reads' own scatter reads 0, so a sensor the
-  order does not reach reads 0 whatever road noise it carries (the report
-  then says the order is measurable only at the strongest sensor). A brake
-  finding's level is read over the braking windows only.
+  `docs/order_tracking.md`): the median read while the order is there. A
+  sensor whose median read does not stand three standard errors out of the
+  floor's scatter beside its line reads 0, so a sensor the order does not
+  reach reads 0 whatever road noise it carries (the report then says the
+  order is measurable only at the strongest sensor); a sensor with under two
+  independent reads over the drive has no row. A brake finding's level is
+  read over the braking windows only.
   Without reads at every location that matched the order (no raw capture, or
   windows the replay could not rebuild), or with no location standing out, the
   median amplitude of the order's matched points at each location
   (`OrderMatchObservation.amp`); `None` where the order was not matched.
 - `location_amplitudes[].db_above_floor`:
   `vibration_strength_db_scalar(peak_band_rms_amp_g=amplitude, floor_amp_g=floor)`,
-  the floor being the mean power beside the order's line at that location
+  the floor being the median power beside the order's line at that location
   (`sensor_levels[].floor_g`) with reads, else the median floor of that
   location's samples.
 - `location_amplitudes[].ratio_to_strongest`: amplitude / strongest amplitude.
@@ -175,9 +177,11 @@ evidence stays.
 `docs/order_tracking.md`), counted only where its line carries at least the
 power of the floor beside it (`level_g >= floor_g`, 3 dB); below, it is part
 of the road's rumble there, or a body mode the line sweeps over reads as it.
-On the benchmark an order injected at a cabin or trunk sensor reads 2.5-21x
-its floor there, and a seat mode or road hump under a line nothing injected
-there 0.5-0.6x. The reference cannot tell one wheel from another, so a source
+On the benchmark (CI configuration, seeds 1-6) an order injected at a cabin
+or trunk sensor reads 0.6-51x its floor there (19 in 20 over 3.2x), and a
+line nothing was injected at there, where the reads hear it at all (a seat
+mode or road hump under the line), 0.5-0.9x, 7 times in 1344 runs, never
+over the bar (main: 1.2-23x and 2.3x; 0.4-1.5x, 44 times, 3 over the bar). The reference cannot tell one wheel from another, so a source
 is one cause there: its orders (T1 and T2; a second corner's T1 is the same
 line) add in power, `sqrt(sum level^2)`, since different frequencies do not
 interfere over a window. Its best-ranked top cause stands for it.
@@ -375,8 +379,12 @@ the penalty eases out beyond it.
 | A phase's match rate past the minimum match rate (with at least 3 matches) | phase bonus ×1 → ×1.03 → ×1.06 | the next 0.10 of match rate (`compute_phase_stats`) |
 
 The presence cap reads the order's heard match rate over the whole run, not
-the rate rescued to its best speed band or location
-(`_compute_effective_match_rate`). An order under the minimum exists only
+the rate rescued to its best speed band, driving phase or location
+(`_compute_effective_match_rate`); for an order whose tracked reads hear it
+only while braking, the whole run is its braking windows at the sensors that
+hear it where they hear it more often there (`heard_match_rate`, "What the
+reads decide" in `docs/order_tracking.md`): brake judder has no windows
+between stops to be heard in. An order under the minimum exists only
 through that rescue; it is heard less often than "just often enough", so it
 is at most Weak. Judged on the rescued rate, the score fell from Strong to
 Weak as the run-wide rate rose past the minimum: on the benchmark matrix an

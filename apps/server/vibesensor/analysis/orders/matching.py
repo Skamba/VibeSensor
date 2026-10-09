@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from collections.abc import Sequence
-from dataclasses import dataclass, replace
+from collections.abc import Collection, Sequence
+from dataclasses import dataclass, field, replace
 from statistics import median
 
 from vibesensor.analysis._sample_metrics import (
@@ -33,7 +33,7 @@ from vibesensor.analysis.constants import (
     SPEED_BIN_WIDTH_KMH,
 )
 from vibesensor.analysis.math_utils import _corr_abs_clamped, _ramp
-from vibesensor.analysis.orders.fixed_tones import near_fixed_tone
+from vibesensor.analysis.orders.fixed_tones import RingingTone
 from vibesensor.analysis.orders.physics import OrderHypothesis
 from vibesensor.analysis.orders.settings import ORDER_CONFIDENCE_SETTINGS
 from vibesensor.analysis.orders.tracking import (
@@ -45,12 +45,20 @@ from vibesensor.analysis.speed_profile_helpers import _phase_to_str
 from vibesensor.domain.driving_segment import DrivingPhase
 from vibesensor.domain.finding import speed_bin_label
 from vibesensor.domain.order_match import OrderMatchObservation, SensorOrderLevel
-from vibesensor.dsp.constants import FFT_N, PEAK_BANDWIDTH_HZ, SAMPLE_RATE_HZ
+from vibesensor.dsp.constants import FFT_N, SAMPLE_RATE_HZ
 from vibesensor.dsp.order_bands import order_peak_tolerance_hz
+from vibesensor.dsp.window_spectrum import line_reach_hz
 from vibesensor.recording.run_schema import RunMetadata
 
 BRAKING_PHASE = DrivingPhase.BRAKING.value
+GUIDED_COAST_PHASE = "guided_coast_down"
+# The cells of the rest of the drive.
+DRIVING_PHASE = ""
 ACCELERATION_PHASE = DrivingPhase.ACCELERATION.value
+# A window's control reads sit this many of its line read's reaches either
+# side of the line: clear of the line's band and flanks, close enough to read
+# the same stretch of floor.
+_CONTROL_REACHES = 2.0
 
 
 @dataclass(frozen=True)
@@ -88,6 +96,13 @@ class OrderMatchAccumulator:
     sensor_levels: tuple[SensorOrderLevel, ...] = ()
     # The same over the braking windows only, for a finding put down to the brakes.
     braking_sensor_levels: tuple[SensorOrderLevel, ...] = ()
+    # The heard sensors' match rate over the driving phases the order is
+    # heard in, where it is not heard driving (``_phase_heard_rate``).
+    phase_heard_rate: float | None = None
+    # The phase labels whose match rate may rescue the order's
+    # (``_compute_effective_match_rate``): those of the driving phases its
+    # tracked reads hear it in.
+    rescue_phases: frozenset[str] = frozenset()
 
     @property
     def matched(self) -> int:
@@ -100,11 +115,19 @@ class OrderMatchAccumulator:
 
     @property
     def heard_match_rate(self) -> float:
-        """Match rate over the sensors that hear the order (global when none does)."""
+        """Match rate over the sensors that hear the order (global when none does).
+
+        Where it is not heard driving, the rate over the driving phases it is
+        heard in (``phase_heard_rate``) where that is higher: an order heard
+        only while braking is absent between the stops, while a wheel order
+        near the floor, clear in a braking cell alone, still matches between
+        them.
+        """
         if not self.heard_locations:
             return self.match_rate
         possible = self._at_heard_locations(self.possible_by_location)
-        return self._at_heard_locations(self.matched_by_location) / max(1, possible)
+        rate = self._at_heard_locations(self.matched_by_location) / max(1, possible)
+        return max(rate, self.phase_heard_rate or 0.0)
 
     @property
     def heard_share(self) -> float:
@@ -130,7 +153,14 @@ class OrderMatchAccumulator:
 
     @property
     def unique_match_locations(self) -> set[str]:
-        """Set of distinct sensor locations that produced matches."""
+        """The sensors that hear the order; every sensor that matched it when none does.
+
+        A sensor matching the order far below the one that hears it best (a
+        fault's leak to the other end of its axle) does not compete for its
+        location.
+        """
+        if self.heard_locations:
+            return {location.strip() for location in self.heard_locations}
         return {(point.location or "").strip() for point in self.matched_points if point.location}
 
     def is_eligible(
@@ -392,7 +422,7 @@ class _Window:
 def match_samples_for_hypothesis(
     samples: Sequence[Sample],
     cached_peaks: list[list[tuple[float, float]]],
-    tones: Sequence[Sequence[float]],
+    tones: Sequence[Sequence[RingingTone]],
     hypothesis: OrderHypothesis,
     context: RunMetadata,
     tire_circumference_m: float | None,
@@ -419,7 +449,7 @@ def match_samples_for_hypothesis(
 
     for sample_idx, sample in enumerate(samples):
         peaks = cached_peaks[sample_idx]
-        if not peaks:
+        if not peaks and sample.spectrum is None:
             continue
         predicted_hz, ref_source = hypothesis.predicted_hz(sample, context, tire_circumference_m)
         # Peaks under the analysis floor are dropped (``_sample_top_peaks``), so a
@@ -444,6 +474,8 @@ def match_samples_for_hypothesis(
             if has_phases and per_sample_phases is not None
             else None,
         )
+        floor_amp = _estimate_strength_floor_amp_g(sample)
+        window = replace(window, floor=max(0.0, floor_amp if floor_amp is not None else 0.0))
         peak_match = best_order_peak_match(
             peaks,
             predicted_hz=predicted_hz,
@@ -452,9 +484,6 @@ def match_samples_for_hypothesis(
         if peak_match is None:
             windows.append(window)
             continue
-
-        floor_amp = _estimate_strength_floor_amp_g(sample)
-        floor = max(0.0, floor_amp if floor_amp is not None else 0.0)
         windows.append(
             replace(
                 window,
@@ -470,17 +499,30 @@ def match_samples_for_hypothesis(
                 ),
                 clear=bool(sample_location)
                 and peak_match.amplitude_g
-                >= ORDER_CONFIDENCE_SETTINGS.heard_peak_over_floor * floor,
-                floor=floor,
+                >= ORDER_CONFIDENCE_SETTINGS.heard_peak_over_floor * window.floor,
             )
         )
 
     bin_hz = fft_bin_hz(context)
     masked = _masked(windows, bin_hz, compliance)
-    cells = _line_reads(
-        samples, windows, masked, _LineReadContext(context, tones, speed_rates, bin_hz, compliance)
+    reads = _line_reads(
+        samples,
+        windows,
+        masked,
+        _LineReadContext(
+            context,
+            tones,
+            speed_rates,
+            bin_hz,
+            compliance,
+            # Brake judder shakes at the wheel's order, only while braking.
+            braking_alone=hypothesis.order_label_base == "wheel",
+        ),
     )
-    windows = [window for index, window in enumerate(windows) if index not in masked]
+    cells = reads.cells
+    heard_cells = cells.heard_cells()
+    hearing = cells.heard_phases()
+    windows = _tracked(samples, windows, masked, reads, heard_cells, hearing, bin_hz)
 
     possible_by_speed_bin: dict[str, int] = defaultdict(int)
     possible_by_phase: dict[str, int] = defaultdict(int)
@@ -505,10 +547,17 @@ def match_samples_for_hypothesis(
     shares = _clear_shares(possible_by_location, clear_by_location)
     heard_locations = _sensors_that_hear(shares)
     matched_windows = [window for window in windows if window.match is not None]
-    heard_speeds = {
-        (window.speed_bin, window.phase_key == BRAKING_PHASE)
+    heard_windows = [
+        window
         for window in matched_windows
         if window.clear and window.location in heard_locations and window.speed_bin is not None
+    ]
+    heard_speeds = {window.speed_bin for window in heard_windows if window.speed_bin is not None}
+    heard_cell_phases = {phase for _location, _speed, phase in heard_cells}
+    braking_speeds = {
+        window.speed_bin
+        for window in heard_windows
+        if window.speed_bin is not None and window.phase_key == BRAKING_PHASE
     }
     return OrderMatchAccumulator(
         possible=len(windows),
@@ -533,20 +582,82 @@ def match_samples_for_hypothesis(
         corroboration=_corroboration(shares),
         matched_sample_indices=tuple(window.sample_idx for window in matched_windows),
         possible_samples=tuple((window.sample_idx, window.location) for window in windows),
-        sensor_levels=cells.sensor_levels(heard_speeds),
-        braking_sensor_levels=cells.sensor_levels(
-            {speed for speed in heard_speeds if speed[1]}, braking_only=True
+        # The guided coast-down in neutral is a test, with the engine idling.
+        sensor_levels=cells.sensor_levels(heard_speeds, (DRIVING_PHASE, BRAKING_PHASE)),
+        braking_sensor_levels=cells.sensor_levels(braking_speeds, (BRAKING_PHASE,)),
+        phase_heard_rate=_phase_heard_rate(windows, heard_cells, heard_locations),
+        rescue_phases=frozenset(
+            key for key in possible_by_phase if _drive_phase(key) in heard_cell_phases
         ),
     )
+
+
+def _drive_phase(phase_key: str | None) -> str:
+    """The driving phase a phase label is tracked in: braking, or the rest of the drive."""
+    return BRAKING_PHASE if phase_key == BRAKING_PHASE else DRIVING_PHASE
+
+
+def _phase_heard_rate(
+    windows: Sequence[_Window],
+    heard_cells: Collection[tuple[str, str, str]],
+    heard_locations: frozenset[str],
+) -> float | None:
+    """The match rate over the driving phases the order is heard in, where it is not heard driving.
+
+    An order heard only while braking (brake judder) is absent from the
+    windows between stops; its heard sensors' match rate is taken over their
+    braking windows alone. ``None`` where the order is heard driving, or by
+    no sensor.
+    """
+    if not heard_locations:
+        return None
+    heard_in = {phase for location, _speed, phase in heard_cells if location in heard_locations}
+    if not heard_in or DRIVING_PHASE in heard_in:
+        return None
+    in_phase = [
+        window
+        for window in windows
+        if window.location in heard_locations and _drive_phase(window.phase_key) in heard_in
+    ]
+    if not in_phase:
+        return None
+    return sum(window.match is not None for window in in_phase) / len(in_phase)
 
 
 @dataclass(frozen=True, slots=True)
 class _LineReadContext:
     context: RunMetadata
-    tones: Sequence[Sequence[float]]
+    tones: Sequence[Sequence[RingingTone]]
     speed_rates: Sequence[float]
     bin_hz: float
     compliance: float
+    # Whether the order can be there only while braking (``TrackedCells``).
+    braking_alone: bool
+
+
+type _CellKey = tuple[str, str, str]
+
+
+@dataclass(frozen=True, slots=True)
+class _Line:
+    """Where one window was read: its cell, the order's line and how far it swept."""
+
+    cell: _CellKey
+    hz: float
+    half_width_hz: float
+
+
+@dataclass(slots=True)
+class _LineReads:
+    """Every window's read at the order's line, and the windows whose line could not be read."""
+
+    cells: TrackedCells
+    # Where each window was read, by window index.
+    lines: dict[int, _Line] = field(default_factory=dict)
+    # Windows whose line lies on, or within the leak of, a ringing tone.
+    on_tone: set[int] = field(default_factory=set)
+    # Windows whose line's band or flanks run off the spectrum's edge.
+    off_edge: set[int] = field(default_factory=set)
 
 
 def _line_reads(
@@ -554,43 +665,165 @@ def _line_reads(
     windows: Sequence[_Window],
     masked: set[int],
     read: _LineReadContext,
-) -> TrackedCells:
-    """Every window read at the order's line, grouped by sensor, speed bin and braking.
+) -> _LineReads:
+    """Every window read at the order's line, grouped by sensor, speed bin and driving phase.
 
     Every window whose spectrum the post-stop analysis rebuilt from the raw
     capture is read at the order's line, whatever louder content the window
-    holds: the prediction times the line's factor where the clear matches place
-    one (``_tracked_line_scale``), else the prediction itself, over the band
-    the line swept while the speed changed (``line_half_width_hz``). A window
-    whose band takes in one of its sensor's fixed tones (*tones*, see
-    ``fixed_tones``) is not read: the tone's level is no part of the order's.
-    See "Order-tracked reads" in docs/order_tracking.md.
+    holds elsewhere: at the frequency the clear matches place the line
+    (``_tracked_line_scale``, from the windows whose line held still), over
+    the band the line swept while the speed changed
+    (``line_half_width_hz``). A window whose read reaches one of its sensor's
+    ringing tones or that tone's leak (*tones*, see ``ringing_tones``) is not
+    read: the tone's level is no part of the order's. Each read comes with two
+    control reads ``_CONTROL_REACHES`` of its reach either side of the line,
+    where the order is not, which place the floor's scatter
+    (``TrackedCells``). See "Order-tracked reads" in docs/order_tracking.md.
     """
     window_s = window_duration_s(read.context)
-    cells = TrackedCells(window_s=window_s)
+    reads = _LineReads(TrackedCells(window_s=window_s, braking_alone=read.braking_alone))
     if not any(samples[window.sample_idx].spectrum is not None for window in windows):
-        return cells
-    scale = _tracked_line_scale(windows, masked, read.bin_hz, read.compliance)
-    band_hz = PEAK_BANDWIDTH_HZ
-    for window in windows:
+        return reads
+    # A window's peak lands anywhere on the stretch its line swept, so only the
+    # windows whose line held still within a peak's width place the line.
+    swept = {
+        index
+        for index, window in enumerate(windows)
+        if line_half_width_hz(
+            window.predicted_hz,
+            samples[window.sample_idx].speed_kmh,
+            read.speed_rates[window.sample_idx],
+            window_s,
+        )
+        > _line_half_width_hz(window.predicted_hz, read.bin_hz)
+    }
+    scale = _tracked_line_scale(windows, masked | swept, read.bin_hz, read.compliance)
+    coasts = [
+        (step.start_t_s, step.end_t_s if step.end_t_s is not None else float("inf"))
+        for step in read.context.guided_phases
+        if step.phase == "coast_down"
+    ]
+    for index, window in enumerate(windows):
         sample = samples[window.sample_idx]
         spectrum = sample.spectrum
-        if spectrum is None or not window.location or window.speed_bin is None:
+        if spectrum is None:
             continue
         line_hz = scale * window.predicted_hz
         half_width_hz = line_half_width_hz(
             line_hz, sample.speed_kmh, read.speed_rates[window.sample_idx], window_s
         )
-        if near_fixed_tone(line_hz, max(band_hz, half_width_hz), read.tones[window.sample_idx]):
+        reach_hz = line_reach_hz(half_width_hz, read.bin_hz)
+        tones = read.tones[window.sample_idx]
+        if any(tone.takes_in(line_hz, reach_hz) for tone in tones):
+            reads.on_tone.add(index)
             continue
         line = spectrum.line_read(line_hz, half_width_hz)
-        if line is not None:
-            cells.add(
-                (window.location, window.speed_bin, window.phase_key == BRAKING_PHASE),
-                line,
-                sample.t_s,
+        if line is None:
+            reads.off_edge.add(index)
+            continue
+        cell = (window.location, window.speed_bin or "", _cell_phase(window, sample, coasts))
+        reads.cells.add(cell, line, sample.t_s)
+        reads.lines[index] = _Line(cell, line_hz, half_width_hz)
+        offset = _CONTROL_REACHES * reach_hz
+        for control_hz in (line_hz - offset, line_hz + offset):
+            if control_hz < MIN_ANALYSIS_FREQ_HZ or any(
+                tone.takes_in(control_hz, reach_hz) for tone in tones
+            ):
+                continue
+            control = spectrum.line_read(control_hz, half_width_hz)
+            if control is not None:
+                reads.cells.add_control(cell, control)
+    return reads
+
+
+def _cell_phase(window: _Window, sample: Sample, coasts: Sequence[tuple[float, float]]) -> str:
+    """The driving phase a window's read is grouped by.
+
+    The guided test's coast-down in neutral is its own: the engine drops to
+    idle there while the road speed carries on, which is how the test tells an
+    engine order from a road-speed one at the same line.
+    """
+    t_s = sample.t_s
+    if t_s is not None and any(start <= t_s < end for start, end in coasts):
+        return GUIDED_COAST_PHASE
+    return _drive_phase(window.phase_key)
+
+
+def _tracked(
+    samples: Sequence[Sample],
+    windows: Sequence[_Window],
+    masked: set[int],
+    reads: _LineReads,
+    heard: dict[tuple[str, str, str], SensorOrderLevel],
+    hearing: Collection[tuple[str, str]],
+    bin_hz: float,
+) -> list[_Window]:
+    """Each window's verdict on the order: from its tracked read where it has one.
+
+    A window read at the order's line matches, and hears, the order where its
+    cell hears it (``TrackedCells.heard_cells``), at that cell's level,
+    whether or not the order ranked among the window's peaks. Where its cell
+    does not, its ranked peak near the line still matches where the order is
+    heard in that driving phase at some sensor (*hearing*, ``TrackedCells.heard_phases``),
+    and the window does not match where it is not. Its frequency is its ranked
+    peak's where one sits within the line's tolerance and sweep, else the
+    line's. A window whose line could not be read keeps its peak match: on a
+    ringing tone (the tone hides the order from the read, not from the ranked
+    peaks), at the spectrum's edge only at a sensor that hears the order in
+    some phase (a floor-level peak at the spectrum's lowest bins is no
+    evidence elsewhere), and in a summary-only run. A window off the order's
+    line (``_masked``) keeps no peak match. A window in the guided
+    coast-down is judged by its ranked peak alone, as the coast test judges
+    it (``diagnosis._speed_dependence``): a cell there spans the shift into
+    neutral, where an engine order still sounds for a window or two.
+    """
+    hearing_locations = {location for location, _phase in hearing}
+    hearing_phases = {phase for _location, phase in hearing}
+    tracked: list[_Window] = []
+    for index, window in enumerate(windows):
+        line = reads.lines.get(index)
+        cell = (
+            heard.get(line.cell)
+            if line is not None and line.cell[2] != GUIDED_COAST_PHASE
+            else None
+        )
+        if line is None or cell is None:
+            unheard = (
+                line.cell[2] not in hearing_phases
+                if line is not None
+                else index in reads.off_edge and window.location not in hearing_locations
             )
-    return cells
+            if unheard:
+                tracked.append(replace(window, match=None, clear=False))
+            elif index not in masked:
+                tracked.append(window)
+            continue
+        peak = window.match
+        matched_hz = (
+            peak.matched_hz
+            if peak is not None
+            and abs(peak.matched_hz - line.hz)
+            <= _line_half_width_hz(line.hz, bin_hz) + line.half_width_hz
+            else line.hz
+        )
+        sample = samples[window.sample_idx]
+        tracked.append(
+            replace(
+                window,
+                match=OrderMatchObservation(
+                    t_s=sample.t_s,
+                    speed_kmh=sample.speed_kmh,
+                    predicted_hz=window.predicted_hz,
+                    matched_hz=matched_hz,
+                    rel_error=abs(matched_hz - window.predicted_hz) / window.predicted_hz,
+                    amp=cell.level_g,
+                    location=window.location,
+                    phase=window.phase_key,
+                ),
+                clear=bool(window.location),
+            )
+        )
+    return tracked
 
 
 def _tracked_line_scale(

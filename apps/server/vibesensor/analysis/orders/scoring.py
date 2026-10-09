@@ -23,6 +23,7 @@ from vibesensor.analysis.orders.statistics import (
 )
 from vibesensor.domain.finding_types import VibrationSource
 from vibesensor.domain.location_hotspot import LocationHotspot
+from vibesensor.domain.order_match import OrderMatchObservation
 from vibesensor.dsp.vibration_strength import vibration_strength_db_scalar
 
 
@@ -83,6 +84,26 @@ def _normalized_domain_hotspot(
     )
 
 
+def _at_tracked_levels(match: OrderMatchAccumulator) -> list[OrderMatchObservation]:
+    """The matched points, each at its sensor's tracked level of the order.
+
+    A window's ranked peak is the order plus whatever else sits in its band
+    (the road's wheel-hop hump under a wheel order in town); the tracked level
+    is the order's own (``TrackedCells.sensor_levels``), so it places the
+    order between sensors. A sensor that does not hear the order is placed by
+    its read all the same (``SensorOrderLevel.read_g``). The peaks' own
+    amplitudes where no sensor hears the order, or a matched sensor has no
+    level.
+    """
+    levels = {level.location: level.level_g or level.read_g for level in match.sensor_levels}
+    points = match.matched_points
+    if not any(level.level_g for level in match.sensor_levels) or not {
+        point.location for point in points
+    } <= set(levels):
+        return points
+    return [replace(point, amp=levels[point.location]) for point in points]
+
+
 def score_order_finding(
     hypothesis: OrderHypothesis,
     match: OrderMatchAccumulator,
@@ -103,7 +124,7 @@ def score_order_finding(
 
     relevant_speed_bins = [context.focused_speed_band] if context.focused_speed_band else None
     location_line, loc_result = summarize_order_match_locations(
-        match.matched_points,
+        _at_tracked_levels(match),
         lang=context.lang,
         relevant_speed_bins=relevant_speed_bins,
         connected_locations=context.connected_locations,
