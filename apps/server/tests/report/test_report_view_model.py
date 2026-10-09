@@ -585,8 +585,9 @@ def test_no_fault_names_what_was_checked_and_what_could_not_be(
 
 
 def test_no_fault_with_a_loose_sensor_says_on_page_one_to_fix_it_and_record_again() -> None:
-    """A loose sensor can hide a fault, so a clean run says so with its verdict,
-    in History (``build_owner_page``) as on the PDF, not only in the warnings."""
+    """A loose sensor can hide a fault, so a clean run says so with its verdict, in
+    an amber box, in History (``build_owner_page``) as on the PDF, not only in the
+    warnings."""
     summary = deepcopy(_healthy_summary())
     clean = report_view_for(summary).owner
     summary["warnings"] = summary_warning_payloads(
@@ -595,6 +596,8 @@ def test_no_fault_with_a_loose_sensor_says_on_page_one_to_fix_it_and_record_agai
     owners = {lang: report_view_for(summary, lang=lang).owner for lang in ("en", "nl")}
 
     assert owners["en"].verdict == "no_fault"
+    # Not all clear: amber, like a moderate finding, instead of green.
+    assert (clean.tone, owners["en"].tone, owners["nl"].tone) == ("good", "caution", "caution")
     assert owners["en"].description == (
         f"{clean.description} The rear-left wheel sensor may be loosely mounted; check its"
         " mount and record again, because a loose sensor can hide a fault."
@@ -617,6 +620,12 @@ def test_no_fault_with_a_loose_sensor_says_on_page_one_to_fix_it_and_record_agai
         "The rear-left wheel and front-right wheel sensors may be loosely mounted; check"
         " their mounts and record again, because a loose sensor can hide a fault."
     )
+
+    # A found fault keeps its own color and wording.
+    fault = deepcopy(_wheel_summary())
+    found = report_view_for(fault).owner
+    fault["warnings"] = summary["warnings"]
+    assert report_view_for(fault).owner == found
 
 
 def test_no_fault_with_a_faint_residual_says_it_was_found_only_faintly() -> None:

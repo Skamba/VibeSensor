@@ -452,11 +452,11 @@ test("journey: history speeds follow the speed unit setting in English and Dutch
   ).toHaveText("Voorwiel links");
 });
 
-test("journey: a no-fault run and a run that could check nothing read as the PDF does", async ({
+test("journey: a no-fault run, one with a loose sensor and one that could check nothing read as the PDF does", async ({
   page,
 }) => {
   const server = createServer();
-  server.runs = [run("run-ok"), run("run-manual")];
+  server.runs = [run("run-ok"), run("run-loose"), run("run-manual")];
   const noFault: Partial<HistoryInsightsPayload["owner"]> = {
     verdict: "no_fault",
     level: null,
@@ -496,14 +496,16 @@ test("journey: a no-fault run and a run that could check nothing read as the PDF
       sensor_count_used: 1,
       diagnosis: makeDiagnosis(),
       owner: makeOwnerPage(
-        runId === "run-ok"
+        runId === "run-ok" || runId === "run-loose"
           ? {
               ...noFault,
-              tone: "good",
+              tone: runId === "run-ok" ? "good" : "caution",
               result: "No significant vibration",
               headline: "No significant vibration found",
               description:
-                "Nothing stood out in the checks this run could make: wheels/tires.",
+                runId === "run-ok"
+                  ? "Nothing stood out in the checks this run could make: wheels/tires."
+                  : "Nothing stood out. The rear-left wheel sensor may be loosely mounted; check its mount and record again, because a loose sensor can hide a fault.",
               next_step: "Nothing to fix for what this run checked.",
             }
           : {
@@ -543,6 +545,37 @@ test("journey: a no-fault run and a run that could check nothing read as the PDF
   // Never green: a run that checked nothing does not show the car is fine.
   await expect(owner).toHaveClass(/history-owner--muted/);
   await expect(owner).toContainText("Record again with live speed");
+
+  // A loose sensor can hide a fault: amber, the warning color, in both themes.
+  await page
+    .locator('[data-run-toggle="details"][data-run="run-loose"]')
+    .click();
+  await expect(owner).toHaveClass(/history-owner--caution/);
+  await expect(owner).toContainText("may be loosely mounted");
+  const colors = () =>
+    owner.locator(".history-owner__verdict").evaluate((box) => {
+      const root = getComputedStyle(document.documentElement);
+      const probe = document.createElement("div");
+      document.body.append(probe);
+      const resolve = (token: string) => {
+        probe.style.backgroundColor = root.getPropertyValue(token);
+        return getComputedStyle(probe).backgroundColor;
+      };
+      const result = {
+        box: getComputedStyle(box).backgroundColor,
+        warn: resolve("--pill-warn-bg"),
+        ok: resolve("--pill-ok-bg"),
+      };
+      probe.remove();
+      return result;
+    });
+  const light = await colors();
+  expect(light.box).toBe(light.warn);
+  expect(light.box).not.toBe(light.ok);
+  await page.emulateMedia({ colorScheme: "dark" });
+  const dark = await colors();
+  expect(dark.box).toBe(dark.warn);
+  expect(dark.box).not.toBe(light.box);
 });
 
 test("journey: the car diagram's labels never overlap, with a sensor at every location", async ({

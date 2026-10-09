@@ -308,6 +308,7 @@ def _header_band(canvas: Canvas, view: ReportView) -> float:
 
 _TONE_COLORS: dict[OwnerTone, tuple[colors.Color, colors.Color]] = {
     "good": (GOOD, GOOD_SOFT),
+    "caution": (WARN, WARN_SOFT),
     "strong": (BAD, BAD_SOFT),
     "moderate": (WARN, WARN_SOFT),
     "muted": (MUTED, GREY_SOFT),

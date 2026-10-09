@@ -81,8 +81,8 @@ A4 portrait, built-in Helvetica, light/print-friendly, drawn by
 `report/view_model.py` (see `docs/report_pipeline.md`):
 
 1. **Owner page**: a header band, then the verdict box. The verdict box is
-   tinted by verdict and level: green for no fault, amber for Moderate, red for
-   Strong, grey for weak evidence. It holds one confidence chip (the level word
+   tinted by verdict and level: green for no fault, amber for Moderate or for no
+   fault with a loose sensor, red for Strong, grey for weak evidence. It holds one confidence chip (the level word
    and its action meaning) and one plain sentence. Below that, the next step,
    fallback step, and check-the-fix boxes, with the car diagram beside them.
 2. **Workshop page**: test conditions grid, findings table (diagnosed row

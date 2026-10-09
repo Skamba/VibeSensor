@@ -881,7 +881,7 @@ export interface components {
             recapture: string[];
             recapture_title: string | null;
             result: string;
-            tone: "good" | "strong" | "moderate" | "muted";
+            tone: "good" | "caution" | "strong" | "moderate" | "muted";
             verdict: "fault" | "weak_evidence" | "no_fault";
             verify: string | null;
             verify_title: string | null;

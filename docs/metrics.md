@@ -455,7 +455,8 @@ checks (`SUITABILITY_CHECK_SENSOR_MOUNTS`, `loose_sensors`), so the quality
 table never reads all OK above the warning. A run where it found none gets no
 row: it may not have been checked. A run with no fault also names the loose
 sensor in its page-1 verdict (report, History and PDF): "…; check its mount
-and record again, because a loose sensor can hide a fault." A fault strongest
+and record again, because a loose sensor can hide a fault." Its verdict box is
+amber, not green. A fault strongest
 at a loose sensor is capped at Moderate and says so in its description instead.
 
 1. Each replayed raw window's mean per axis is that window's 0 Hz reading:
