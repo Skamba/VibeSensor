@@ -307,6 +307,12 @@ function OwnerSummary(props: { owner: OwnerPage }) {
               </ul>
             </section>
           ) : null}
+          {owner.felt_title && owner.felt ? (
+            <section>
+              <h4 class="history-owner__title">{owner.felt_title}</h4>
+              <p class="history-owner__text">{owner.felt}</p>
+            </section>
+          ) : null}
           {owner.confirm_title && owner.confirm ? (
             <StepBox
               title={owner.confirm_title}

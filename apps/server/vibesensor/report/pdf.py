@@ -377,6 +377,9 @@ def _owner_page(canvas: Canvas, owner: OwnerPage, y: float) -> None:
     if owner.not_covered_title and owner.not_covered:
         y = _section_title(canvas, owner.not_covered_title, x, y - 2 * MM)
         y = _bullets(canvas, owner.not_covered, x, y, text_w, numbered=False) - 1 * MM
+    if owner.felt_title and owner.felt:
+        y = _section_title(canvas, owner.felt_title, x, y - 2 * MM)
+        y = _paragraph(canvas, owner.felt, x, y, text_w) - 1 * MM
     if owner.confirm_title and owner.confirm:
         y = _step_box(
             canvas, owner.confirm_title, owner.confirm, None, x, y - 2 * MM, text_w, WARN_SOFT
@@ -715,6 +718,8 @@ def _mechanic_tables(canvas: Canvas, page: MechanicPage) -> float:
         )
     if page.worksheet_empty:
         y = _paragraph(canvas, page.worksheet_empty, MARGIN, y - 1 * MM, CONTENT_W, size=8.5)
+    if page.felt_title:
+        y = _felt_table(canvas, page, y - GAP)
     y -= GAP + 5 * MM
 
     half = (CONTENT_W - GAP) / 2
@@ -735,6 +740,26 @@ def _mechanic_tables(canvas: Canvas, page: MechanicPage) -> float:
     for line in page.ruled_out:
         right_y = _paragraph(canvas, line, right_x, right_y, half, size=8) - 1 * MM
     y = min(left_y, right_y) - GAP
+    return y
+
+
+def _felt_table(canvas: Canvas, page: MechanicPage, y: float) -> float:
+    """The causes by their level where the occupants sit; return the y below."""
+    y = _section_title(canvas, page.felt_title or "", MARGIN, y)
+    if page.felt:
+        widths = (0.28, 0.18, 0.10, 0.20, 0.24)
+        y = _table(
+            canvas,
+            page.felt_header,
+            [(row.cause, row.level, row.share, row.judged, row.workshop) for row in page.felt],
+            MARGIN,
+            y,
+            [_Column(CONTENT_W * w, bold=i == 0) for i, w in enumerate(widths)],
+            size=7.5,
+            highlight=[row.first for row in page.felt],
+        )
+    if page.felt_note:
+        y = _paragraph(canvas, page.felt_note, MARGIN, y - 1 * MM, CONTENT_W, size=7.5)
     return y
 
 

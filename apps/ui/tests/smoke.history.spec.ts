@@ -241,6 +241,7 @@ test("journey: history titles runs by date and result, opens on the report's pag
     "Likely cause: a wheel or tire problem at the front-left wheel",
   );
   await expect(owner.locator(".history-owner__level")).toHaveText("Moderate");
+  await expect(owner).toContainText("What you feel");
   await expect(owner).toContainText("Cheap check first");
   await expect(owner).toContainText("If that doesn't fix it");
   await expect(owner).toContainText("Check the fix");
@@ -467,6 +468,8 @@ test("journey: a no-fault run and a run that could check nothing read as the PDF
     fallback_step: null,
     verify_title: null,
     verify: null,
+    felt_title: null,
+    felt: null,
     covered_title: "What this test covered",
     covered: "50 km/h (cruise) with a sensor at the front-left wheel.",
     not_covered_title: "Not covered",

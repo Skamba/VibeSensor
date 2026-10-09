@@ -195,6 +195,21 @@ real drives):
 `below_workshop` in between; `null` where the reference does not measure the
 cause.
 
+**In the report.** Page 1 ("What you feel", also in History) says, for the
+diagnosed cause, how much of what the test measured at the reference it
+explains (nearly all from 90 %, most from 50 %, else part) at its speeds, and
+whether a workshop acts on that level; below the wheel limit it adds that a
+workshop may find the wheels in balance and to ask for a road-force check. A
+trunk or tunnel reference adds that it is not the seat workshops measure at.
+A cause the reference does not measure "may not be what you feel"; without a
+reference the report says it cannot tell. Page 2 lists every cause with its
+`peak_mg`, share, severity and limit. A no-fault run says nothing about it.
+The wheel shop lines pair the limit with what a workshop then checks:
+residual imbalance under 5 g per wheel, 3 g preferred (tire-shop practice;
+balancers round to 5 g steps unless set to their fine mode), and road force
+(GM: at most 18 lb on passenger P-metric tires; Volvo: at most 65 N / 15 lb
+for a car with a vibration complaint, against 120 N in production).
+
 To check on real drives: whether the GM limits are peak or RMS readings (the
 bulletins do not say; peak is assumed); how the trunk relates to the seat
 track (they are not the same point: a seat-mounted and a trunk sensor on the
