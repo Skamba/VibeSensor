@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 from vibesensor.domain.strength_metrics import StrengthPeak
+
+if TYPE_CHECKING:
+    from vibesensor.dsp.window_spectrum import WindowSpectrum
 
 __all__ = ["SensorFrame"]
 
@@ -15,6 +19,9 @@ class SensorFrame:
 
     ``top_peaks`` stays typed as :class:`StrengthPeak` objects internally and
     is serialized back to JSON payload dicts only at explicit boundaries.
+    ``spectrum`` is the window's combined spectrum when the post-stop analysis
+    rebuilt it from the raw capture; it lives in memory only and is never
+    stored or exported.
     """
 
     run_id: str
@@ -46,3 +53,4 @@ class SensorFrame:
     analysis_window_start_us: int | None = None
     analysis_window_end_us: int | None = None
     analysis_window_synced: bool | None = None
+    spectrum: WindowSpectrum | None = field(default=None, repr=False, compare=False)

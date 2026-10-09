@@ -22,7 +22,7 @@ from vibesensor.analysis._types import Sample
 from vibesensor.analysis.orders.settings import ORDER_CONFIDENCE_SETTINGS
 from vibesensor.dsp.order_bands import ORDER_TOLERANCE_REL
 
-__all__ = ["without_fixed_tones"]
+__all__ = ["fixed_tones", "near_fixed_tone", "without_fixed_tones"]
 
 # A tone that stays put while the speed changes by half is no order: any
 # order's frequency would have left its tolerance window (+/- 8 %) several
@@ -91,37 +91,37 @@ def _sensor_fixed_tones(
     return fixed
 
 
-def without_fixed_tones(
+def fixed_tones(
     samples: Sequence[Sample],
-    peaks: Sequence[list[tuple[float, float]]],
-) -> list[list[tuple[float, float]]]:
-    """Each spectrum's peaks without those at its sensor's fixed tones.
+    peaks: Sequence[Sequence[tuple[float, float]]],
+) -> list[tuple[float, ...]]:
+    """The fixed tones (Hz) of each spectrum's sensor.
 
     Only spectra taken while moving judge what is fixed; a tone found that way
-    is dropped from every spectrum of that sensor.
+    is a tone of every spectrum of that sensor.
     """
     by_sensor: dict[str, list[int]] = defaultdict(list)
     for index, sample in enumerate(samples):
         if sample.speed_kmh is not None and sample.speed_kmh > 0 and peaks[index]:
             by_sensor[sample.client_id].append(index)
-    fixed_by_sensor = {
-        sensor: tones
+    by_client = {
+        sensor: tuple(_sensor_fixed_tones(indices, samples, peaks))
         for sensor, indices in by_sensor.items()
-        if (tones := _sensor_fixed_tones(indices, samples, peaks))
     }
-    if not fixed_by_sensor:
-        return [list(sample_peaks) for sample_peaks in peaks]
-    filtered: list[list[tuple[float, float]]] = []
-    for sample, sample_peaks in zip(samples, peaks, strict=True):
-        sensor_tones = fixed_by_sensor.get(sample.client_id)
-        if not sensor_tones:
-            filtered.append(list(sample_peaks))
-            continue
-        filtered.append(
-            [
-                (hz, amp)
-                for hz, amp in sample_peaks
-                if not any(abs(hz - tone) <= _tone_width_hz(tone) for tone in sensor_tones)
-            ]
-        )
-    return filtered
+    return [by_client.get(sample.client_id, ()) for sample in samples]
+
+
+def near_fixed_tone(hz: float, half_width_hz: float, tones: Sequence[float]) -> bool:
+    """Whether a band ``hz ± half_width_hz`` takes in one of *tones*."""
+    return any(abs(hz - tone) <= half_width_hz + _tone_width_hz(tone) for tone in tones)
+
+
+def without_fixed_tones(
+    peaks: Sequence[Sequence[tuple[float, float]]],
+    tones: Sequence[Sequence[float]],
+) -> list[list[tuple[float, float]]]:
+    """Each spectrum's peaks without those at its sensor's fixed tones (``fixed_tones``)."""
+    return [
+        [(hz, amp) for hz, amp in sample_peaks if not near_fixed_tone(hz, 0.0, sample_tones)]
+        for sample_peaks, sample_tones in zip(peaks, tones, strict=True)
+    ]

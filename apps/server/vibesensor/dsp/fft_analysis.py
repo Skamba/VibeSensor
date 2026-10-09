@@ -20,6 +20,7 @@ from vibesensor.dsp.vibration_strength import (
     compute_vibration_strength_db,
     empty_vibration_strength_metrics,
 )
+from vibesensor.dsp.window_spectrum import WindowSpectrum
 from vibesensor.live.payload_types import AxisPeak
 
 if TYPE_CHECKING:
@@ -388,11 +389,11 @@ def compute_combined_strength_metrics(
     freq_slice: FloatArray,
     valid_idx: IntIndexArray,
     strength_range_mask: BoolArray | None = None,
-) -> VibrationStrengthMetrics | None:
-    """Strength metrics of the combined spectrum only, as ``compute_fft_spectrum`` reports them.
+) -> tuple[VibrationStrengthMetrics, WindowSpectrum] | None:
+    """The combined spectrum and its strength metrics, as ``compute_fft_spectrum`` reports them.
 
     Skips the per-axis peak search, for callers that read only the combined
-    strength (post-stop raw replay). ``None`` when there are no analysis bins.
+    spectrum (post-stop raw replay). ``None`` when there are no analysis bins.
     """
     specs_all = _amplitude_spectra(
         fft_block,
@@ -401,12 +402,12 @@ def compute_combined_strength_metrics(
     )
     if specs_all is None or freq_slice.size == 0:
         return None
-    _combined_amp, strength_metrics = _combined_strength_metrics(
+    combined_amp, strength_metrics = _combined_strength_metrics(
         freq_slice=freq_slice,
         amp_slices=[specs_all[axis_idx, valid_idx] for axis_idx in range(len(AXES))],
         strength_range_mask=strength_range_mask,
     )
-    return strength_metrics
+    return strength_metrics, WindowSpectrum(freq_hz=freq_slice, amp_g=combined_amp)
 
 
 def _amplitude_spectra(
@@ -508,7 +509,7 @@ class SpectralAnalysisComputer:
         self,
         fft_block: FloatArray,
         sample_rate_hz: int,
-    ) -> VibrationStrengthMetrics | None:
+    ) -> tuple[VibrationStrengthMetrics, WindowSpectrum] | None:
         freq_slice, valid_idx, strength_range_mask = self._fft_cache_entry(sample_rate_hz)
         return compute_combined_strength_metrics(
             fft_block,

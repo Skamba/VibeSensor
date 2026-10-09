@@ -103,8 +103,10 @@ broadband content than the simulator does.
 the `*-iso8608-road` cases (healthy motorway, healthy sweep, engine sweep)
 pass on every matrix seed. The rest of the benchmark still runs on the
 idealised floor, because on the generated road (seeds 1-6, every case and
-car, 1278 runs) about half of it fails for reasons that need a product
-decision, not a simulator or test change:
+car, 1362 runs) a quarter of it fails for reasons that need a product
+decision, not a simulator or test change (half of it before the order levels
+were read at each order's line, "Order-tracked reads" in
+`docs/order_tracking.md`):
 
 - Mild and barely-there wheel imbalances, brake judder and faint engine
   tones are missed (`no_fault`, about 150 runs; no wheel-fault case passes on every seed): at 80-120 km/h a wheel order
@@ -112,10 +114,13 @@ decision, not a simulator or test change:
   each spectrum bin on a class A road at 100 km/h), and each window's eight
   strongest peaks are the hump's.
 - Cases expecting "about N x stronger at the corner than at the next sensor"
-  read "strongest at the corner" (about 290 runs): the next sensor's share of
-  the fault is under its own hump, so it is not measured there.
+  read "about as strong at the corner as at" another wheel (26 runs; 362
+  read "strongest at the corner" before the order-tracked reads): the
+  wheel-hop hump's curvature at the knuckles the fault does not reach reads
+  as part of the order's level there, so the ratio is understated. A sensor
+  too lossy for its spectra to be rebuilt falls back to the matched peaks.
 - Healthy cars driven in town are given a moderate wheel or brake fault
-  (24 runs) or a weak guess (23): hump peaks near the wheel order at city
+  (19 runs) or a weak guess (29): hump peaks near the wheel order at city
   speeds match it in about a quarter of the windows at every corner.
 - A 13 Hz body mode of fixed amplitude
   (`bench-healthy-residual-under-body-resonance-motorway`) stands 23 dB over

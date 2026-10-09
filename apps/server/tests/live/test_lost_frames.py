@@ -112,10 +112,11 @@ def test_lossy_spectrum_reads_the_noise_floor_the_raw_replay_reads() -> None:
         return 0.005 * np.sin(2 * np.pi * 15.0 * t_s)
 
     replay = SpectralAnalysisComputer(fft_n=FFT_N, spectrum_min_hz=5.0, spectrum_max_hz=200.0)
-    replayed = replay.compute_combined_strength_metrics(
+    computed = replay.compute_combined_strength_metrics(
         _samples(hum, frames=30)[-FFT_N:].T, SAMPLE_RATE_HZ
     )
-    assert replayed is not None
+    assert computed is not None
+    replayed, _spectrum = computed
 
     def live_floor(lost: set[int]) -> float:
         combined = _stream(hum, frames=30, lost=lost).latest_metrics(_CLIENT_ID)["combined"]

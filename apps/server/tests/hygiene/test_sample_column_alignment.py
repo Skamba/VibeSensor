@@ -23,6 +23,7 @@ from vibesensor.recording.sensor_frame import SensorFrame
 # Known source-specific columns that are intentionally absent from other sources.
 _DDL_ONLY = {"id"}  # autoincrement PK
 _EXPORT_ONLY = {"extras"}  # synthetic overflow column
+_IN_MEMORY_ONLY = {"spectrum"}  # replayed window spectrum, never stored
 
 
 def _ddl_columns() -> list[str]:
@@ -59,7 +60,7 @@ def _core_ddl_columns() -> set[str]:
 
 
 def _domain_fields() -> list[str]:
-    return [f.name for f in dataclasses.fields(SensorFrame)]
+    return [f.name for f in dataclasses.fields(SensorFrame) if f.name not in _IN_MEMORY_ONLY]
 
 
 def _export_columns() -> list[str]:

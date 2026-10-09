@@ -55,12 +55,23 @@ PicoScope NVH), so the persisted `diagnosis` block reports amplitude at the
 diagnosed order in **mg** (1 mg = 0.001 g), always with the dB above that
 location's own noise floor next to it:
 
-- `location_amplitudes[].amplitude_mg`: median amplitude of the order's matched
-  points at that location (`OrderMatchObservation.amp`, g × 1000). `None` when
-  the order was not detected there.
+- `location_amplitudes[].amplitude_mg`: the order's level at that location,
+  read at its line in every window at the speeds it was heard
+  (`Finding.sensor_levels[].level_g`, g × 1000; "Order-tracked reads" in
+  `docs/order_tracking.md`). Over a smooth floor a sensor the order does not
+  reach reads about 0; a broad resonance under the line (the wheel hop at a
+  wheel order on a real road) reads as a level of its own there, so the ratio
+  to the next sensor understates a single corner's fault. A brake finding's
+  level is read over the braking windows only.
+  Without reads at every location that matched the order (no raw capture, or
+  windows the replay could not rebuild), or with no location above 0, the
+  median amplitude of the order's matched points at each location
+  (`OrderMatchObservation.amp`); `None` where the order was not matched.
 - `location_amplitudes[].db_above_floor`:
-  `vibration_strength_db_scalar(peak_band_rms_amp_g=amplitude, floor_amp_g=median
-  floor of that location's samples)`.
+  `vibration_strength_db_scalar(peak_band_rms_amp_g=amplitude, floor_amp_g=floor)`,
+  the floor being the mean power beside the order's line at that location
+  (`sensor_levels[].floor_g`) with reads, else the median floor of that
+  location's samples.
 - `location_amplitudes[].ratio_to_strongest`: amplitude / strongest amplitude.
 - With no diagnosed order (`amplitude_basis = "overall"`), each location reports
   the p95 of its dominant-peak amplitude (`strength_peak_amp_g`).

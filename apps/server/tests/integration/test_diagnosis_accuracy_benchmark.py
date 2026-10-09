@@ -1276,6 +1276,15 @@ REALISM_CASES = (
         cars=("other",),
     ),
     Case("bench-front-left-wheel-motorway", _motorway(_FL_IMBALANCE), _FL_FAULT),
+    # The same on a real road: every knuckle's spectrum carries the road's
+    # wheel-hop hump at the wheel order, so how much stronger the order is at the
+    # front-left shows only in its own level, read at its line at every sensor.
+    Case(
+        "bench-front-left-wheel-motorway-iso8608-road",
+        _motorway(_FL_IMBALANCE),
+        _FL_FAULT,
+        iso8608_road=True,
+    ),
     # A healthy car whose road-excited seat mode or wheel hop sits where the
     # orders run: every window has a peak somewhere in the order's tolerance,
     # scattered over it, not a line on the prediction. Not a fault.
@@ -2754,10 +2763,11 @@ def _expected_check(
 def _assert_order_amplitude_mg(diagnosis: dict, case: Case, car: BenchCar) -> None:
     """The strongest location's mg level is on the scale of the tone the simulator injected.
 
-    It is a median over the run's matched windows (single-axis band level, smeared
-    while the speed ramps), so it reads a fraction of the injected 3-axis peak:
-    about a quarter at steady speed, a few percent on fast sweeps; a unit error is
-    off by 10x or more.
+    It is the order's tracked level: the band power over the local floor at its
+    line, averaged over the windows at the speeds it was heard and read over the
+    line's sweep while the speed changes. A tone on one axis of the combined
+    spectrum reads a fraction of the injected peak, and the road's floor
+    partly hides a faint one; a unit error is off by 10x or more.
     """
     assert diagnosis["amplitude_basis"] == "order"
     strongest = diagnosis["location_amplitudes"][0]
@@ -3225,9 +3235,13 @@ def _assert_report_view(
                 assert keyword in owner.next_step, owner.next_step
     if expected.dominant_corner and diagnosis["verdict"] == "fault":
         corner = _ZONE_TEXT_EN[diagnosis["zone"]]
-        assert f"stronger at the {corner} than at the next sensor" in owner.description, (
-            owner.description
-        )
+        # The order's own level at the next sensor can read nothing over its floor
+        # (a corner's imbalance does not reach the other knuckles over their road
+        # noise): then there is no ratio to state, only where it is measurable.
+        assert (
+            f"stronger at the {corner} than at the next sensor" in owner.description
+            or f"measurable only at the {corner}," in owner.description
+        ), owner.description
 
 
 def _assert_pdf_text(result: SimPipelineResult, case: Case, car: BenchCar) -> None:

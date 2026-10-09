@@ -529,6 +529,7 @@ export interface components {
             peak_classification?: string | null;
             phase_evidence?: components["schemas"]["PhaseEvidence"] | null;
             ranking_score?: number | null;
+            sensor_levels?: components["schemas"]["SensorLevel"][];
             severity?: string | null;
             signatures_observed?: string[];
             strongest_location?: string | null;
@@ -1205,6 +1206,19 @@ export interface components {
             check_key: string;
             explanation?: components["schemas"]["PayloadValue"];
             state: string;
+        };
+        /**
+         * HTTP contract for an order's own level at one sensor (``SensorOrderLevel``).
+         *
+         * ``level_g`` is the order alone, read at its line in every window at the
+         * speeds it is heard (band RMS over the local floor); ``floor_g`` is that
+         * local floor; ``windows`` how many windows were read.
+         */
+        SensorLevel: {
+            floor_g: number;
+            level_g: number;
+            location: string;
+            windows: number;
         };
         /** Response body confirming the new location assignment for a client. */
         SetClientLocationResponse: {

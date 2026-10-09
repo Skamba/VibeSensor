@@ -19,6 +19,7 @@ __all__ = [
     "PhaseEvidence",
     "PhaseSpeedBreakdownRow",
     "PlotDataResult",
+    "SensorLevel",
     "SpeedBreakdownRow",
 ]
 
@@ -46,6 +47,21 @@ class PeakTableRow(TypedDict):
     suspected_source: str
     peak_classification: str
     typical_speed_band: str
+
+
+@with_config(_IGNORE_EXTRA)
+class SensorLevel(TypedDict):
+    """HTTP contract for an order's own level at one sensor (``SensorOrderLevel``).
+
+    ``level_g`` is the order alone, read at its line in every window at the
+    speeds it is heard (band RMS over the local floor); ``floor_g`` is that
+    local floor; ``windows`` how many windows were read.
+    """
+
+    location: str
+    level_g: float
+    floor_g: float
+    windows: int
 
 
 @with_config(_IGNORE_EXTRA)

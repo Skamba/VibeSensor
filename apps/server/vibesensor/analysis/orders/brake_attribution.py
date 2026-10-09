@@ -24,6 +24,7 @@ from vibesensor.analysis._types import PhaseLabels, Sample
 from vibesensor.analysis.orders.matching import BRAKING_PHASE, OrderMatchAccumulator
 from vibesensor.domain.finding import Finding
 from vibesensor.domain.finding_types import VibrationSource
+from vibesensor.domain.order_match import SensorOrderLevel
 
 __all__ = ["BRAKING_PHASE", "as_brake_finding", "only_while_braking"]
 
@@ -187,8 +188,12 @@ def only_while_braking(
     return len(clear_present) <= _MAX_CLEAR_PRESENT_SHARE * len(clear_possible)
 
 
-def as_brake_finding(finding: Finding) -> Finding:
-    """The wheel-order *finding* put down to the brakes: its judder while braking."""
+def as_brake_finding(finding: Finding, braking_levels: tuple[SensorOrderLevel, ...]) -> Finding:
+    """The wheel-order *finding* put down to the brakes: its judder while braking.
+
+    *braking_levels* are the order's levels at each sensor read over the
+    braking windows only (``OrderMatchAccumulator.braking_sensor_levels``).
+    """
     origin = finding.origin
     if origin is not None:
         origin = replace(
@@ -204,5 +209,6 @@ def as_brake_finding(finding: Finding) -> Finding:
         matched_points=tuple(
             point for point in finding.matched_points if point.phase == BRAKING_PHASE
         ),
+        sensor_levels=braking_levels,
         origin=origin,
     )

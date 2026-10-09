@@ -12,6 +12,7 @@ from vibesensor.common.json_utils import i18n_ref
 from vibesensor.domain.strength_metrics import StrengthMetrics
 from vibesensor.dsp.constants import SPECTRUM_MAX_HZ, SPECTRUM_MIN_HZ
 from vibesensor.dsp.fft_analysis import SpectralAnalysisComputer
+from vibesensor.dsp.window_spectrum import WindowSpectrum
 from vibesensor.recording.raw_capture import RawRunCapture
 from vibesensor.recording.raw_capture_quality import (
     RawCaptureLossPolicyAssessment,
@@ -125,6 +126,7 @@ class _ResolvedWindow:
 class _ComputedStrengthMetrics:
     metrics: StrengthMetrics
     analytically_valid: bool
+    spectrum: WindowSpectrum | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -444,6 +446,7 @@ def _rebuild_sample(
             strength_bucket=domain_strength.strength_bucket,
             strength_peak_amp_g=domain_strength.peak_amp_g,
             strength_floor_amp_g=domain_strength.noise_floor_amp_g,
+            spectrum=computed_strength.spectrum,
         ),
         RawReplayWindowCoverage(
             client_id=sample.client_id,
@@ -973,17 +976,19 @@ def _compute_strength_metrics(
     *,
     fft_computer: SpectralAnalysisComputer,
 ) -> _ComputedStrengthMetrics:
-    strength_metrics = (
+    computed = (
         fft_computer.compute_combined_strength_metrics(fft_block, sample_rate_hz)
         if fft_block.size > 0
         else None
     )
-    if strength_metrics is None:
+    if computed is None:
         return _ComputedStrengthMetrics(
             metrics=strength_metrics_from_mapping(None),
             analytically_valid=False,
         )
+    strength_metrics, spectrum = computed
     return _ComputedStrengthMetrics(
         metrics=strength_metrics_from_mapping(strength_metrics),
         analytically_valid=True,
+        spectrum=spectrum,
     )

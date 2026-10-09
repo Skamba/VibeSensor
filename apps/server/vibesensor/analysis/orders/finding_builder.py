@@ -70,6 +70,7 @@ def assemble_order_finding(
         cruise_fraction=phase_evidence.cruise_fraction,
         phases_detected=phase_evidence.phases_detected,
         matched_points=tuple(match.matched_points),
+        sensor_levels=match.sensor_levels,
         evidence=FindingEvidence(
             match_rate=context.effective_match_rate,
             global_match_rate=context.match_rate,

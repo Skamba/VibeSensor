@@ -12,17 +12,18 @@ from vibesensor.common.json_utils import (
     i18n_ref,
     payload_value_from_json,
 )
-from vibesensor.common.scalars import float_or, optional_float, text_or_none
+from vibesensor.common.scalars import coerce_count, float_or, optional_float, text_or_none
 from vibesensor.domain._numeric import coerce_float
 from vibesensor.domain.finding import Finding
 from vibesensor.domain.finding_evidence import FindingEvidence, Signature
 from vibesensor.domain.finding_types import VibrationSource
-from vibesensor.domain.order_match import OrderMatchObservation
+from vibesensor.domain.order_match import OrderMatchObservation, SensorOrderLevel
 from vibesensor.summary.analysis_views import (
     FindingEvidenceMetrics,
     LocationHotspotPayload,
     MatchedPoint,
     PhaseEvidence,
+    SensorLevel,
 )
 from vibesensor.summary.finding_payload_parts import AmplitudeMetric, FindingPayload
 from vibesensor.summary.origin_fields import (
@@ -142,6 +143,16 @@ def finding_payload_from_domain(finding: Finding) -> FindingPayload:
     matched_points = _matched_points_payload(finding)
     if matched_points is not None:
         payload["matched_points"] = matched_points
+    if finding.sensor_levels:
+        payload["sensor_levels"] = [
+            SensorLevel(
+                location=level.location,
+                level_g=level.level_g,
+                floor_g=level.floor_g,
+                windows=level.windows,
+            )
+            for level in finding.sensor_levels
+        ]
     evidence_metrics = build_evidence_metrics(finding)
     if evidence_metrics is not None:
         payload["evidence_metrics"] = evidence_metrics
@@ -221,6 +232,22 @@ def finding_from_payload(payload: Mapping[str, object]) -> Finding:
         else ()
     )
 
+    raw_levels = payload.get("sensor_levels")
+    sensor_levels = (
+        tuple(
+            SensorOrderLevel(
+                location=str(item.get("location", "")),
+                level_g=float_or(item.get("level_g"), 0.0),
+                floor_g=float_or(item.get("floor_g"), 0.0),
+                windows=coerce_count(item.get("windows")),
+            )
+            for item in raw_levels
+            if isinstance(item, Mapping)
+        )
+        if isinstance(raw_levels, list)
+        else ()
+    )
+
     hotspot_raw = payload.get("location_hotspot")
     location = (
         location_hotspot_from_payload(hotspot_raw) if isinstance(hotspot_raw, Mapping) else None
@@ -262,6 +289,7 @@ def finding_from_payload(payload: Mapping[str, object]) -> Finding:
         cruise_fraction=cruise_fraction,
         phases_detected=phases_detected,
         matched_points=matched_points,
+        sensor_levels=sensor_levels,
         evidence=evidence,
         location=location,
         origin=origin,

@@ -990,7 +990,10 @@ def _description(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str:
     top = _strongest_two(diagnosis)
     if top:
         location = ctx.location(top[0]["location"])
-        if len(top) == 2 and top[1]["ratio_to_strongest"]:
+        if len(top) == 2 and top[1]["ratio_to_strongest"] == 0:
+            # The order's own level is over the floor at no other sensor: no ratio to give.
+            parts.append(ctx.t("DESC_ONLY_MEASURED_AT", location=location))
+        elif len(top) == 2 and top[1]["ratio_to_strongest"]:
             ratio = 1.0 / top[1]["ratio_to_strongest"]
             if ratio >= _DOMINANT_RATIO:
                 parts.append(ctx.t("DESC_STRONGER", ratio=ctx.ratio(ratio), location=location))

@@ -11,6 +11,7 @@ from statistics import median
 
 __all__ = [
     "OrderMatchObservation",
+    "SensorOrderLevel",
     "frequency_tracking_slope",
     "heard_speed_range",
     "trend_moves",
@@ -55,6 +56,24 @@ class OrderMatchObservation:
             raise ValueError("predicted_hz must be > 0")
         if self.rel_error < 0:
             raise ValueError("rel_error must be >= 0")
+
+
+@dataclass(frozen=True, slots=True)
+class SensorOrderLevel:
+    """An order's own level at one sensor, read at the order's line in every window.
+
+    ``level_g`` is the order alone: the band RMS at its line (over
+    ``PEAK_BANDWIDTH_HZ``, a peak's measure) less the local floor's share in
+    power, averaged over ``windows`` windows at the speeds the order is heard.
+    ``floor_g`` is that local floor (band RMS of the spectrum beside the line).
+    A sensor the order does not reach reads about 0 (see "Order-tracked reads"
+    in ``docs/order_tracking.md``).
+    """
+
+    location: str
+    level_g: float
+    floor_g: float
+    windows: int
 
 
 def frequency_tracking_slope(points: Sequence[OrderMatchObservation]) -> float | None:
