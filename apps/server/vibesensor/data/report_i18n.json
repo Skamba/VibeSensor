@@ -555,6 +555,10 @@
     "en": "This cause explains {share} of what the test measured at the {location}, nearest where you sit.",
     "nl": "Deze oorzaak verklaart {share} van wat de test mat bij de {location}, het dichtst bij waar je zit."
   },
+  "FELT_SHARE_HALF": {
+    "en": "about half",
+    "nl": "ongeveer de helft"
+  },
   "FELT_SHARE_MOST": {
     "en": "most",
     "nl": "het grootste deel"

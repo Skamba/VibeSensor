@@ -32,7 +32,12 @@ from vibesensor.analysis.constants import (
     MIN_ORDER_TRACKING_SLOPE,
     SPEED_COVERAGE_MIN_PCT,
 )
-from vibesensor.analysis.felt_ranking import WORKSHOP_LEVELS, FeltCause, felt_ranking
+from vibesensor.analysis.felt_ranking import (
+    WORKSHOP_LEVELS,
+    FeltAttribution,
+    FeltCause,
+    felt_ranking,
+)
 from vibesensor.analysis.guided_steps import guided_step_done
 from vibesensor.analysis.orders.tracking import window_duration_s
 from vibesensor.analysis.phase_segmentation import BRAKING_MIN_DURATION_S, TimeSpanLookup
@@ -278,6 +283,15 @@ def build_diagnosis(
     reference_speed = _reference_speed_kmh(candidate)
     speed_min, speed_max = _matched_speed_range(candidate)
     spectrum_location = _strongest_row_location(rows) or location
+    source_checks = _source_checks(
+        candidate,
+        findings,
+        refs,
+        speed_dependence,
+        braked=_braked(braking),
+        same_rhythm=_same_rhythm_source(candidate, alias_gear, alternative),
+        no_fault=verdict is DiagnosisVerdict.NO_FAULT,
+    )
     payload: DiagnosisPayload = {
         "verdict": verdict.value,
         "confidence_level": level.value if level is not None else None,
@@ -332,30 +346,66 @@ def build_diagnosis(
             centre_speed_kmh=reference_speed,
             refs=refs,
         ),
-        "source_checks": _source_checks(
-            candidate,
-            findings,
-            refs,
-            speed_dependence,
-            braked=_braked(braking),
-            same_rhythm=_same_rhythm_source(candidate, alias_gear, alternative),
-            no_fault=verdict is DiagnosisVerdict.NO_FAULT,
-        ),
+        "source_checks": source_checks,
         "conditions": _conditions(refs),
         "driveline_parts": _driveline_parts(candidate, zone, refs),
-        "felt": _felt(test_run, metadata, no_fault=verdict is DiagnosisVerdict.NO_FAULT),
+        "felt": _felt(
+            test_run,
+            findings,
+            metadata,
+            _felt_attribution(candidate, findings, refs, source_checks),
+            no_fault=verdict is DiagnosisVerdict.NO_FAULT,
+        ),
     }
     if alternative is not None and verdict is not DiagnosisVerdict.NO_FAULT:
         payload["alternative"] = alternative
     return payload
 
 
-def _felt(test_run: TestRun, metadata: RunMetadata, *, no_fault: bool) -> FeltPayload:
+def _felt_attribution(
+    candidate: Finding | None,
+    findings: Sequence[Finding],
+    refs: _References,
+    source_checks: Sequence[SourceCheck],
+) -> FeltAttribution:
+    """The diagnosis's attribution of the orders, for the felt block.
+
+    The sources it rules out are no felt cause, and an engine order that turns
+    with a wheel or propshaft order in top gear (no measured RPM) is that
+    order's line: the diagnosed source's where it is one of the two.
+    """
+    return FeltAttribution(
+        ruled_out=frozenset(
+            VibrationSource(check["source"])
+            for check in source_checks
+            if check["status"] in ("ruled_out", "ruled_out_estimated")
+        ),
+        line_of={
+            finding.order_code: road
+            for finding in findings
+            if finding.order_code is not None and (road := _road_alike(finding, refs)) is not None
+        },
+        owner=candidate.suspected_source if candidate is not None else None,
+    )
+
+
+def _felt(
+    test_run: TestRun,
+    findings: Sequence[Finding],
+    metadata: RunMetadata,
+    attribution: FeltAttribution,
+    *,
+    no_fault: bool,
+) -> FeltPayload:
     """The causes by their level at the felt reference sensor, against workshop limits.
 
-    A no-fault run names no cause, so it lists none.
+    *findings* are the diagnosis's (an order the neutral coast-down put on
+    another source is that source's), and so are the top causes standing for
+    each source. A no-fault run names no cause, so it lists none.
     """
-    ranking = felt_ranking(test_run.top_causes, test_run.findings)
+    attributed = {finding.finding_id: finding for finding in findings}
+    top_causes = [attributed.get(cause.finding_id, cause) for cause in test_run.top_causes]
+    ranking = felt_ranking(top_causes, findings, attribution)
     bin_hz = 1.0 / window_duration_s(metadata)
     causes = () if no_fault else ranking.causes
     return {

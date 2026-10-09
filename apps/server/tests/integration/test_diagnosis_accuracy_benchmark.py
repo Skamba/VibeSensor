@@ -3417,6 +3417,20 @@ def _assert_felt(diagnosis: dict, case: Case, car: BenchCar) -> None:
     ]
     assert all(mg > 0 for mg in injected), (felt, injected)
     assert all(mg <= 2.0 * injected[0] for mg in injected), (felt, injected)
+    # One injected tone is one cause there: an engine order the drive's gear
+    # puts on a wheel order is one line, never counted for both.
+    tones = [
+        {
+            tone
+            for code in row["order_codes"]
+            for phase in case.phases
+            for tone in _phase_tones(phase, code, car)
+        }
+        for row in felt["causes"]
+        if row["level_mg"] > 0
+    ]
+    for index, own in enumerate(tones):
+        assert all(own.isdisjoint(other) for other in tones[index + 1 :]), felt
 
 
 def _phase_tones(phase: ScenarioPhase, order_code: str, car: BenchCar) -> set[tuple[str, float]]:

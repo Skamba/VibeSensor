@@ -9,8 +9,9 @@ from __future__ import annotations
 import pytest
 from test_support.findings import make_finding
 
-from vibesensor.analysis.felt_ranking import felt_ranking, rank_by_felt
+from vibesensor.analysis.felt_ranking import FeltAttribution, felt_ranking, rank_by_felt
 from vibesensor.domain.finding import Finding
+from vibesensor.domain.finding_types import VibrationSource
 from vibesensor.domain.order_match import OrderMatchObservation, SensorOrderLevel
 from vibesensor.dsp.window_spectrum import tone_line_level_g
 
@@ -111,6 +112,53 @@ def test_a_sources_orders_add_in_power_and_a_shared_line_counts_once() -> None:
 
     assert [c.level_g for c in causes] == pytest.approx([0.05, 0.05])
     assert [c.share for c in causes] == pytest.approx([0.5, 0.5])
+
+
+def test_a_source_the_diagnosis_rules_out_is_no_felt_cause() -> None:
+    wheel = _cause("W", "wheel/tire", "wheel_1x", {"Trunk": 0.05})
+    engine = _cause("E", "engine", "engine_1x", {"Trunk": 0.03})
+    coast_down = FeltAttribution(ruled_out=frozenset({VibrationSource.WHEEL_TIRE}))
+
+    (felt,) = felt_ranking((wheel, engine), (wheel, engine), coast_down).causes
+
+    assert felt.finding is engine and felt.share == pytest.approx(1.0)
+
+
+@pytest.mark.parametrize(
+    ("owner", "expected"),
+    [
+        # The wheels named: the shared line is their T2; the engine keeps its E2.
+        (VibrationSource.WHEEL_TIRE, {"W": ("T1", "T2"), "E": ("E2",)}),
+        (VibrationSource.ENGINE, {"E": ("E1", "E2"), "W": ("T1",)}),
+    ],
+)
+def test_an_engine_order_on_a_wheel_orders_line_counts_once_for_the_diagnosed_source(
+    owner: VibrationSource, expected: dict[str, tuple[str, ...]]
+) -> None:
+    # Without measured RPM, E1 turns with T2 in top gear: one line at the trunk.
+    t1 = _cause("W", "wheel/tire", "wheel_1x", {"Trunk": 0.03})
+    t2 = _cause("T2", "wheel/tire", "wheel_2x", {"Trunk": 0.04})
+    e1 = _cause("E", "engine", "engine_1x", {"Trunk": 0.04})
+    e2 = _cause("E2", "engine", "engine_2x", {"Trunk": 0.02})
+    attribution = FeltAttribution(line_of={"E1": "T2"}, owner=owner)
+
+    causes = felt_ranking((t1, e1), (t1, t2, e1, e2), attribution).causes
+
+    assert {c.finding.finding_id: tuple(code for code, _ in c.order_levels_g) for c in causes} == (
+        expected
+    )
+    # T1, T2 (= E1) and E2: 9 + 16 + 4 in power, each line once.
+    assert sum(c.share or 0.0 for c in causes) == pytest.approx(1.0)
+
+
+def test_a_cause_whose_only_line_is_the_diagnosed_sources_is_not_listed() -> None:
+    t2 = _cause("W", "wheel/tire", "wheel_2x", {"Trunk": 0.04})
+    e1 = _cause("E", "engine", "engine_1x", {"Trunk": 0.04})
+    attribution = FeltAttribution(line_of={"E1": "T2"}, owner=VibrationSource.WHEEL_TIRE)
+
+    (felt,) = felt_ranking((e1, t2), (t2, e1), attribution).causes
+
+    assert felt.finding is t2 and felt.share == pytest.approx(1.0)
 
 
 def test_causes_heard_at_different_speeds_each_explain_their_own() -> None:
