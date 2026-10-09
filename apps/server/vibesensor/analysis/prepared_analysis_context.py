@@ -41,6 +41,7 @@ def prepare_analysis_context(
     )
     sensor_ids = {client_id for sample in typed_samples if (client_id := sample.client_id)}
     total_dropped, total_overflow = compute_frame_integrity_counts(typed_samples)
+    loose_mounts = find_loose_mounts(typed_samples, window_means, metadata=context)
     return PreparedAnalysisContext(
         file_name=file_name,
         context=context,
@@ -59,9 +60,9 @@ def prepare_analysis_context(
             sat_count=accel_stats["sat_count"],
             total_dropped=total_dropped,
             total_overflow=total_overflow,
-        ),
+        ).with_loose_mounts(len(loose_mounts)),
         sensor_locations=tuple(sensor_locations),
         connected_locations=frozenset(connected_locations),
         sensor_intensity_by_location=tuple(sensor_intensity_by_location),
-        loose_mounts=find_loose_mounts(typed_samples, window_means, metadata=context),
+        loose_mounts=loose_mounts,
     )

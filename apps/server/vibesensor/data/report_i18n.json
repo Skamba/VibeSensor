@@ -1059,6 +1059,10 @@
     "en": "Few sensors were active, so the location is less certain.",
     "nl": "Er waren weinig sensoren actief, dus de locatie is minder zeker."
   },
+  "QUALITY_SENSOR_MOUNTS_WARN": {
+    "en": "One or more sensors moved on their mount during the drive, so the vibration measured there is less reliable.",
+    "nl": "Een of meer sensoren verschoven tijdens de rit op hun bevestiging, dus de trilling die daar is gemeten is minder betrouwbaar."
+  },
   "QUALITY_SPEED_VARIATION_PASS": {
     "en": "The speed was usable for matching the wheel and drivetrain orders.",
     "nl": "De snelheid was bruikbaar om de ordes van wielen en aandrijving te herkennen."
@@ -1847,6 +1851,10 @@
     "en": "Sensor coverage",
     "nl": "Sensordekking"
   },
+  "SUITABILITY_CHECK_SENSOR_MOUNTS": {
+    "en": "Sensor mounting",
+    "nl": "Sensorbevestiging"
+  },
   "SUITABILITY_CHECK_SPEED_VARIATION": {
     "en": "Speed variation",
     "nl": "Snelheidsvariatie"
@@ -1894,6 +1902,10 @@
   "SUITABILITY_SENSOR_COVERAGE_WARN": {
     "en": "Few active sensors; location ranking is weaker.",
     "nl": "Weinig actieve sensoren; locatievergelijking is minder betrouwbaar."
+  },
+  "SUITABILITY_SENSOR_MOUNTS_WARN": {
+    "en": "One or more sensors moved on their mount during the drive, so the vibration measured there is less reliable.",
+    "nl": "Een of meer sensoren verschoven tijdens de rit op hun bevestiging, dus de trilling die daar is gemeten is minder betrouwbaar."
   },
   "SUITABILITY_SPEED_VARIATION_MANUAL": {
     "en": "The speed was entered by hand and does not follow the car; use GPS or OBD-II speed.",

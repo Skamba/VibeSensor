@@ -449,7 +449,11 @@ check its mount and record again" (run-quality warning `sensor_loose_mount`,
 in the report, History and PDF). A firmly fixed sensor turns only with the
 part it sits on, and so with the car; a sensor that sagged on loose ties or
 tipped off a pad reads the same car turned by an angle of its own. It needs
-the raw capture and three or more sensors.
+the raw capture and three or more sensors. A run where it found a loose
+sensor also gets a warning row "Sensor mounting" in the run-suitability
+checks (`SUITABILITY_CHECK_SENSOR_MOUNTS`, `loose_sensors`), so the quality
+table never reads all OK above the warning. A run where it found none gets no
+row: it may not have been checked.
 
 1. Each replayed raw window's mean per axis is that window's 0 Hz reading:
    gravity plus the car's own acceleration (`RawReplayWindowCoverage.mean_xyz`).

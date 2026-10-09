@@ -7,6 +7,8 @@ from vibesensor.recording.run_suitability_codec import (
     run_suitability_from_payload,
     run_suitability_payload,
 )
+from vibesensor.report.i18n import tr
+from vibesensor.report.run_quality import suitability_check_detail
 
 
 def test_run_suitability_from_payload_uses_canonical_check_key() -> None:
@@ -117,3 +119,23 @@ def test_run_suitability_payload_uses_raw_sample_duration_details() -> None:
 
 def test_run_suitability_payload_handles_none() -> None:
     assert run_suitability_payload(None) == []
+
+
+def test_a_loose_mount_adds_a_warning_row_that_survives_storage() -> None:
+    """Only a found loose mount adds the row: a run without one may not have been checked."""
+    base = RunSuitability(checks=(SuitabilityCheck(check_key="speed_profile", state="pass"),))
+
+    assert base.with_loose_mounts(0) is base
+    stored = run_suitability_from_payload(run_suitability_payload(base.with_loose_mounts(2)))
+    assert stored.checks[-1] == SuitabilityCheck(
+        check_key="SUITABILITY_CHECK_SENSOR_MOUNTS", state="warn", details=(("loose_sensors", 2),)
+    )
+    row = run_suitability_payload(stored)[-1]
+    assert [tr("en", row["check_key"]), tr("nl", row["check_key"])] == [
+        "Sensor mounting",
+        "Sensorbevestiging",
+    ]
+    assert suitability_check_detail("en", row, speed_unit="kmh") == (
+        "One or more sensors moved on their mount during the drive, so the vibration measured"
+        " there is less reliable."
+    )

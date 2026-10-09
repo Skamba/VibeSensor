@@ -42,7 +42,7 @@ summary's `diagnosis` block (`d` below; contract in
 
 | Report element | Source |
 |---|---|
-| Checks | `run_suitability[]` (`check_key` label, `state`, plain meaning; a warning keeps its measured specifics). Frame integrity warns on dropped frames, queue overflows or incomplete raw-replay coverage, so it never reads "no data lost" next to the replay-coverage warning |
+| Checks | `run_suitability[]` (`check_key` label, `state`, plain meaning; a warning keeps its measured specifics). Frame integrity warns on dropped frames, queue overflows or incomplete raw-replay coverage, so it never reads "no data lost" next to the replay-coverage warning; "Sensor mounting" is a warning row only when the loose-mount check found a loose sensor, named in the warnings below it |
 | Warnings | `warnings[].code` → plain text, else the resolved `title` |
 | Traceability | `run_id`, `sensor_model`, `firmware_version`, `raw_sample_rate_hz`, VibeSensor version |
 
