@@ -101,8 +101,8 @@ broadband content than the simulator does.
 
 Every benchmark case drives on `generated_road(seed)`, as every real car has a
 road under it, unless it names why it stays on the idealised floor
-(`Case.idealised_floor`, an `IdealisedFloor`): 82 of the 121 cases (147 of
-the 222 case and car runs) drive on the road and pass the CI seed and the
+(`Case.idealised_floor`, an `IdealisedFloor`): 82 of the 121 cases CI runs
+(147 of the 222 case and car runs) drive on the road and pass the CI seed and the
 matrix rule there. The other 39 are expectations the analysis does not meet
 on the road yet, for reasons that need a product decision, not a simulator or
 test change (seeds 1-6 with every case on the road, 1362 runs):
@@ -284,6 +284,109 @@ road (`_road_with`); a non-uniform tyre carries T1-T4 falling as 1/n
 
 ## Fault amplitudes
 
+A bench fault comes in two sizes. **Tuned** (the default, and what CI gates
+on): order tones at levels set per sensor, sized so the analysis finds what a
+real car with that fault shows. **Physical**
+(`VIBESENSOR_BENCH_FAULT_AMPLITUDES=physical`): the fault as a force in the
+car, in grams or newtons, which every sensor reads through the car to its own
+mount (`simulator/fault_forces.py`, `Profile.order_forces`). The physical
+sizes are a measured yardstick, not a gate: `tools/dev/physical_fault_tally.py`
+runs the bench with them and prints how much of it the analysis meets (see
+"Physical yardstick" below). Every case has both sizes (`_sized` in the bench)
+except `bench-weak-front-left-wheel-motorway`, a 10 g wheel that runs only
+with physical sizes (`Case.physical_only`: tuned levels have no gram scale).
+
+### Tuned
+
 | Parameter | Value | Source / reason |
 |-----------|-------|-----------------|
 | Rotating unbalance (`wheel_imbalance`, `wheel_mild_imbalance`, `driveshaft_imbalance`) | the order tones grow with the square of the speed (`UNBALANCE_SPEED_EXPONENT` 2, `Profile.order_speed_exponent`), at their listed level at 100 km/h | a mass `m` at radius `r` turning at `ω` pulls with `F = m r ω²` (ISO 21940-11, the balance-quality standard that replaced ISO 1940-1), and `ω` follows the road speed. A healthy car's residual is then faint in town, as on a real car, instead of as strong as at motorway speed |
+| Level at each sensor | set per sensor by the case (`_ov`, `_road_with` layers) | a wheel that lost a weight plays 0.85 of `wheel_imbalance` at its corner: about 650 mg (3-axis vector) at 80 km/h, 1 g at 100 km/h; the other sensors hear none of it, or a tenth to a third of it where a case layers it there |
+
+### Physical
+
+The fault is a force turning with its order (`OrderForce`): an unbalance
+`m r ω²`, or a force its shape or load fixes, the same at every speed. A
+sensor reads it through the structure between them:
+
+| Parameter | Value | Source / reason |
+|-----------|-------|-----------------|
+| Own knuckle under its wheel's force | the quarter car's unsprung mass on tyre and suspension (`QuarterCar`: 40 kg, 200 kN/m tyre, wheel hop near 12 Hz) vertically, the wheel's fore-aft mode (17 Hz, 15 % damping) fore-aft | the same quarter car the road drives (`simulator/road_vibration.py`); fore-aft modes of 15-20 Hz in a rolling car (bushing rubber and tyre slip damp them) |
+| The body under a wheel's force | rigid at these rates: fore-aft the whole sprung body (4 × 330 kg) moves; vertically the wheel's own corner moves three times as much as any other point | heave, pitch and roll add at the loaded corner and largely cancel elsewhere with a dynamic index near one (Gillespie, *Fundamentals of Vehicle Dynamics*, ch. 5) |
+| Another corner's knuckle | the body's motion through its control arms (stiff fore-aft and sideways) and its suspension (vertically) | the knuckle hangs on the arms and rides on the tyre |
+| Propshaft and engine | through rubber mounts (200 kg powertrain on 10 Hz mounts, 10 % damping) into a stiff body point that moves like 50 kg below 100 Hz; a sensor on the engine or gearbox rides on the shaking powertrain | mounts ring at 6-12 Hz with 5-15 % damping |
+| Sensor alignment | a fifth of the strongest axis on the other two | a sensor fixed about 10° off square |
+
+| Fault (bench) | Size | Source / reason |
+|---------------|------|-----------------|
+| Wheel that lost a balancing weight | 40 g at the rim | *assumption*: one mid-size clip-on or stick-on weight (they come in 5 g steps) |
+| Mild, weak, barely-there wheel | 15 g, 10 g, 5 g | a balancer shows under 5 g (a quarter ounce) as zero |
+| Healthy car's residual | 2-3.5 g per wheel | under the balancing tolerance |
+| Propshaft | 15 g on its 40 mm tube | a lost balance weight |
+| Inline-4 second order (E2) | 150 g at 45 mm, over a 20 g flywheel residual at E1 | 0.5 kg reciprocating per cylinder, 0.3 crank-to-rod ratio, no balance shafts; the crank four times worse than ISO 21940-11 G6.3 |
+| Engine first order (crank pulley, flywheel) | 50 g at 0.1 m | 25 times G6.3 |
+| Firing rhythm (six, three, V8) | 500 N | about 150 N·m at the firing order reacted by mounts about 0.3 m apart |
+| Tyre radial force variation | 150 N at T2, 50 N at T1 (out of round); 150/n N at Tn (non-uniform) | OEM uniformity grading passes under about 100 N at the first harmonic (Gent & Walter, *The Pneumatic Tire*, NHTSA 2006, ch. 9) |
+| Brake judder | 150 N fore-aft at the tyre | about 50 N·m of brake torque variation (Jacobsson, *Proc. IMechE D* 217, 2003) |
+| Propshaft joint at an angle | 30 N at P2 over 5 g at P1 | the joint pulses the shaft's torque twice per turn |
+
+A 40 g wheel at 30, 50, 80, 100 and 130 km/h shakes its own knuckle at 2,
+20, 186, 409 and 1120 mg (3-axis vector) and every other sensor at 0.5, 1.7,
+7, 14 and 34 mg: the wheel hop amplifies its own corner, and the 1.3 t body
+barely moves.
+
+### Physical yardstick
+
+Measured 2026-10-09 with `tools/dev/physical_fault_tally.py`. A case and car
+passes as CI counts it: seed 1 and at least four of seeds 2-6.
+
+| Area | On the road | Idealised floor | All |
+|------|-------------|-----------------|-----|
+| Wheel and tyre | 16/80 | 34/43 | 50/123 |
+| Driveline | 1/15 | - | 1/15 |
+| Engine | 7/18 | 2/8 | 9/26 |
+| Brakes | - | 7/7 | 7/7 |
+| Healthy | 35/36 | 15/17 | 50/53 |
+| Total | | | 117/224 |
+
+Sized in grams, most faults the tuned bench gates on sit under what the
+analysis finds on the road. The healthy cars stay healthy on the road (the one
+road "healthy" miss is the electric car without its motor ratio, whose 15 g
+propshaft the report calls vibration-free). On the idealised floor, with no
+road hump to hide it, the residual case under a 13 Hz body mode
+(`bench-healthy-residual-under-body-resonance-motorway`) names rear-right, the
+3.5 g wheel on the most coupled mount: where residual ends and a fault begins.
+
+Smallest fault found, by speed (`... limits`: a 14 s ramp over ±8 km/h, then
+a wobbly 15 s cruise; found on 4 of seeds 1-5 at that size and every larger one
+tried, as a fault or weak evidence naming the right source, and for a wheel at
+its knuckle the right wheel; in brackets the smallest that is a fault verdict
+where that differs; none: not even the largest size tried):
+
+| Source (sizes tried) | Floor | 50 km/h | 80 km/h | 100 km/h | 130 km/h |
+|----------------------|-------|---------|---------|----------|----------|
+| Front-left wheel, every sensor (2-60 g) | road | none | none | 40 g | 10 g |
+| | idealised | 20 g | 2 g | 2 g | 2 g |
+| Front-left wheel, cabin sensors only (10-200 g) | road | none | 100 g (none) | 100 g (none) | 40 g (none) |
+| | idealised | none | 200 g (none) | 100 g (none) | 40 g (none) |
+| Propshaft (5-240 g at 40 mm) | road | 60 g | 30 g | 60 g | 60 g |
+| | idealised | 30 g | 30 g | 30 g | 30 g |
+| Inline-4 E2, every sensor (20-300 g at 45 mm) | road | 300 g | 50 g (100 g) | 50 g (100 g) | none |
+| | idealised | 20 g | 20 g | 20 g | 20 g |
+| Inline-4 E2, with an engine-bay sensor | road | 300 g | 20 g | 20 g | 20 g |
+| | idealised | 20 g | 20 g | 20 g | 20 g |
+
+At a steady 50 km/h the road alone reads as a wheel or tyre finding on all
+wheels at every size (even 2 g, a fraction of a milli-g at the knuckle), so
+that column measures the road, not the fault.
+
+Why a 40 g wheel goes unfound at 80 km/h on the road: the analysis's combined
+spectrum is the RMS over the three axes (the 3-axis vector over √3). At 80
+km/h the knuckle's wheel-hop hump, which the road rings there, is 130-195 mg
+per bin, about 150 mg at the wheel's first order (10.3 Hz). The 40 g line is
+186 mg as a vector, about 107 mg combined: it lifts that bin only from about
+156 to 197 mg, a bump inside the hump's own spread, and the run reads
+no_fault. The tuned lost weight is about 650 mg (vector) at the same speed,
+375 mg combined, well clear of the hump. A 40 g wheel stands out from 100 km/h
+(409 mg) and a 10 g wheel at 130 km/h, where the force has grown with the
+square of the speed.

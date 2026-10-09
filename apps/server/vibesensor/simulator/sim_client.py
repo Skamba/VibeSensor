@@ -15,6 +15,7 @@ from vibesensor.ingest.sensor_units import ADXL345_SCALE_G_PER_LSB
 from vibesensor.simulator.adxl345_front_end import Adxl345FrontEnd
 from vibesensor.simulator.body_attitude import SensorAttitude
 from vibesensor.simulator.confounders import SensorConfounders
+from vibesensor.simulator.fault_forces import OrderForce, order_force_mg
 from vibesensor.simulator.profiles import (
     DEFAULT_SPEED_KMH,
     PROFILE_LIBRARY,
@@ -23,9 +24,9 @@ from vibesensor.simulator.profiles import (
     RoadResonance,
 )
 from vibesensor.simulator.road_surface import ISO8608_GD_N0_M3, RoadSurface
-from vibesensor.simulator.road_vibration import RoadVibration, mount_for_name
+from vibesensor.simulator.road_vibration import RoadVibration, SensorMount, mount_for_name
 from vibesensor.simulator.sim_scene import _normalize_wheel_slot
-from vibesensor.simulator.wheel_kinematics import DriveState, SimCar
+from vibesensor.simulator.wheel_kinematics import CORNERS, DriveState, SimCar
 
 __all__ = ["SimClient", "make_client_id"]
 
@@ -133,6 +134,7 @@ class SimClient:
     road: RoadSurface | None = None
     # Distance the front axle has covered along ``road`` (m).
     distance_m: float = 0.0
+    mount: SensorMount = field(init=False)
     road_vibration: RoadVibration = field(init=False)
     front_end: Adxl345FrontEnd = field(init=False)
     # Gravity and the car's own acceleration as this sensor's mounting reads them.
@@ -153,9 +155,9 @@ class SimClient:
         # The device timer counts from its own boot, unrelated to the server
         # clock, so t0_us only becomes server-relative after clock sync.
         self.device_boot_mono_s = time.monotonic() - float(self.rng.uniform(1.0, 30.0))
-        mount, axle_share = mount_for_name(self.name)
+        self.mount, axle_share = mount_for_name(self.name)
         self.road_vibration = RoadVibration(
-            mount=mount,
+            mount=self.mount,
             axle_share=axle_share,
             sample_rate_hz=self.sample_rate_hz,
             rng=np.random.default_rng((seed, _ROAD_SEED_SALT)),
@@ -207,6 +209,16 @@ class SimClient:
             hz = self.car.engine_hz(state, self.gear_ratio)
         return hz * _ORDER_MULTIPLES[base]
 
+    def order_force_tone(self, force: OrderForce) -> tuple[float, tuple[float, float, float]]:
+        """The frequency and level (mg per axis) at which this sensor reads *force* now."""
+        hz = self.order_tone_hz(force.order_key) * force.multiple
+        own = _normalize_wheel_slot(self.name)
+        corner = force.order_key.partition("@")[2] or own
+        tire = self.car.tires[CORNERS.index(corner) if corner in CORNERS else 0]
+        amps = order_force_mg(force, hz, self.mount, tire.rim_radius_m, own_wheel=corner == own)
+        gain = self.profile.order_resonance_gain(self.current_speed_kmh)
+        return hz, (amps[0] * gain, amps[1] * gain, amps[2] * gain)
+
     def pulse(self, strength: float) -> None:
         vec = np.asarray(self.profile.bump_strength, dtype=np.float32)
         self.bump_state += vec * np.float32(strength)
@@ -255,6 +267,17 @@ class SimClient:
             )
             for order_key, multiple, amps_xyz in profile.order_tones
         )
+        # A fault given as forces: as strong as its force through the car to
+        # this sensor's mount.
+        for force in profile.order_forces:
+            hz, mg = self.order_force_tone(force)
+            local_tones.append(
+                (
+                    (force.order_key, force.multiple),
+                    hz,
+                    (mg[0] * _COUNTS_PER_MG, mg[1] * _COUNTS_PER_MG, mg[2] * _COUNTS_PER_MG),
+                )
+            )
         # Integrate each tone's phase from its previous frame: evaluating
         # ``sin(2*pi*f*t)`` on absolute time would jump the phase at every
         # frame edge whenever ``f`` follows a changing speed, smearing the
