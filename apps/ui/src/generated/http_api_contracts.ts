@@ -905,6 +905,9 @@ export interface components {
             [key: string]: components["schemas"]["JsonSchemaNestedValue"];
         };
         JsonSchemaNestedValue: components["schemas"]["JsonSchemaScalar"] | components["schemas"]["JsonSchemaLeafObject"] | ((components["schemas"]["JsonSchemaScalar"] | components["schemas"]["JsonSchemaLeafObject"])[]);
+        JsonSchemaObject: {
+            [key: string]: components["schemas"]["JsonSchemaValue"];
+        };
         JsonSchemaScalar: boolean | number | string | null;
         JsonSchemaValue: components["schemas"]["JsonSchemaNestedValue"] | components["schemas"]["JsonSchemaNestedObject"] | ((components["schemas"]["JsonSchemaNestedValue"] | components["schemas"]["JsonSchemaNestedObject"])[]);
         LanguageCode: "en" | "nl";
@@ -1048,10 +1051,8 @@ export interface components {
             outlier_pct: number;
             upper_bound: number | null;
         };
-        PayloadObject: {
-            [key: string]: components["schemas"]["JsonSchemaValue"];
-        };
-        PayloadValue: components["schemas"]["JsonSchemaNestedValue"] | components["schemas"]["JsonSchemaNestedObject"] | ((components["schemas"]["JsonSchemaNestedValue"] | components["schemas"]["JsonSchemaNestedObject"])[]);
+        PayloadObject: components["schemas"]["JsonSchemaObject"];
+        PayloadValue: components["schemas"]["JsonSchemaValue"];
         /** Typed HTTP contract for one ranked peak table row. */
         PeakTableRow: {
             burstiness: number;
