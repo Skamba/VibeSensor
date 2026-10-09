@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from vibesensor.analysis.diagnosis import build_diagnosis
+from vibesensor.analysis.mount_tilt import loose_mount_warnings
 from vibesensor.common.time_utils import utc_now_iso
 from vibesensor.domain.finding import Finding as DomainFinding
 from vibesensor.recording.run_metadata import run_metadata_to_json_object
@@ -78,13 +79,17 @@ def analysis_result_to_summary(result: AnalysisResult) -> AnalysisSummary:
             samples=result.samples,
             metadata=result.metadata,
             sensor_count=len(result.sensor_locations),
+            loose_locations=frozenset(mount.location for mount in result.loose_mounts),
         ),
     )
     summary["warnings"] = summary_warning_payloads(
-        build_summary_warnings(
-            metadata,
-            reference_complete=result.reference_complete,
-        )
+        [
+            *build_summary_warnings(
+                metadata,
+                reference_complete=result.reference_complete,
+            ),
+            *loose_mount_warnings(result.loose_mounts),
+        ]
     )
     report_date = metadata.get("end_time_utc")
     summary["report_date"] = report_date if isinstance(report_date, str) else utc_now_iso()

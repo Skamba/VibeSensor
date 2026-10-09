@@ -75,6 +75,7 @@ def build_post_analysis_input(loaded: LoadedPostAnalysisRun) -> PostAnalysisRunI
             loaded.metadata,
             samples,
             file_name=loaded.run_id,
+            window_means=[coverage.mean_xyz for coverage in replay_result.window_coverages],
         ),
         language=loaded.language,
         total_summary_row_count=loaded.total_summary_row_count,

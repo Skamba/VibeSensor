@@ -103,7 +103,9 @@ _MAX_WEAK_REASONS = 2
 # Never Strong with these: a vibration under the moderate strength band is no
 # "go fix it" (it may be a healthy car's residual), and a cause felt about as
 # strongly at several sensors is not pinned to the part a Strong level names.
-_HEDGES = frozenset({"faint", "spread_across_locations"})
+# Nor is a cause felt strongest at a sensor that turned on its fixing: a loose
+# fixing rattles and rings, so its amplitude says little about the part.
+_HEDGES = frozenset({"faint", "spread_across_locations", "loose_mount"})
 # Too few sensors to compare locations: always said, never cut off, and a
 # wheel or brake fault (whose Strong level names a corner or an axle) is never
 # Strong with one.
@@ -162,6 +164,7 @@ def build_diagnosis(
     samples: Sequence[Sample],
     metadata: RunMetadata,
     sensor_count: int,
+    loose_locations: frozenset[str] = frozenset(),
 ) -> DiagnosisPayload:
     """Build the persisted diagnosis block for one analysed run."""
     # The top cause names the source and its confidence; the order shown (label,
@@ -243,6 +246,7 @@ def build_diagnosis(
         sensor_count=sensor_count,
         wheels=wheels,
         manual_speed=refs.manual_speed,
+        loose=_strongest_row_location(rows) in loose_locations,
     )
     if _contradicts_coast_test(candidate, speed_dependence):
         verdict = DiagnosisVerdict.WEAK_EVIDENCE
@@ -1089,11 +1093,14 @@ def _weak_reasons(
     sensor_count: int,
     wheels: frozenset[str],
     manual_speed: bool,
+    loose: bool,
 ) -> list[str]:
     if candidate is None:
         return []
     # A hand-entered speed comes first: the order match holds only at that speed.
     reasons: list[str] = ["manual_speed"] if manual_speed else []
+    if loose:
+        reasons.append("loose_mount")
     source = candidate.suspected_source
     if sensor_count < 2:
         # One sensor compares nothing, so nothing can be spread across locations.

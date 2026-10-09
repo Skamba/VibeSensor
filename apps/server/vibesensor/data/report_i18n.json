@@ -1263,6 +1263,14 @@
     "en": "Order-analysis reference context was incomplete for this run",
     "nl": "De referentiecontext voor ordeanalyse was onvolledig voor deze meting"
   },
+  "RUN_CONTEXT_WARNING_SENSOR_LOOSE_MOUNT_DETAIL": {
+    "en": "Its reading of gravity turned {degrees}° more than the other sensors' did during the drive. A firmly fixed sensor only turns with the car, so this one moved on its mount; a loose mount also rattles, so the vibration measured there is less reliable.",
+    "nl": "Zijn meting van de zwaartekracht draaide tijdens de rit {degrees}° meer dan die van de andere sensoren. Een stevig bevestigde sensor draait alleen met de auto mee, dus deze is op zijn bevestiging verschoven; een losse bevestiging rammelt ook, dus de trilling die daar is gemeten is minder betrouwbaar."
+  },
+  "RUN_CONTEXT_WARNING_SENSOR_LOOSE_MOUNT_TITLE": {
+    "en": "The {location} sensor may be loosely mounted; check its mount and record again",
+    "nl": "De sensor bij {location} zit mogelijk los; controleer de bevestiging en neem opnieuw op"
+  },
   "RUN_CONTEXT_WARNING_SPEED_MISSING_DETAIL": {
     "en": "Without a live speed, those parts ({percent}% of the recording) could not be matched to the speed-dependent causes (wheels, driveline, engine) and were left out of that part of the analysis. The typed-in fallback speed is only shown live, never recorded.",
     "nl": "Zonder live snelheid konden die delen ({percent}% van de opname) niet aan de snelheidsafhankelijke oorzaken (wielen, aandrijflijn, motor) worden gekoppeld en zijn bij dat deel van de analyse weggelaten. De ingevoerde terugvalsnelheid wordt alleen live getoond, nooit opgenomen."
@@ -1874,6 +1882,10 @@
   "WEAK_INTERMITTENT": {
     "en": "It came and went: it was there for less than half of the drive.",
     "nl": "Hij kwam en ging: hij was er minder dan de helft van de rit."
+  },
+  "WEAK_LOOSE_MOUNT": {
+    "en": "The sensor where it was strongest may be loosely mounted, so how strong it was there is uncertain.",
+    "nl": "De sensor waar hij het sterkst was zit mogelijk los, dus hoe sterk hij daar was is onzeker."
   },
   "WEAK_MANUAL_SPEED": {
     "en": "The speed was entered by hand, not measured: the match only holds if you drove at exactly that speed.",

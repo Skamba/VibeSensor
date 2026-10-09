@@ -153,7 +153,9 @@ During `execute_post_analysis()`, `PostAnalysisWorker`:
    sampling method, processing profile, raw-replay coverage, and fallback
    reasons).
 2. Adds language-neutral trust warnings when the captured run context was
-   incomplete for confident order analysis.
+   incomplete for confident order analysis, and one per sensor whose reading
+   of gravity turned on its own (`sensor_loose_mount`, the loose-mount check
+   in `docs/metrics.md`).
 3. Stores the summary via `history_db.store_analysis()` as a versioned
    persistence envelope.
 
@@ -280,6 +282,9 @@ the PDF both show:
   the owner to fix. So is a wheel/tire or brake cause with `single_sensor` or
   `single_wheel_sensor` (one sensor, or one wheel sensor with others in the
   cabin): it cannot name the corner or axle a Strong level sends the owner to.
+  So is any cause with `loose_mount` (felt strongest at a sensor the
+  loose-mount check flagged, see `docs/metrics.md`): how strong it was there
+  rests on a sensor that turned on its fixing.
 - `order_code` (T1/T2 tire, P1/P2 driveshaft: propshaft or gearbox output, E<m> engine: the orders of the
   car's engine profile, E1/E2 when it is not known; see "Engine orders" in `docs/order_tracking.md`), `frequency_hz` at
   `reference_speed_kmh`, the matched speed range, presence ratio, and

@@ -304,6 +304,58 @@ the wheel when its RPM is estimated, or whether an engine tone spread over the
 car outweighs a wheel order at a dominant corner; their amplitudes do (step 8 in
 `docs/order_tracking.md`).
 
+## Loose-mount check
+
+`analysis/mount_tilt.py` warns when a sensor's reading of gravity turned on
+its own during the drive: "The <location> sensor may be loosely mounted;
+check its mount and record again" (run-quality warning `sensor_loose_mount`,
+in the report, History and PDF). A firmly fixed sensor turns only with the
+part it sits on, and so with the car; a sensor that sagged on loose ties or
+tipped off a pad reads the same car turned by an angle of its own. It needs
+the raw capture and three or more sensors.
+
+1. Each replayed raw window's mean per axis is that window's 0 Hz reading:
+   gravity plus the car's own acceleration (`RawReplayWindowCoverage.mean_xyz`).
+   Windows below 25 km/h are left out: a car parking may steer its front
+   wheels to full lock (about 35°), which tilts a front knuckle about 8.5°.
+2. Each sensor's windows are averaged (as unit vectors) per 5 s stretch of the
+   drive (longer on a drive over 20 minutes, so at most 240 stretches).
+3. For every pair of stretches, each sensor's reading turned by some angle;
+   the median of the other sensors' angles is how far the car's own reading
+   turned. Only pairs where it turned 10° or less are compared: the car's
+   acceleration changed by under tan 10° = 0.18 g (or the road's grade by
+   under 18 %).
+4. A sensor whose angle exceeds the others' median by 8° or more in some pair
+   is flagged.
+
+The threshold sits over what a firm sensor reads anyway, between two
+stretches the check compares:
+
+| Unshared turn | Worst case | Basis |
+|---------------|------------|-------|
+| Body against wheel carrier | 1.2° | roll 6.6°/g (or pitch 3°/g) × 0.18 g (`docs/simulator_realism.md`, "Body attitude") |
+| A front carrier steered at 25 km/h or more | 1.5° | at 0.18 g and 25 km/h the bend's radius is 27 m: 6° of steer plus understeer about a steering axis 14° from vertical tilts the carrier 6.2° × sin 14° |
+| Offset drift as the sensor warms by 40 °C | 1.9° | ADXL345 0 g offset drift ±0.4 mg/°C (x, y) and ±1.2 mg/°C (z) (ADI PCN 10_0327, Rev. B die); the part across gravity at a 30° mounting is about 33 mg |
+| The other sensors' median off by its own errors | 1.9° | the same drift on the others |
+| Sum | 5.5° | |
+
+8° is about 1.5 times that sum. A sensor that tipped 14° (an adhesive pad
+letting go at one corner, `bench-*-pad-lets-go-*`) reads 14°; on every healthy
+bench drive (bends, firm stops, 8 % hills, city) no sensor reads over 1°.
+Rows thinned by the post-analysis loader still count: each stretch needs two
+windows per sensor.
+
+The diagnosis treats a cause felt strongest at a flagged sensor as resting on
+that sensor (weak reason `loose_mount`): never Strong, as for a cause spread
+over the locations.
+
+Not covered: engine torque roll of a sensor on the engine or gearbox (a few
+degrees on soft mounts under full load in top gear) is not modelled; a drive
+with fewer than three sensors, or without raw capture, gets no check. The
+check costs 1-4 ms per bench drive on x86 (5-12 sensors, 400-2600 rows) and
+about 60 ms for an hour's 12,000 rows; each window's mean adds about 1 % to
+the raw replay's spectrum work.
+
 ## One spectrum definition
 
 The live tick (`apps/server/vibesensor/live/compute.py`) and the post-stop raw

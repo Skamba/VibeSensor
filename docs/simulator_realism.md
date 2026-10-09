@@ -84,7 +84,7 @@ data rate = sample rate (800 Hz).
 | Range | -4096..4095 counts (±16 g), clips | 13-bit full-resolution output |
 | Noise | 0.75 / 0.75 / 1.1 LSB rms (x/y/z) at 100 Hz ODR, × √(bandwidth / 50 Hz): 2.1 / 2.1 / 3.1 LSB at 800 Hz | datasheet Table 1; noise density times the √bandwidth |
 | 0 g offset | per sensor, normal with the datasheet's ±150 mg (x/y) and ±250 mg (z) at 3 σ | datasheet Table 1 |
-| Gravity | +1 g on z | the sensor is mounted level, z up |
+| Gravity | none here: the 0 Hz reading comes from the body attitude model | see "Body attitude" below |
 | Bandwidth | first-order roll-off, -3 dB at ODR/2 | datasheet Table 7 gives bandwidth = ODR/2 and no order; first order is the gentlest reading. No analog anti-alias filter: content above 400 Hz folds back into the band |
 | Rounding | to the nearest count | |
 
@@ -125,6 +125,33 @@ decision, not a simulator or test change:
 The unexplained-vibration check judges a peak against its local floor
 (`docs/metrics.md`), so a healthy car on this road is no longer reported as
 "Vibration found" (211 of those runs before).
+
+## Body attitude (`simulator/body_attitude.py`)
+
+A sensor reads specific force: gravity's reaction plus the car's own
+acceleration. `SensorAttitude` adds it to every frame (idealised and road
+path alike, before the sensor's own noise or front end), turned into the axes
+of the part the sensor sits on and of the sensor on that part. Readings move
+linearly across each frame from the last frame's end, so a phase change adds
+no step.
+
+| Parameter | Value | Source / reason |
+|-----------|-------|-----------------|
+| Mounting | any heading, tilted 0-30° off level, per sensor (seeded) | *assumption*: the owner sticks the sensor on wherever the knuckle, rail or floor offers a flat spot |
+| Body roll | 6.6°/g of lateral acceleration, outward | measured 4.9 and 6.6°/g on two passenger cars (*J. Braz. Soc. Mech. Sci. & Eng.* 33(4), 2011, Table 1); the softer one |
+| Body pitch | 3°/g, nose down under braking | the quarter car's ride rate (series spring and tyre, about 18.8 kN/m per corner) under the load transfer `m g h / L` with CG height 0.55 m (NHTSA static stability factor about 1.4 on a 1.55 m track) and wheelbase 2.7 m, no anti-dive geometry |
+| Understeer | 4°/g extra front-wheel steer | understeer gradients 3.9 and 4.0°/g (same paper, Table 2) |
+| Steer angle | `atan(L κ)` plus the understeer, front corners only | Ackermann geometry, wheelbase 2.7 m |
+| Steering axis | kingpin inclination 13°, caster 6°, leaning inboard and rearward | *assumption*: typical strut values (Reimpell, *The Automotive Chassis*) |
+| Wheel carrier | stays with the road (no roll or pitch), turns about the steering axis | the knuckle's own attitude follows the road; steering turns a carrier on an inclined axis |
+| Powertrain | moves with the body | engine torque roll on the mounts is not modelled (no source gives it for a generic car) |
+| Grade | the scenario phase's `grade_pct`, reached along a vertical curve of 50 m per % | AASHTO *Green Book* crest/sag curve rates (K about 50 m/% at 80-90 km/h) |
+| Response | the car's acceleration and lateral acceleration follow the driver with a 0.3 s first-order lag | brake pressure builds in about 0.3 s (UN ECE R13-H allows up to 0.6 s); body pitch and roll modes settle within that |
+
+With these, a firmly fixed sensor's reading of gravity turns with the car by
+up to about 1.2° more or less than another one's (body against knuckle at
+0.18 g) and a front knuckle's by about 1.5° when steered at road speed
+(`docs/metrics.md`, "Loose-mount check").
 
 ## Wheel kinematics
 
@@ -175,7 +202,7 @@ braking).
 `simulator/confounders.py` adds what a real first drive brings that can fool
 the diagnosis or hide a fault. A `SimClient` gets them through
 `SimClient.confounders` (`SensorConfounders`); the accuracy bench sets them
-per sensor location (`Case.fixings`, `Case.flat_spots`, `Case.accessories`).
+per sensor location (`Case.fixings`, `Case.slips`, `Case.flat_spots`, `Case.accessories`).
 They act on the sensor's motion before its own noise (idealised path) or
 before the ADXL345 front end (road path). Their tones skip the front end's
 first-order roll-off, which is under 1 dB below 150 Hz.
@@ -189,6 +216,16 @@ first-order roll-off, which is under 1 dB below 150 Hz.
 | Springy bracket | 60 Hz, ζ 0.05 (×10 at resonance) | *assumption*: a sheet-metal bracket or foam pad brings the mount's ring into the band; ζ 0.02-0.1 for bolted steel structures (Rao ch. 3) |
 | Loose (cable ties) | 35 Hz, ζ 0.06, hold-down 0.1 g along z | *assumption*: loosened ties hold the housing down only to a fraction of a g |
 | Rattle | beyond the hold-down the reading clips at it; on landing, an impulse equal to the excess velocity gained rings the housing at 250 Hz, ζ 0.1 | rattle starts where the excitation exceeds the preload (Trapp & Chen, *Automotive Buzz, Squeak and Rattle*, 2012); impacts excite the housing's own high modes |
+
+### Mount slip (`MountSlip`)
+
+A fixing that comes loose lets the housing turn on it, so its whole reading
+(gravity included) turns about an axis through its contact edge.
+
+| Parameter | Value in the bench | Source / reason |
+|-----------|--------------------|-----------------|
+| Step | 14° at once, 20 s into the drive, on a broken stretch | an adhesive pad letting go at one corner tips a 40 mm housing onto its 10 mm edge: atan(10/40) = 14° |
+| Sag | not used in the bench; the housing sags by a set rate for every second it floats off a rattling fixing, up to `max_deg` | friction holds a joint only while it is loaded; once transverse slip relieves it, any steady moment turns it bit by bit (Junker, SAE 690055, 1969). The rate has no measurement behind it (*assumption*) |
 
 ### Parking flat spots (`FlatSpot`)
 

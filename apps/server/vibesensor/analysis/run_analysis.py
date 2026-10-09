@@ -60,6 +60,7 @@ class RunAnalysis:
             include_samples=self._include_samples,
             prepared=self._prepared,
             accel_stats=self._accel_stats,
+            window_means=self._run.window_means,
         )
         result = build_analysis_result(analysis_context, build_findings_bundle(analysis_context))
         return result

@@ -39,7 +39,8 @@ _COUNTS_PER_G = 1.0 / ADXL345_SCALE_G_PER_LSB
 class Adxl345FrontEnd:
     """One sensor's front end: its output data rate and its own 0 g offset (counts).
 
-    The sensor is mounted with z vertical, so gravity reads +1 g on z.
+    The acceleration it reads already holds gravity, in the sensor's axes
+    (``body_attitude.py``).
     """
 
     sample_rate_hz: int
@@ -67,11 +68,10 @@ class Adxl345FrontEnd:
     def read(self, counts: np.ndarray, rng: np.random.Generator) -> np.ndarray:
         """The ``(n, 3)`` int16 samples the sensor outputs for an acceleration in counts.
 
-        Adds gravity, the offset and the sensor's own noise, rounds to whole
-        counts and clips at the full-resolution range.
+        Adds the offset and the sensor's own noise, rounds to whole counts and
+        clips at the full-resolution range.
         """
         out = np.asarray(counts, dtype=np.float64) + np.asarray(self.offset_counts)
-        out[:, 2] += _COUNTS_PER_G
         out += rng.normal(0.0, 1.0, size=out.shape) * self.noise_counts_rms()
         samples: np.ndarray = np.clip(np.rint(out), _FULL_RES_MIN_COUNT, _FULL_RES_MAX_COUNT)
         return samples.astype(np.int16)

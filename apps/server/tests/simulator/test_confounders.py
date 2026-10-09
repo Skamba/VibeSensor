@@ -9,6 +9,7 @@ from vibesensor.ingest.sensor_units import ADXL345_SCALE_G_PER_LSB
 from vibesensor.simulator.confounders import (
     AccessoryTone,
     FlatSpot,
+    MountSlip,
     SensorConfounders,
     SensorFixing,
 )
@@ -121,3 +122,27 @@ def test_engine_driven_alternator_follows_the_crank() -> None:
             wheel_hz=0.0, engine_hz=engine_hz, speed_kmh=0.0, samples=_FS, dt=_DT
         )
         assert _tone_mg(second, 2.8 * engine_hz) == pytest.approx(8.0, rel=0.02)
+
+
+def test_a_slipping_mount_sags_only_while_the_housing_floats_off_its_fixing() -> None:
+    confounders = SensorConfounders(
+        fixing=SensorFixing(35.0, 0.06, rattle_g=0.1),
+        slip=MountSlip(sag_deg_per_floating_s=2.0, max_deg=20.0),
+    )
+    gravity = np.tile([0.0, 0.0, 1000.0 * _COUNTS_PER_MG], (200, 1))
+
+    def drive(shake: np.ndarray) -> np.ndarray:
+        reading = gravity
+        for frame in np.split(shake, len(shake) // 200):
+            reading = confounders.slipped(confounders.through_fixing(frame, _FS) + gravity, _FS)
+        return reading
+
+    drive(_vertical_sine(15.0, 20.0, 2.0))
+    assert confounders.tilt_deg == 0.0
+    drive(_vertical_sine(15.0, 300.0, 4.0))
+    turned = confounders.tilt_deg
+    assert 0.0 < turned <= 20.0
+    # The housing reads gravity turned by as far as it sagged.
+    still = confounders.slipped(gravity, _FS)
+    tilt = np.degrees(np.arccos(still[:, 2].mean() / np.linalg.norm(still.mean(axis=0))))
+    assert tilt == pytest.approx(turned, abs=1e-6)

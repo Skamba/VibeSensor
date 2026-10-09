@@ -24,6 +24,7 @@ WARNING_CODE_RAW_CAPTURE_FINALIZE_DEGRADED = "raw_capture_finalize_degraded"
 WARNING_CODE_POWER_UNDERVOLTAGE = "power_undervoltage"
 WARNING_CODE_POWER_OVERHEATED = "power_overheated"
 WARNING_CODE_RECORDING_INTERRUPTED = "recording_interrupted"
+WARNING_CODE_SENSOR_LOOSE_MOUNT = "sensor_loose_mount"
 WarningSeverity = Literal["warn", "error"]
 
 

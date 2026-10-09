@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 from vibesensor.analysis._types import AccelStatistics, Sample
 from vibesensor.analysis._view_types import PeakTableRowData
+from vibesensor.analysis.mount_tilt import LooseMount
 from vibesensor.analysis.run_data_preparation import PreparedRunData
 from vibesensor.domain.diagnostic_case import DiagnosticCase
 from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
@@ -44,3 +45,5 @@ class AnalysisResult:
 
     test_run: TestRun
     diagnostic_case: DiagnosticCase
+    # Sensors whose gravity reading turned on its own (``mount_tilt.py``).
+    loose_mounts: tuple[LooseMount, ...] = ()
