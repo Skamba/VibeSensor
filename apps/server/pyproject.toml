@@ -13,7 +13,7 @@ dependencies = [
   "fastapi>=0.111,<1",
   "httpx>=0.27,<1",
   "msgspec>=0.19,<1",
-  "pydantic>=2.7,<3",
+  "pydantic>=2.14,<3",
   "starlette>=0.37.2,<2",
   "granian[reload]>=2.7,<3",
   "uvloop>=0.22,<1; sys_platform == 'linux'",

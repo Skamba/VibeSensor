@@ -150,7 +150,7 @@ cd apps/ui && npm run test:smoke
 | Unit | `npm run test:unit` | pure page models, payload decoders, poll/ws/live helpers, the spectrum renderer, `api/*` wrappers |
 | Smoke | `npm run test:smoke` | per-page user journeys (`tests/smoke.<page>.spec.ts`) against a real Vite dev server |
 
-- `make ui-typecheck` runs format/lint/type gates. UI commands need only Node; the generated contract TypeScript is committed (regenerate with `make sync-contracts`).
+- `make ui-typecheck` runs format/lint/type gates. UI commands need only Node; the generated contract TypeScript is committed (regenerate with `make sync-contracts`). Its output depends on the installed Pydantic version, so when a Pydantic release changes it, regenerate and raise the `pydantic` floor in `apps/server/pyproject.toml` to that release; the floor bump also refreshes CI's cached venv, which is keyed on that file. If `make sync-contracts` rewrites files on a clean checkout, rerun `make setup`.
 - UI unit tests cover pure logic (each page's model, poll/ws/live helpers, the spectrum renderer) and the `api/*` wrappers; the latter use `apps/ui/tests/fetch_stub.ts`, which fails unrouted requests loudly.
 - Rendered behaviour belongs in the per-page Playwright journeys, which mock HTTP with `page.route` and the WebSocket with the fake socket in `tests/smoke.helpers.ts`.
 
