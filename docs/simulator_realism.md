@@ -99,35 +99,54 @@ broadband content than the simulator does.
 
 ### Benchmark on the realistic road
 
-`Case(iso8608_road=True)` runs a benchmark drive on `generated_road(seed)`;
-the `*-iso8608-road` cases (healthy motorway, healthy sweep, engine sweep)
-pass on every matrix seed. The rest of the benchmark still runs on the
-idealised floor, because on the generated road (seeds 1-6, every case and
-car, 1362 runs) a quarter of it fails for reasons that need a product
-decision, not a simulator or test change (half of it before the order levels
-were read at each order's line, "Order-tracked reads" in
-`docs/order_tracking.md`):
+Every benchmark case drives on `generated_road(seed)`, as every real car has a
+road under it, unless it names why it stays on the idealised floor
+(`Case.idealised_floor`, an `IdealisedFloor`): 79 of the 118 cases (144 of
+the 219 case and car runs) drive on the road and pass the CI seed and the
+matrix rule there. The other 39 are expectations the analysis does not meet
+on the road yet, for reasons that need a product decision, not a simulator or
+test change (seeds 1-6 with every case on the road, 1362 runs):
 
-- Mild and barely-there wheel imbalances, brake judder and faint engine
-  tones are missed (`no_fault`, about 150 runs; no wheel-fault case passes on every seed): at 80-120 km/h a wheel order
-  runs at 11-17 Hz, right on the knuckle's wheel-hop hump (about 0.1 g in
-  each spectrum bin on a class A road at 100 km/h), and each window's eight
-  strongest peaks are the hump's.
-- Cases expecting "about N x stronger at the corner than at the next sensor"
-  read "about as strong at the corner as at" another wheel (26 runs; 362
-  read "strongest at the corner" before the order-tracked reads). In 15 no
-  sensor's level stands out of the hump's scatter (short stretches at the
-  heard speeds, lossy sensors) and the report falls back to the matched
-  peaks; in 11 a second sensor's level stands out, carrying its share of the
-  scatter, or the injected ratio itself is near the 1.5x the wording turns
-  at (1.7x for one front and the diagonal rear corner).
-- Healthy cars driven in town are given a moderate wheel or brake fault
-  (19 runs) or a weak guess (29): hump peaks near the wheel order at city
-  speeds match it in about a quarter of the windows at every corner.
-- A 13 Hz body mode of fixed amplitude
-  (`bench-healthy-residual-under-body-resonance-motorway`) stands 23 dB over
-  the trunk's local floor on this road, under the 26 dB unexplained-vibration
-  bar it clears on the idealised floor.
+- `MISSED_UNDER_WHEEL_HOP` (14 cases): mild and barely-there wheel
+  imbalances, brake judder and faint engine tones are missed (`no_fault`,
+  about 150 runs): at 80-120 km/h a wheel order runs at 11-17 Hz, right on
+  the knuckle's wheel-hop hump (about 0.1 g in each spectrum bin on a class A
+  road at 100 km/h), and each window's eight strongest peaks are the hump's.
+- `HUMP_MATCHES_IN_TOWN` (8): healthy cars driven in town, or stopping in
+  traffic, are given a moderate wheel or brake fault (19 runs) or a weak guess
+  (29), and a faulty corner reads spread over all four: hump peaks near the
+  wheel order at city speeds match it in about a quarter of the windows at
+  every corner.
+- `LEVEL_UNDER_THE_HUMP` (3): a clear wheel fault in traffic or in the brake
+  step's stops, or brake judder in the guided brake step, reads a confidence
+  level lower than on the idealised floor: the hump's matches at the other
+  corners count as evidence spread over them.
+- `HUMP_SCATTER` (13): on more than one seed in five the hump moves what the
+  report names: the wheel order's second harmonic instead of the first (a
+  flat-spotted tyre, a coast-down), another corner (with a loose sensor at
+  the next corner), one of two equal front corners alone, a level over a
+  third of the injected tone's, or a healthy car's hump matched as a Strong
+  wheel fault (the pothole loop, 2 of 12 runs).
+- `UNEXPLAINED_BAR` (1): the case checks the unexplained-vibration wording,
+  which needs a body mode over its 26 dB bar; on the road its fixed-amplitude
+  13 Hz mode stands 23 dB over the trunk's local floor.
+
+Two expectations were not true of a road and changed with it:
+
+- A single corner's fault may be described as "strongest at the corner" with
+  no ratio: over a short stretch at the heard speeds on a rough road (a surge,
+  a pull-away, an upshift, a lossy sensor) no sensor's level may stand out of
+  the road's scatter, and the report places the corner by its matched peaks
+  ("Order-tracked reads" in `docs/order_tracking.md`; 15 of 1362 runs).
+- Two faulty corners whose imbalances differ by 1.7x (front-left and
+  rear-right) may read "about as strong": that is close to the 1.5x the
+  wording turns at, and the weaker corner's level carries its share of the
+  road's scatter.
+
+On the road the benchmark (seeds 1-6) passes 1294 of 1314 runs against 1360
+of 1362 on the idealised floor, and two healthy runs of 306 are given a fault
+(a Strong rear wheel on the inline-six sweep, a Moderate T2 under a fixed
+resonance), each on one seed in six. It takes about 13 % longer.
 
 The unexplained-vibration check judges a peak against its local floor
 (`docs/metrics.md`), so a healthy car on this road is no longer reported as
