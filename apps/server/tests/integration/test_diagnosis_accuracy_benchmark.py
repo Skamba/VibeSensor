@@ -3595,6 +3595,11 @@ def _assert_loose_mount_warnings(result: SimPipelineResult, case: Case) -> None:
             assert warning in warnings, (location, turn_deg, warnings)
         elif turn_deg < _UNNOTICED_TURN_DEG:
             assert warning not in warnings, (location, turn_deg, warnings)
+    # The quality table says so in a row of its own whenever a sensor is named loose.
+    mounting = [
+        check.passed for check in result.report.quality.checks if check.label == "Sensor mounting"
+    ]
+    assert mounting == ([False] if "sensor may be loosely mounted" in warnings else []), mounting
 
 
 def _assert_sensor_identity(result: SimPipelineResult) -> None:

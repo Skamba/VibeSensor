@@ -18,6 +18,7 @@ _RESTATING_EXPLANATIONS = frozenset(
         "SUITABILITY_SENSOR_COVERAGE_WARN",
         "SUITABILITY_REFERENCE_COMPLETENESS_WARN",
         "SUITABILITY_RUN_DURATION_WARNING",
+        "SUITABILITY_SENSOR_MOUNTS_WARN",
     }
 )
 # The speed above which the speed-variation warning asks the driver to record.

@@ -83,6 +83,11 @@ class SuitabilityCheck:
                     total_overflow=total_overflow,
                 )
             )
+        if self.check_key == "SUITABILITY_CHECK_SENSOR_MOUNTS":
+            return _i18n_ref(
+                "SUITABILITY_SENSOR_MOUNTS_WARN",
+                loose_sensors=int(details.get("loose_sensors", 0)),
+            )
         if self.check_key == "SUITABILITY_CHECK_ANALYSIS_SAMPLING":
             stride = str(details.get("stride", ""))
             if stride:
@@ -151,6 +156,26 @@ class RunSuitability:
             for check in self.checks
         )
         return RunSuitability(checks=checks)
+
+    def with_loose_mounts(self, count: int) -> RunSuitability:
+        """Add a warning check for *count* sensors that turned on their fixing.
+
+        Only a found loose mount adds the check: the loose-mount check needs
+        three sensors and raw data, so a run without one may not have been
+        checked at all.
+        """
+        if count <= 0:
+            return self
+        return RunSuitability(
+            checks=(
+                *self.checks,
+                SuitabilityCheck(
+                    check_key="SUITABILITY_CHECK_SENSOR_MOUNTS",
+                    state="warn",
+                    details=(("loose_sensors", count),),
+                ),
+            )
+        )
 
     @staticmethod
     def _speed_variation(
