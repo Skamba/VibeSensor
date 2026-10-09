@@ -342,6 +342,32 @@ def test_clear_wheel_fault_names_corner_order_level_and_next_steps() -> None:
     assert not any(line.startswith("Wheels/tires") for line in mechanic.ruled_out)
 
 
+def test_a_sensor_the_order_does_not_reach_reads_not_detected_not_zero_mg() -> None:
+    # An order read at its line reads 0 mg at a sensor it does not reach; its dB
+    # there only reflects that sensor's floor.
+    rows = deepcopy(_wheel_summary()["diagnosis"]["location_amplitudes"])
+    for row in rows[1:]:
+        row.update(amplitude_mg=0.0, db_above_floor=-26.4, ratio_to_strongest=0.0)
+    view = report_view_for(_variant(location_amplitudes=rows))
+
+    assert "measurable only at the front-left wheel" in view.owner.description
+    assert [marker.value for marker in view.owner.diagram.markers[1:]] == ["-"] * (len(rows) - 1)
+    for amplitude in view.mechanic.amplitudes[1:]:
+        assert (amplitude.amplitude, amplitude.ratio) == ("not detected", "-")
+    assert view.mechanic.amplitudes[0].ratio == "1.0x"
+
+
+def test_a_fault_strongest_at_a_loose_sensor_says_so_on_the_owner_page() -> None:
+    owner = report_view_for(
+        _variant(confidence_level="moderate", weak_reasons=["loose_mount"])
+    ).owner
+
+    assert owner.description.endswith(
+        "The sensor where it was strongest may be loosely mounted, so how strong it was"
+        " there is uncertain."
+    )
+
+
 def _swept_fault_samples(sensors: list[str]) -> list[dict[str, Any]]:
     """A front-left wheel imbalance over a 50-110 km/h sweep."""
     samples: list[dict[str, Any]] = []
@@ -1600,8 +1626,8 @@ def test_the_cause_felt_in_the_trunk_says_its_share_and_that_a_workshop_acts_on_
         ),
         (
             lambda: _felt_summary(None),
-            "No sensor in the cabin or the trunk measured this vibration, so this report cannot"
-            " say how much of what you feel this cause explains.",
+            "This run had no sensor in the cabin or the trunk, so this report cannot say how"
+            " much of what you feel this cause explains.",
         ),
     ],
 )
