@@ -3600,6 +3600,13 @@ def _assert_loose_mount_warnings(result: SimPipelineResult, case: Case) -> None:
         check.passed for check in result.report.quality.checks if check.label == "Sensor mounting"
     ]
     assert mounting == ([False] if "sensor may be loosely mounted" in warnings else []), mounting
+    # A run with no fault names the loose sensor with its verdict: it can hide a fault.
+    if result.diagnosis["verdict"] == "no_fault":
+        page_one = result.report.owner.description
+        for location in case.loose_mounts:
+            assert tr("en", f"LOC_{location.upper()}") in page_one, page_one
+        hidden = "a loose sensor can hide a fault" in page_one
+        assert hidden == ("sensor may be loosely mounted" in warnings), page_one
 
 
 def _assert_sensor_identity(result: SimPipelineResult) -> None:

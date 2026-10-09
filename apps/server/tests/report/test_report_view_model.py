@@ -17,9 +17,10 @@ from test_support.synthetic_samples import (
     make_noise_samples,
 )
 
+from vibesensor.analysis.mount_tilt import LooseMount, loose_mount_warnings
 from vibesensor.recording.run_metadata import run_metadata_from_mapping
 from vibesensor.report.view_model import ReportView, build_owner_page, build_report_view
-from vibesensor.summary.warning_fields import localize_warning_list
+from vibesensor.summary.warning_fields import localize_warning_list, summary_warning_payloads
 
 _UNRESOLVED_KEY = re.compile(r"\b[A-Z][A-Z0-9]+(?:_[A-Z0-9]+)+\b")
 _PERCENT_CONFIDENCE = re.compile(r"\d+\s?%\s*(confidence|zekerheid)", re.IGNORECASE)
@@ -581,6 +582,41 @@ def test_no_fault_names_what_was_checked_and_what_could_not_be(
     assert owner.description == description
     # Each untested source comes first in "Not covered", with how to close the gap.
     assert owner.not_covered[:2] == not_covered
+
+
+def test_no_fault_with_a_loose_sensor_says_on_page_one_to_fix_it_and_record_again() -> None:
+    """A loose sensor can hide a fault, so a clean run says so with its verdict,
+    in History (``build_owner_page``) as on the PDF, not only in the warnings."""
+    summary = deepcopy(_healthy_summary())
+    clean = report_view_for(summary).owner
+    summary["warnings"] = summary_warning_payloads(
+        loose_mount_warnings([LooseMount("sensor-rl", "Rear Left Wheel", 12.4)])
+    )
+    owners = {lang: report_view_for(summary, lang=lang).owner for lang in ("en", "nl")}
+
+    assert owners["en"].verdict == "no_fault"
+    assert owners["en"].description == (
+        f"{clean.description} The rear-left wheel sensor may be loosely mounted; check its"
+        " mount and record again, because a loose sensor can hide a fault."
+    )
+    assert owners["nl"].description.endswith(
+        "De sensor bij wiel linksachter zit mogelijk los; controleer de bevestiging en neem"
+        " opnieuw op, want een losse sensor kan een fout verbergen."
+    )
+    assert build_owner_page(summary, lang="nl") == owners["nl"]
+
+    summary["warnings"] = summary_warning_payloads(
+        loose_mount_warnings(
+            [
+                LooseMount("sensor-rl", "Rear Left Wheel", 12.4),
+                LooseMount("sensor-fr", "Front Right Wheel", 9.0),
+            ]
+        )
+    )
+    assert report_view_for(summary).owner.description.endswith(
+        "The rear-left wheel and front-right wheel sensors may be loosely mounted; check"
+        " their mounts and record again, because a loose sensor can hide a fault."
+    )
 
 
 def test_no_fault_with_a_faint_residual_says_it_was_found_only_faintly() -> None:

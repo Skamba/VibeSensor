@@ -1971,6 +1971,14 @@
     "en": "No vibration stood out, but this run could not check the wheels or the electric motor against their rhythms, so it does not show that they are fine.",
     "nl": "Er viel geen trilling op, maar deze rit kon wielen en elektromotor niet aan hun ritme toetsen, dus hij laat niet zien dat ze in orde zijn."
   },
+  "VERDICT_NO_FAULT_LOOSE_MOUNT": {
+    "en": "The {locations} sensor may be loosely mounted; check its mount and record again, because a loose sensor can hide a fault.",
+    "nl": "De sensor bij {locations} zit mogelijk los; controleer de bevestiging en neem opnieuw op, want een losse sensor kan een fout verbergen."
+  },
+  "VERDICT_NO_FAULT_LOOSE_MOUNTS": {
+    "en": "The {locations} sensors may be loosely mounted; check their mounts and record again, because a loose sensor can hide a fault.",
+    "nl": "De sensoren bij {locations} zitten mogelijk los; controleer hun bevestiging en neem opnieuw op, want een losse sensor kan een fout verbergen."
+  },
   "VERDICT_NO_FAULT_NOT_CHECKED": {
     "en": "Not checked, so not shown to be fine: {sources}.",
     "nl": "Niet gecontroleerd, dus niet aangetoond dat het in orde is: {sources}."
