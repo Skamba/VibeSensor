@@ -26,19 +26,23 @@
     min-width: 0;
     width: 100%;
   }
-  /* Tabs share the row and wrap a long label instead of overflowing the screen. */
+  /* Tabs share the row; on a narrow phone the labels shrink to fit ("Geschiedenis"
+     and "Instellingen" at 320 px) and never break inside a word. Where even the
+     smallest size does not fit, a whole tab moves to a second row. */
   .menu {
     display: flex;
+    flex-wrap: wrap;
     width: 100%;
+    /* A pill on one row; still a rounded box when a tab wraps. */
+    border-radius: 24px;
   }
   .menu .menu-btn {
     flex: 1 1 auto;
-    min-width: 0;
     height: auto;
     min-height: 38px;
-    padding: var(--space-1) var(--space-2);
-    white-space: normal;
-    overflow-wrap: anywhere;
+    padding: var(--space-1) 6px;
+    font-size: clamp(0.8125rem, 3.9vw, 1em);
+    white-space: nowrap;
     line-height: 1.2;
   }
   .speed {
