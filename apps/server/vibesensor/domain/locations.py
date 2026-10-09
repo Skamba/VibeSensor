@@ -11,6 +11,8 @@ from typing import TYPE_CHECKING, Final
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
+    from vibesensor.domain.drive_layout import Axle
+
 LOCATION_CODES: Final[dict[str, str]] = {
     "front_left_wheel": "Front Left Wheel",
     "front_right_wheel": "Front Right Wheel",
@@ -122,6 +124,14 @@ _CODE_BY_NORMALIZED_LABEL: dict[str, str] = {
 def location_code_for_label(label: str) -> str | None:
     """Canonical location code for a stored label (``Front Left Wheel``, ``front-left``)."""
     return _CODE_BY_NORMALIZED_LABEL.get(_normalized_location(label))
+
+
+def wheel_axle(label_or_code: str) -> Axle | None:
+    """The axle of a wheel (corner) sensor at *label_or_code*; ``None`` for any other sensor."""
+    code = location_code_for_label(label_or_code)
+    if code not in WHEEL_LOCATION_CODES:
+        return None
+    return "front" if code.startswith("front_") else "rear"
 
 
 def all_locations() -> list[dict[str, str]]:

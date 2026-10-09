@@ -122,12 +122,14 @@ inherited from family-level data, encode that through `confidence` and
 - **Staggered tyres:** a tyre setup stores a `rear` size next to `front` when
   the sheet or price list prints a mixed set (e.g. G32 245/45 R19 front with
   275/40 R19 rear); options carry the sizes as printed. The order analysis
-  uses one rolling circumference for every sensor, picked by
-  `default_axle_for_speed` (`AxleTireSetup.effective_tire_circumference_m`).
-  Rows set `rear`, the driven axle of a rear-wheel-drive car and xDrive's
-  main-drive axle, so a sensor on a front wheel is checked against the rear
-  tyre's wheel order. The two diameters of BMW's mixed sets differ by about
-  0.1–0.7 %.
+  places a wheel sensor's wheel orders (T1, T2, and the spectrum's markers)
+  on its own axle's tyre (`AxleTireSetup.axle_tire_circumference_m`); every
+  other sensor's wheel orders, and the propshaft and engine orders, use the
+  circumference `default_axle_for_speed` picks
+  (`AxleTireSetup.effective_tire_circumference_m`). Rows set `rear`, the
+  driven axle of a rear-wheel-drive car and xDrive's main-drive axle. The two
+  diameters of BMW's mixed sets differ by about 0.1–0.7 %; the benchmark's
+  staggered coupe (`bench-*-staggered-tires-sweep`) runs 3 % apart.
 - **Drive layout on a saved car:** a car added from the library takes the
   variant's `drivetrain` as its drive layout and the gearbox's
   `final_drive_axle` (which axle the engine drives), kept while the layout

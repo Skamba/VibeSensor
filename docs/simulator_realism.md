@@ -101,8 +101,8 @@ broadband content than the simulator does.
 
 Every benchmark case drives on `generated_road(seed)`, as every real car has a
 road under it, unless it names why it stays on the idealised floor
-(`Case.idealised_floor`, an `IdealisedFloor`): 79 of the 118 cases (144 of
-the 219 case and car runs) drive on the road and pass the CI seed and the
+(`Case.idealised_floor`, an `IdealisedFloor`): 82 of the 121 cases (147 of
+the 222 case and car runs) drive on the road and pass the CI seed and the
 matrix rule there. The other 39 are expectations the analysis does not meet
 on the road yet, for reasons that need a product decision, not a simulator or
 test change (seeds 1-6 with every case on the road, 1362 runs):
