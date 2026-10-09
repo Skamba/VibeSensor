@@ -32,7 +32,9 @@ from vibesensor.analysis.constants import (
     MIN_ORDER_TRACKING_SLOPE,
     SPEED_COVERAGE_MIN_PCT,
 )
+from vibesensor.analysis.felt_ranking import WORKSHOP_LEVELS, FeltCause, felt_ranking
 from vibesensor.analysis.guided_steps import guided_step_done
+from vibesensor.analysis.orders.tracking import window_duration_s
 from vibesensor.analysis.phase_segmentation import BRAKING_MIN_DURATION_S, TimeSpanLookup
 from vibesensor.analysis.speed_profile_helpers import run_speed_source, speed_typed_in
 from vibesensor.common.units import SECONDS_PER_MINUTE
@@ -64,6 +66,8 @@ from vibesensor.summary.diagnosis_contracts import (
     DiagnosisSpectrum,
     DriveLayoutValue,
     DrivelinePart,
+    FeltCauseRow,
+    FeltPayload,
     FinalDriveAxleValue,
     FuelTypeValue,
     GuidedPhaseValue,
@@ -338,10 +342,47 @@ def build_diagnosis(
         ),
         "conditions": _conditions(refs),
         "driveline_parts": _driveline_parts(candidate, zone, refs),
+        "felt": _felt(test_run, metadata, no_fault=verdict is DiagnosisVerdict.NO_FAULT),
     }
     if alternative is not None and verdict is not DiagnosisVerdict.NO_FAULT:
         payload["alternative"] = alternative
     return payload
+
+
+def _felt(test_run: TestRun, metadata: RunMetadata, *, no_fault: bool) -> FeltPayload:
+    """The causes by their level at the felt reference sensor, against workshop limits.
+
+    A no-fault run names no cause, so it lists none.
+    """
+    ranking = felt_ranking(test_run.top_causes, test_run.findings)
+    bin_hz = 1.0 / window_duration_s(metadata)
+    causes = () if no_fault else ranking.causes
+    return {
+        "reference": ranking.reference,
+        "fallback": ranking.fallback,
+        "causes": [_felt_row(cause, bin_hz) for cause in causes],
+    }
+
+
+def _felt_row(cause: FeltCause, bin_hz: float) -> FeltCauseRow:
+    finding = cause.finding
+    speeds = cause.speed_range_kmh
+    limit = WORKSHOP_LEVELS.get(finding.suspected_source)
+    return {
+        "finding_id": finding.finding_id,
+        "source": str(finding.suspected_source),
+        "order_codes": [cast(OrderCodeValue, code) for code, _level in cause.order_levels_g],
+        "level_mg": _mg(cause.level_g),
+        "peak_mg": _mg(cause.peak_g(bin_hz)),
+        "share": cause.share,
+        "speed_min_kmh": speeds[0] if speeds is not None else None,
+        "speed_max_kmh": speeds[1] if speeds is not None else None,
+        "severity": cause.severity(bin_hz),
+        "workshop_mg": _mg(limit.act_g) if limit is not None else None,
+        "normal_mg": (
+            _mg(limit.normal_g) if limit is not None and limit.normal_g is not None else None
+        ),
+    }
 
 
 def _at_most_moderate(level: ConfidenceLevel) -> ConfidenceLevel:

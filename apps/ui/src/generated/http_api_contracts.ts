@@ -359,6 +359,7 @@ export interface components {
             confidence_level: components["schemas"]["ConfidenceLevelValue"] | null;
             dominant_phase: string | null;
             driveline_parts?: components["schemas"]["DrivelinePart"][];
+            felt?: components["schemas"]["FeltPayload"];
             finding_id: string | null;
             frequency_hz: number | null;
             guided_phases: components["schemas"]["GuidedPhaseValue"][];
@@ -469,6 +470,42 @@ export interface components {
             vid?: number | null;
         };
         ExpectedFrameLoss: "stream_start" | "bluetooth_scan" | "bluetooth_pairing";
+        /**
+         * One cause's level at the felt reference sensor and how a workshop would judge it.
+         *
+         * ``level_mg`` is on the scale of ``location_amplitudes`` (0: the reference
+         * does not measure it); ``peak_mg`` the same level as the peak of a tone on
+         * one axis, the scale workshop limits are on (``workshop_mg``: from here a
+         * workshop repairs; ``normal_mg``: up to here it is normal; ``None`` without
+         * one). ``share`` is its part of what the causes heard at the same speeds
+         * shake there.
+         */
+        FeltCauseRow: {
+            finding_id: string;
+            level_mg: number;
+            normal_mg: number | null;
+            order_codes: components["schemas"]["OrderCodeValue"][];
+            peak_mg: number;
+            severity: components["schemas"]["FeltSeverityValue"] | null;
+            share: number | null;
+            source: string;
+            speed_max_kmh: number | null;
+            speed_min_kmh: number | null;
+            workshop_mg: number | null;
+        };
+        FeltFallbackValue: "no_cabin_sensor" | "no_order_levels";
+        /**
+         * The run's causes ranked by what the driver feels: their level at the felt reference.
+         *
+         * ``reference`` is that sensor's location; without one, ``fallback`` says why
+         * and the causes keep the ranking by evidence. No causes on a no-fault run.
+         */
+        FeltPayload: {
+            causes: components["schemas"]["FeltCauseRow"][];
+            fallback: components["schemas"]["FeltFallbackValue"] | null;
+            reference: string | null;
+        };
+        FeltSeverityValue: "workshop" | "below_workshop" | "normal";
         FinalDriveAxleValue: "front" | "rear";
         /** HTTP contract for serialized evidence metrics attached to a finding. */
         FindingEvidenceMetrics: {

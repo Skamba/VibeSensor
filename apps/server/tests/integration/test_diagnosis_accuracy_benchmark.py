@@ -39,6 +39,7 @@ from test_support.sim_pipeline import (
 )
 
 from vibesensor.analysis.constants import MIN_ANALYSIS_FREQ_HZ
+from vibesensor.analysis.felt_ranking import FELT_LOCATIONS
 from vibesensor.analysis.phase_segmentation import DrivingPhase, segment_run_phases
 from vibesensor.domain.engine_profile import EngineProfile
 from vibesensor.domain.locations import location_code_for_label
@@ -1532,7 +1533,7 @@ _FL_AND_PROPSHAFT = (
             _Layer("wheel_imbalance", _FL_GAIN * 0.12),
         ),
     ),
-    _on("trunk", _road_with("propshaft_at_trunk", _Layer("driveshaft_imbalance", 0.4))),
+    _on("VS-07 trunk", _road_with("propshaft_at_trunk", _Layer("driveshaft_imbalance", 0.4))),
     _on(
         "front-left",
         _road_with(
@@ -2735,6 +2736,7 @@ def _assert_case(
     _assert_raw_backed(result, case)
     _assert_raw_capture_on_one_clock(result)
     _assert_report_view(result, diagnosis, expected, case, car)
+    _assert_felt(diagnosis, case, car)
     if diagnosis["verdict"] == "weak_evidence":
         assert expected.weak_reasons <= set(diagnosis["weak_reasons"]), summary
         assert len(result.report.owner.reasons) == len(diagnosis["weak_reasons"]) > 0
@@ -2878,6 +2880,42 @@ def _assert_order_amplitude_mg(diagnosis: dict, case: Case, car: BenchCar) -> No
     if fixing is None or fixing.rattle_g is None:
         # A rattling sensor's landings add broadband energy to every band.
         assert strongest["amplitude_mg"] <= injected / 3.0, (strongest, injected)
+
+
+def _assert_felt(diagnosis: dict, case: Case, car: BenchCar) -> None:
+    """The causes are ranked by what the simulator injected where the occupants sit.
+
+    The felt reference is the layout's sensor nearest the occupants (a seat,
+    then the trunk, then the propshaft tunnel), unless that sensor lost frames.
+    A cause the reference measures has an order injected there, and none it
+    measures got more than twice as much injected there as the first. A
+    no-fault run lists no cause.
+    """
+    felt = diagnosis["felt"]
+    if diagnosis["verdict"] == "no_fault":
+        assert felt["causes"] == [], felt
+    sensors = case.sensors()
+    present = {sensor.location_code for sensor in sensors}
+    nearest = next((code for code in FELT_LOCATIONS if code in present), None)
+    if felt["reference"] is None:
+        # A sensor that lost frames may have no order levels to read.
+        assert (
+            nearest is None or nearest in case.frame_loss or felt["fallback"] == "no_order_levels"
+        ), felt
+        return
+    assert location_code_for_label(felt["reference"]) == nearest, felt
+    injected = [
+        math.hypot(
+            *(
+                injected_order_mg(case.phases, code, sensors, car)[nearest]
+                for code in row["order_codes"]
+            )
+        )
+        for row in felt["causes"]
+        if row["level_mg"] > 0
+    ]
+    assert all(mg > 0 for mg in injected), (felt, injected)
+    assert all(mg <= 2.0 * injected[0] for mg in injected), (felt, injected)
 
 
 def _phase_tones(phase: ScenarioPhase, order_code: str, car: BenchCar) -> set[tuple[str, float]]:

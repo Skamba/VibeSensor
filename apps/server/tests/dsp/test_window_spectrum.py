@@ -12,7 +12,7 @@ import pytest
 
 from vibesensor.analysis.orders.tracking import TrackedCells, line_half_width_hz
 from vibesensor.dsp.fft_analysis import SpectralAnalysisComputer
-from vibesensor.dsp.window_spectrum import LineRead, WindowSpectrum
+from vibesensor.dsp.window_spectrum import LineRead, WindowSpectrum, tone_line_level_g
 
 _FS = 800
 _N = 2048
@@ -39,6 +39,17 @@ def test_a_steady_tone_reads_its_peak_level() -> None:
     assert peak["hz"] == pytest.approx(47.3, abs=0.2)
     assert np.sqrt(read.excess + read.flanks) == pytest.approx(peak["amp"], rel=0.05)
     assert read.excess > 50 * read.flanks
+
+
+@pytest.mark.parametrize("hz", [23.0, 47.3])
+def test_a_tone_on_one_axis_reads_the_level_its_peak_amplitude_gives(hz: float) -> None:
+    # The felt ranking turns workshop limits (a tone's peak on one axis) into reads.
+    rng = np.random.default_rng(11)
+    _metrics, spectrum = _spectrum(0.03 * np.sin(2 * np.pi * hz * _T), rng)
+    read = spectrum.line_read(hz, 0.0)
+
+    assert read is not None
+    assert np.sqrt(read.excess) == pytest.approx(tone_line_level_g(0.03, _FS / _N), rel=0.05)
 
 
 def test_broadband_noise_alone_reads_no_level_on_average() -> None:

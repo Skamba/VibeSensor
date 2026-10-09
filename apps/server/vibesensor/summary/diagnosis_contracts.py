@@ -23,6 +23,10 @@ __all__ = [
     "DiagnosisAlternative",
     "DrivelinePart",
     "EngineOrderRow",
+    "FeltCauseRow",
+    "FeltFallbackValue",
+    "FeltPayload",
+    "FeltSeverityValue",
     "FinalDriveAxleValue",
     "FuelTypeValue",
     "GuidedPhaseValue",
@@ -103,6 +107,12 @@ type SourceCheckReason = Literal[
     "regen_braking",
     "faint_only",
 ]
+# Why the causes stay ranked by evidence: no seat, trunk or tunnel sensor, or
+# no order levels to read there (no raw capture).
+type FeltFallbackValue = Literal["no_cabin_sensor", "no_order_levels"]
+# A cause's level at the felt reference against its source's workshop limit
+# (docs/metrics.md, "What the driver feels").
+type FeltSeverityValue = Literal["workshop", "below_workshop", "normal"]
 type GuidedPhaseValue = Literal["sweep", "hold", "coast_down", "brake"]
 type SpeedDependenceValue = Literal["vehicle_speed", "engine_speed"]
 type RpmSourceValue = Literal["measured", "estimated_top_gear", "none"]
@@ -230,6 +240,44 @@ class TestConditions(TypedDict):
 
 
 @with_config(_FORBID_EXTRA)
+class FeltCauseRow(TypedDict):
+    """One cause's level at the felt reference sensor and how a workshop would judge it.
+
+    ``level_mg`` is on the scale of ``location_amplitudes`` (0: the reference
+    does not measure it); ``peak_mg`` the same level as the peak of a tone on
+    one axis, the scale workshop limits are on (``workshop_mg``: from here a
+    workshop repairs; ``normal_mg``: up to here it is normal; ``None`` without
+    one). ``share`` is its part of what the causes heard at the same speeds
+    shake there.
+    """
+
+    finding_id: str
+    source: str
+    order_codes: list[OrderCodeValue]
+    level_mg: float
+    peak_mg: float
+    share: float | None
+    speed_min_kmh: float | None
+    speed_max_kmh: float | None
+    severity: FeltSeverityValue | None
+    workshop_mg: float | None
+    normal_mg: float | None
+
+
+@with_config(_FORBID_EXTRA)
+class FeltPayload(TypedDict):
+    """The run's causes ranked by what the driver feels: their level at the felt reference.
+
+    ``reference`` is that sensor's location; without one, ``fallback`` says why
+    and the causes keep the ranking by evidence. No causes on a no-fault run.
+    """
+
+    reference: str | None
+    fallback: FeltFallbackValue | None
+    causes: list[FeltCauseRow]
+
+
+@with_config(_FORBID_EXTRA)
 class DiagnosisAlternative(TypedDict):
     """The other source the diagnosed order may equally be.
 
@@ -284,3 +332,5 @@ class DiagnosisPayload(TypedDict):
     # check, the axle the sensors point to first. Empty for an EV (its motor is
     # the driveline order), without a layout, or for another source.
     driveline_parts: NotRequired[list[DrivelinePart]]
+    # The causes ranked by what the driver feels (absent on runs analysed before).
+    felt: NotRequired[FeltPayload]
