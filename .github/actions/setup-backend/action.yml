@@ -18,6 +18,15 @@ runs:
     - id: setup-python
       uses: ./.github/actions/setup-python
 
+    # pyproject.toml has version floors, not a lockfile, so pip resolves the
+    # newest releases at install time. The ISO week in the key rebuilds the
+    # venv weekly so CI picks up new dependency releases (e.g. Pydantic, which
+    # changes `make sync-contracts` output) within a week.
+    - name: Compute backend virtualenv cache week
+      id: cache-week
+      shell: bash
+      run: echo "week=$(date -u +%G-W%V)" >> "${GITHUB_OUTPUT}"
+
     - name: Restore backend virtualenv cache
       id: backend-venv-cache
       uses: actions/cache@v6
@@ -25,6 +34,7 @@ runs:
         path: .venv
         key: >-
           ${{ runner.os }}-${{ runner.arch }}-backend-venv-${{
+          steps.cache-week.outputs.week }}-${{
           hashFiles(
             '.python-version',
             'apps/server/pyproject.toml',
