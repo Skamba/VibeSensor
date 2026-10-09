@@ -77,6 +77,49 @@ def _weak_summary() -> dict[str, Any]:
     )
 
 
+def _felt_row(source: str, codes: list[str], peak_mg: float, **row: Any) -> dict[str, Any]:
+    limits = {"engine": (12.0, 2.0)}.get(source, (25.0, None))
+    return {
+        "finding_id": "F001",
+        "source": source,
+        "order_codes": codes,
+        "level_mg": 0.267 * peak_mg,
+        "peak_mg": peak_mg,
+        "share": 1.0 if peak_mg else None,
+        "speed_min_kmh": 80.0,
+        "speed_max_kmh": 120.0,
+        "severity": "workshop" if peak_mg >= limits[0] else ("below_workshop" if peak_mg else None),
+        "workshop_mg": limits[0],
+        "normal_mg": limits[1],
+        **row,
+    }
+
+
+def _felt_summary(reference: str | None, *rows: dict[str, Any], **diagnosis: Any) -> dict[str, Any]:
+    fallback = None if reference else "no_cabin_sensor"
+    felt = {"reference": reference, "fallback": fallback, "causes": list(rows)}
+    return _variant(felt=felt, **diagnosis)
+
+
+def _felt_trunk_summary() -> dict[str, Any]:
+    """The wheels felt in the trunk at a workshop level, with a faint propshaft beside them."""
+    return _felt_summary(
+        "Trunk",
+        _felt_row("wheel/tire", ["T1", "T2"], 60.0, share=0.8),
+        _felt_row("driveline", ["P1"], 12.0, share=0.2, finding_id="F002"),
+    )
+
+
+def _felt_engine_normal_summary() -> dict[str, Any]:
+    return _felt_summary(
+        "Driver Seat",
+        _felt_row("engine", ["E2"], 1.5, severity="normal"),
+        source="engine",
+        order_code="E2",
+        zone="engine_bay",
+    )
+
+
 def _guided_summary() -> dict[str, Any]:
     summary = _variant(
         guided_phases=["sweep", "hold", "coast_down", "brake"], speed_dependence="vehicle_speed"
@@ -113,6 +156,9 @@ def _all_text(view: ReportView) -> str:
             owner.next_step,
             owner.fallback_step,
             owner.verify,
+            owner.felt,
+            mechanic.felt_title,
+            mechanic.felt_note,
         )
         if value
     ]
@@ -123,6 +169,8 @@ def _all_text(view: ReportView) -> str:
         for r in mechanic.worksheet
     ]
     parts += [f"{r.location} {r.amplitude} {r.ratio}" for r in mechanic.amplitudes]
+    parts += [*mechanic.felt_header]
+    parts += [" ".join((r.cause, r.level, r.share, r.judged, r.workshop)) for r in mechanic.felt]
     parts += [*mechanic.ruled_out, *mechanic.shop, mechanic.worksheet_empty or ""]
     parts += [f"{c.label} {c.detail}" for c in quality.checks]
     parts += [*quality.warnings, quality.footer_line]
@@ -137,6 +185,8 @@ _SCENARIOS = {
     "weak": _weak_summary,
     "guided": _guided_summary,
     "guided_contradiction": _guided_contradiction_summary,
+    "felt_trunk": _felt_trunk_summary,
+    "felt_engine_normal": _felt_engine_normal_summary,
 }
 
 
@@ -286,7 +336,8 @@ def test_clear_wheel_fault_names_corner_order_level_and_next_steps() -> None:
     assert mechanic.amplitudes[0].amplitude.startswith("60 mg (")
     assert mechanic.amplitudes[0].ratio == "1.0x"
     assert mechanic.amplitude_title == "Amplitude at T1 per location"
-    assert mechanic.shop[0].startswith("Road-force all four wheel/tire assemblies")
+    assert mechanic.shop[0].startswith("Balance all four wheels to under 5 g")
+    assert mechanic.shop[1].startswith("Road-force all four wheel/tire assemblies")
     assert any(line.startswith("Driveline: ") for line in mechanic.ruled_out)
     assert not any(line.startswith("Wheels/tires") for line in mechanic.ruled_out)
 
@@ -1499,3 +1550,72 @@ def test_a_run_with_a_power_dip_and_overheating_says_its_results_may_be_affected
             "van de verwarming.",
         ),
     ]
+
+
+def test_the_cause_felt_in_the_trunk_says_its_share_and_that_a_workshop_acts_on_it() -> None:
+    view = report_view_for(_felt_trunk_summary(), lang="en")
+    owner, mechanic = view.owner, view.mechanic
+
+    assert owner.felt_title == "What you feel"
+    assert owner.felt is not None
+    assert owner.felt.startswith(
+        "This cause explains most of what the test measured at the trunk, nearest where you"
+        " sit, at 80–120\xa0km/h. A workshop acts on that level: from 25\xa0mg at the driver's"
+        " seat, GM has the wheels balanced and road-force checked."
+    )
+    # The trunk is not the seat track the limit is measured on.
+    assert "is not the seat workshops measure at" in owner.felt
+    assert mechanic.felt_title == "What the driver feels: levels at the trunk"
+    first, second = mechanic.felt
+    assert (first.cause, first.level, first.share, first.judged, first.workshop) == (
+        "Wheels/tires (T1, T2)",
+        "60\xa0mg",
+        "80\xa0%",
+        "At workshop level",
+        "25\xa0mg",
+    )
+    assert first.first and not second.first
+    assert second.judged == "Below workshop level"
+    assert mechanic.felt_note is not None and "19-NA-240" in mechanic.felt_note
+
+
+@pytest.mark.parametrize(
+    ("summary", "felt"),
+    [
+        (
+            lambda: _felt_summary("Driver Seat", _felt_row("wheel/tire", ["T1"], 15.0)),
+            "That level is below the 25\xa0mg at the driver's seat from which workshops act:"
+            " what you feel may also come from something else. A workshop may find the wheels"
+            " in balance; ask for a road-force check of the tires as well.",
+        ),
+        (
+            _felt_engine_normal_summary,
+            "That level is normal for an engine (2.0\xa0mg or less at the driver's seat): what"
+            " you feel may come from something else.",
+        ),
+        (
+            lambda: _felt_summary("Trunk", _felt_row("wheel/tire", ["T1"], 0.0)),
+            "It was not measurable at the trunk, nearest where you sit, so it may not be what"
+            " you feel.",
+        ),
+        (
+            lambda: _felt_summary(None),
+            "No sensor in the cabin or the trunk measured this vibration, so this report cannot"
+            " say how much of what you feel this cause explains.",
+        ),
+    ],
+)
+def test_the_felt_wording_says_when_the_cause_may_not_be_what_is_felt(
+    summary: Any, felt: str
+) -> None:
+    owner = report_view_for(summary(), lang="en").owner
+
+    assert owner.felt is not None and felt in owner.felt
+    # A seat is where workshops measure: no caveat there.
+    assert "is not the seat" not in owner.felt
+
+
+def test_a_no_fault_run_says_nothing_about_what_is_felt() -> None:
+    view = report_view_for(_healthy_summary(), lang="en")
+
+    assert view.owner.felt is None and view.mechanic.felt_title is None

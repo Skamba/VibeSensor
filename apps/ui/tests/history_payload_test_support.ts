@@ -129,6 +129,8 @@ export function makeOwnerPage(
     covered: null,
     not_covered_title: null,
     not_covered: [],
+    felt_title: "What you feel",
+    felt: "This cause explains most of what the test measured at the trunk, nearest where you sit.",
     next_step_title: "Next step",
     confirm_title: "Cheap check first",
     confirm: "Swap the front-left wheel to the other side and record again.",

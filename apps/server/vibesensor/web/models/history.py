@@ -189,6 +189,8 @@ class HistoryOwnerPageResponse(TypedDict):
     covered: str | None
     not_covered_title: str | None
     not_covered: list[str]
+    felt_title: str | None
+    felt: str | None
     next_step_title: str
     confirm_title: str | None
     confirm: str | None

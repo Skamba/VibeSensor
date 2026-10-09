@@ -32,6 +32,8 @@ from vibesensor.summary.contracts import AnalysisSummary
 from vibesensor.summary.diagnosis_contracts import (
     DiagnosisAlternative,
     DiagnosisPayload,
+    FeltCauseRow,
+    FeltPayload,
     LocationAmplitudeRow,
     OrderFindingRow,
     ReferenceProvenanceValue,
@@ -169,7 +171,12 @@ _DRIVELINE_SHOP_KEYS = {
     ),
 }
 _SHOP_KEYS = {
-    "WHEEL": ("SHOP_TIRE_ROAD_FORCE", "SHOP_TIRE_MATCH", "SHOP_TIRE_RUNOUT"),
+    "WHEEL": (
+        "SHOP_TIRE_BALANCE",
+        "SHOP_TIRE_ROAD_FORCE",
+        "SHOP_TIRE_MATCH",
+        "SHOP_TIRE_RUNOUT",
+    ),
     "DRIVELINE": ("SHOP_DRIVELINE_RUNOUT", "SHOP_DRIVELINE_ANGLES", "SHOP_DRIVELINE_ORDERS"),
     "ENGINE": ("SHOP_ENGINE_MOUNTS", "SHOP_ENGINE_ORDERS", "SHOP_ENGINE_MISFIRE"),
     "MOTOR": ("SHOP_MOTOR_MOUNTS", "SHOP_MOTOR_BALANCE", "SHOP_MOTOR_ORDERS"),
@@ -323,6 +330,10 @@ class OwnerPage:
     covered: str | None
     not_covered_title: str | None
     not_covered: tuple[str, ...]
+    # How much of what the occupants feel the cause explains, and whether a
+    # workshop would act on that level ("What the driver feels" in docs/metrics.md).
+    felt_title: str | None
+    felt: str | None
     next_step_title: str
     confirm_title: str | None
     confirm: str | None
@@ -345,6 +356,18 @@ class WorksheetRow:
     location: str
     level: str
     diagnosed: bool
+
+
+@dataclass(frozen=True, slots=True)
+class FeltRow:
+    """One cause's level at the felt reference sensor against the workshop level."""
+
+    cause: str
+    level: str
+    share: str
+    judged: str
+    workshop: str
+    first: bool
 
 
 @dataclass(frozen=True, slots=True)
@@ -401,6 +424,11 @@ class MechanicPage:
     worksheet_header: tuple[str, ...]
     worksheet: tuple[WorksheetRow, ...]
     worksheet_empty: str | None
+    # The causes by their level where the occupants sit; no title: nothing to show.
+    felt_title: str | None
+    felt_header: tuple[str, ...]
+    felt: tuple[FeltRow, ...]
+    felt_note: str | None
     amplitude_title: str
     amplitude_header: tuple[str, str, str]
     amplitudes: tuple[AmplitudeRow, ...]
@@ -739,6 +767,7 @@ def _owner_page(
     not_covered: tuple[str, ...] = ()
     next_step = ctx.t("STEP_NO_FAULT")
     result = ctx.t("RESULT_NO_FAULT")
+    felt = _felt(ctx, diagnosis)
     if verdict == "no_fault":
         description, covered, not_covered = _coverage(ctx, analysis, diagnosis)
         strongest = _unexplained_row(diagnosis)
@@ -809,6 +838,8 @@ def _owner_page(
         covered=covered,
         not_covered_title=ctx.t("NOT_COVERED") if not_covered else None,
         not_covered=not_covered,
+        felt_title=ctx.t("FELT_TITLE") if felt else None,
+        felt=felt,
         next_step_title=ctx.t("NEXT_STEP"),
         confirm_title=ctx.t("CONFIRM_FIRST") if confirm else None,
         confirm=confirm,
@@ -1029,6 +1060,121 @@ def _description(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str:
     return text
 
 
+_FELT_SEATS = frozenset(
+    {"driver_seat", "front_passenger_seat", "rear_left_seat", "rear_center_seat", "rear_right_seat"}
+)
+_FELT_SHARE_KEYS = ((0.9, "FELT_SHARE_ALL"), (0.5, "FELT_SHARE_MOST"), (0.0, "FELT_SHARE_PART"))
+_FELT_WORKSHOP_KEYS = {"WHEEL": "FELT_WORKSHOP_WHEEL", "ENGINE": "FELT_WORKSHOP_ENGINE"}
+
+
+def _felt_block(diagnosis: DiagnosisPayload) -> FeltPayload | None:
+    """The run's felt ranking; ``None`` on a no-fault run or one analysed before it existed."""
+    if diagnosis["verdict"] == "no_fault":
+        return None
+    return diagnosis.get("felt")
+
+
+def _felt_measured(row: FeltCauseRow | None) -> FeltCauseRow | None:
+    return row if row is not None and row["level_mg"] > 0 else None
+
+
+def _felt(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str | None:
+    """How much of what the occupants feel the diagnosed cause explains, and how
+    a workshop would judge its level there."""
+    felt = _felt_block(diagnosis)
+    if felt is None:
+        return None
+    reference = felt["reference"]
+    if reference is None:
+        fallback = felt["fallback"]
+        return ctx.t(f"FELT_FALLBACK_{fallback.upper()}") if fallback else None
+    where = ctx.location(reference)
+    row = _felt_measured(
+        next((row for row in felt["causes"] if row["source"] == diagnosis["source"]), None)
+    )
+    if row is None:
+        return ctx.t("FELT_NOT_MEASURED", location=where)
+    share = row["share"] or 0.0
+    share_key = next(key for floor, key in _FELT_SHARE_KEYS if share >= floor)
+    low, high = row["speed_min_kmh"], row["speed_max_kmh"]
+    parts = [
+        ctx.t(
+            "FELT_SHARE", location=where, share=ctx.t(share_key), speeds=ctx.speed_range(low, high)
+        )
+        if low is not None and high is not None
+        else ctx.t("FELT_SHARE_ANY_SPEED", location=where, share=ctx.t(share_key))
+    ]
+    severity = _felt_severity(ctx, row, diagnosis["source"])
+    if severity is not None:
+        parts.append(severity)
+        if location_code_for_label(reference) not in _FELT_SEATS:
+            parts.append(ctx.t("FELT_NOT_SEAT", location=where))
+    return " ".join(parts)
+
+
+def _felt_severity(ctx: _Ctx, row: FeltCauseRow, source: str | None) -> str | None:
+    severity, limit, normal = row["severity"], row["workshop_mg"], row["normal_mg"]
+    if severity is None or limit is None:
+        return None
+    key = ctx.source_key(source) or ""
+    if severity == "workshop":
+        return ctx.t(_FELT_WORKSHOP_KEYS.get(key, "FELT_WORKSHOP"), limit=ctx.mg(limit))
+    if severity == "normal" and normal is not None:
+        return ctx.t("FELT_NORMAL", normal=ctx.mg(normal))
+    below = ctx.t("FELT_BELOW_WORKSHOP", limit=ctx.mg(limit))
+    return f"{below} {ctx.t('FELT_BELOW_WORKSHOP_WHEEL')}" if key == "WHEEL" else below
+
+
+type _FeltTable = tuple[str | None, tuple[str, ...], tuple[FeltRow, ...], str | None]
+
+
+def _felt_table(ctx: _Ctx, diagnosis: DiagnosisPayload) -> _FeltTable:
+    """Page 2's felt table (title, header, rows, note): every cause at the felt
+    reference against its workshop level; no title when there is nothing to show."""
+    felt = _felt_block(diagnosis)
+    if felt is None:
+        return None, (), (), None
+    reference = felt["reference"]
+    if reference is None:
+        note = _felt(ctx, diagnosis)
+        return (ctx.t("FELT_TABLE_TITLE") if note else None), (), (), note
+    where = ctx.location(reference)
+    note = ctx.t("FELT_TABLE_BASIS")
+    if location_code_for_label(reference) not in _FELT_SEATS:
+        note = f"{note} {ctx.t('FELT_NOT_SEAT', location=where)}"
+    header = tuple(
+        ctx.t(key, location=where)
+        for key in (
+            "FELT_COL_CAUSE",
+            "FELT_COL_LEVEL",
+            "FELT_COL_SHARE",
+            "FELT_COL_JUDGED",
+            "FELT_COL_WORKSHOP",
+        )
+    )
+    rows = tuple(_felt_row(ctx, row, first=index == 0) for index, row in enumerate(felt["causes"]))
+    return ctx.t("FELT_TABLE_TITLE_AT", location=where), header, rows, note
+
+
+def _felt_row(ctx: _Ctx, row: FeltCauseRow, *, first: bool) -> FeltRow:
+    key = ctx.source_key(row["source"])
+    source = ctx.t(f"SOURCE_{key}") if key else row["source"]
+    measured = _felt_measured(row) is not None
+    limit, normal = row["workshop_mg"], row["normal_mg"]
+    workshop = ctx.mg(limit) if limit is not None else "-"
+    if normal is not None:
+        workshop = ctx.t("FELT_WORKSHOP_WITH_NORMAL", limit=workshop, normal=ctx.mg(normal))
+    severity = row["severity"]
+    return FeltRow(
+        cause=f"{source} ({', '.join(row['order_codes'])})",
+        level=ctx.mg(row["peak_mg"]) if measured else ctx.t("FELT_NOT_MEASURABLE"),
+        share=ctx.share(row["share"]) if row["share"] is not None and measured else "-",
+        judged=ctx.t(f"FELT_JUDGED_{severity.upper()}") if severity else "-",
+        workshop=workshop,
+        first=first and measured,
+    )
+
+
 def _weak_reason(ctx: _Ctx, reason: str) -> str:
     key = _WEAK_REASON_KEYS.get(reason)
     return ctx.t(ctx.driveline_key(key)) if key is not None else reason
@@ -1247,6 +1393,7 @@ def _mechanic_page(
     diagnosis: DiagnosisPayload,
 ) -> MechanicPage:
     order_code = diagnosis["order_code"]
+    felt_title, felt_header, felt_rows, felt_note = _felt_table(ctx, diagnosis)
     return MechanicPage(
         title=ctx.t("PAGE2_TITLE"),
         conditions_title=ctx.t("CONDITIONS_TITLE"),
@@ -1269,6 +1416,10 @@ def _mechanic_page(
             for row in diagnosis["order_findings"]
         ),
         worksheet_empty=_worksheet_empty(ctx, diagnosis),
+        felt_title=felt_title,
+        felt_header=felt_header,
+        felt=felt_rows,
+        felt_note=felt_note,
         amplitude_title=(
             ctx.t("AMPLITUDE_TITLE_ORDER", order=order_code)
             if diagnosis["amplitude_basis"] == "order" and order_code

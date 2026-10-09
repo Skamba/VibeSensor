@@ -663,6 +663,8 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
 - **Page 1 (owner):**
   - verdict and confidence;
   - a plain sentence;
+  - what you feel: how much of what the sensor nearest the occupants
+    measured the cause explains, and whether a workshop acts on that level;
   - a car diagram with a corner or zone;
   - the next step and a fallback step;
   - how to check the fix (re-run the test);
@@ -670,7 +672,8 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
 - **Page 2 (mechanic):**
   - test conditions: tire and circumference, ratios, speed source, RPM
     measured or estimated, phases, guided steps, sensors;
-  - the worksheet and per-location mg;
+  - the worksheet, the causes' levels where the driver sits against the
+    workshop levels, and per-location mg;
   - ruled-out and not-testable sources;
   - the spectrum with T/P/E markers (E markers from measured RPM when OBD-II
     supplied it);

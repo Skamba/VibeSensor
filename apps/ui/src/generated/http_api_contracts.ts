@@ -868,6 +868,8 @@ export interface components {
             description: string;
             diagram: components["schemas"]["HistoryOwnerDiagramResponse"];
             fallback_step: string | null;
+            felt: string | null;
+            felt_title: string | null;
             headline: string;
             level: ("strong" | "moderate" | "weak") | null;
             level_meaning: string | null;

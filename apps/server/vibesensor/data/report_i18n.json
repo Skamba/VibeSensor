@@ -479,6 +479,122 @@
     "en": "No abnormal play, wear, or looseness is detected.",
     "nl": "Er wordt geen abnormale speling, slijtage of losheid gedetecteerd."
   },
+  "FELT_BELOW_WORKSHOP": {
+    "en": "That level is below the {limit} at the driver's seat from which workshops act: what you feel may also come from something else.",
+    "nl": "Dat niveau ligt onder de {limit} bij de bestuurdersstoel vanaf waar werkplaatsen ingrijpen: wat je voelt kan ook ergens anders vandaan komen."
+  },
+  "FELT_BELOW_WORKSHOP_WHEEL": {
+    "en": "A workshop may find the wheels in balance; ask for a road-force check of the tires as well.",
+    "nl": "Een werkplaats kan de wielen in balans vinden; vraag ook om een road-force-meting van de banden."
+  },
+  "FELT_COL_CAUSE": {
+    "en": "Cause (orders)",
+    "nl": "Oorzaak (orden)"
+  },
+  "FELT_COL_JUDGED": {
+    "en": "Against workshop level",
+    "nl": "T.o.v. werkplaatsniveau"
+  },
+  "FELT_COL_LEVEL": {
+    "en": "Level (one-axis peak)",
+    "nl": "Niveau (piek op één as)"
+  },
+  "FELT_COL_SHARE": {
+    "en": "Share",
+    "nl": "Aandeel"
+  },
+  "FELT_COL_WORKSHOP": {
+    "en": "Workshop acts from",
+    "nl": "Werkplaats grijpt in vanaf"
+  },
+  "FELT_FALLBACK_NO_CABIN_SENSOR": {
+    "en": "No sensor in the cabin or the trunk measured this vibration, so this report cannot say how much of what you feel this cause explains.",
+    "nl": "Geen sensor in het interieur of de kofferbak heeft deze trilling gemeten, dus dit rapport kan niet zeggen hoeveel van wat je voelt deze oorzaak verklaart."
+  },
+  "FELT_FALLBACK_NO_ORDER_LEVELS": {
+    "en": "This run kept no raw data to measure the vibration where you sit, so this report cannot say how much of what you feel this cause explains.",
+    "nl": "Deze rit bewaarde geen ruwe data om de trilling te meten waar je zit, dus dit rapport kan niet zeggen hoeveel van wat je voelt deze oorzaak verklaart."
+  },
+  "FELT_JUDGED_BELOW_WORKSHOP": {
+    "en": "Below workshop level",
+    "nl": "Onder werkplaatsniveau"
+  },
+  "FELT_JUDGED_NORMAL": {
+    "en": "Normal",
+    "nl": "Normaal"
+  },
+  "FELT_JUDGED_WORKSHOP": {
+    "en": "At workshop level",
+    "nl": "Op werkplaatsniveau"
+  },
+  "FELT_NORMAL": {
+    "en": "That level is normal for an engine ({normal} or less at the driver's seat): what you feel may come from something else.",
+    "nl": "Dat niveau is normaal voor een motor ({normal} of minder bij de bestuurdersstoel): wat je voelt komt mogelijk ergens anders vandaan."
+  },
+  "FELT_NOT_MEASURABLE": {
+    "en": "not measurable",
+    "nl": "niet meetbaar"
+  },
+  "FELT_NOT_MEASURED": {
+    "en": "It was not measurable at the {location}, nearest where you sit, so it may not be what you feel.",
+    "nl": "Deze oorzaak was niet meetbaar bij de {location}, het dichtst bij waar je zit, dus het is mogelijk niet wat je voelt."
+  },
+  "FELT_NOT_SEAT": {
+    "en": "The {location} is not the seat workshops measure at, so this comparison is a rough one.",
+    "nl": "De {location} is niet de stoel waar werkplaatsen meten, dus dit is een ruwe vergelijking."
+  },
+  "FELT_SHARE": {
+    "en": "This cause explains {share} of what the test measured at the {location}, nearest where you sit, at {speeds}.",
+    "nl": "Deze oorzaak verklaart {share} van wat de test mat bij de {location}, het dichtst bij waar je zit, bij {speeds}."
+  },
+  "FELT_SHARE_ALL": {
+    "en": "nearly all",
+    "nl": "vrijwel alles"
+  },
+  "FELT_SHARE_ANY_SPEED": {
+    "en": "This cause explains {share} of what the test measured at the {location}, nearest where you sit.",
+    "nl": "Deze oorzaak verklaart {share} van wat de test mat bij de {location}, het dichtst bij waar je zit."
+  },
+  "FELT_SHARE_MOST": {
+    "en": "most",
+    "nl": "het grootste deel"
+  },
+  "FELT_SHARE_PART": {
+    "en": "part",
+    "nl": "een deel"
+  },
+  "FELT_TABLE_BASIS": {
+    "en": "Level: the cause's orders at this sensor, the three axes together, as the peak one axis would carry. Workshop levels on the driver's seat track: wheels 25 mg (GM bulletins 19-NA-240 and 20-NA-192); engine 12 mg, normal up to 2 mg (GM rough-idle diagnosis); driveline and brakes take the wheel level, an assumption. Share: of the causes found at the same speeds.",
+    "nl": "Niveau: de orden van de oorzaak bij deze sensor, de drie assen samen, als de piek die één as zou dragen. Werkplaatsniveaus op de stoelrail van de bestuurder: wielen 25 mg (GM-bulletins 19-NA-240 en 20-NA-192); motor 12 mg, normaal tot 2 mg (GM-diagnose stationair lopen); aandrijflijn en remmen krijgen het wielniveau, een aanname. Aandeel: van de oorzaken gevonden bij dezelfde snelheden."
+  },
+  "FELT_TABLE_TITLE": {
+    "en": "What the driver feels",
+    "nl": "Wat de bestuurder voelt"
+  },
+  "FELT_TABLE_TITLE_AT": {
+    "en": "What the driver feels: levels at the {location}",
+    "nl": "Wat de bestuurder voelt: niveaus bij de {location}"
+  },
+  "FELT_TITLE": {
+    "en": "What you feel",
+    "nl": "Wat je voelt"
+  },
+  "FELT_WORKSHOP": {
+    "en": "A workshop acts on that level (from {limit} at the driver's seat).",
+    "nl": "Op dat niveau grijpt een werkplaats in (vanaf {limit} bij de bestuurdersstoel)."
+  },
+  "FELT_WORKSHOP_ENGINE": {
+    "en": "A workshop acts on that level: from {limit} at the driver's seat, GM has the engine mounts checked.",
+    "nl": "Op dat niveau grijpt een werkplaats in: vanaf {limit} bij de bestuurdersstoel laat GM de motorsteunen controleren."
+  },
+  "FELT_WORKSHOP_WHEEL": {
+    "en": "A workshop acts on that level: from {limit} at the driver's seat, GM has the wheels balanced and road-force checked.",
+    "nl": "Op dat niveau grijpt een werkplaats in: vanaf {limit} bij de bestuurdersstoel laat GM de wielen balanceren en met road force meten."
+  },
+  "FELT_WORKSHOP_WITH_NORMAL": {
+    "en": "{limit} (normal up to {normal})",
+    "nl": "{limit} (normaal tot {normal})"
+  },
   "FINAL_DRIVE_AXLE_FRONT": {
     "en": "front axle",
     "nl": "vooras"
@@ -1375,13 +1491,17 @@
     "en": "Inspect around {zone} for loose components, brackets and mounts.",
     "nl": "Controleer rond {zone} op losse onderdelen, beugels en steunen."
   },
+  "SHOP_TIRE_BALANCE": {
+    "en": "Balance all four wheels to under 5 g (0.18 oz) residual imbalance each, 3 g preferred; ask for the balancer's fine mode, as its normal mode rounds to 5 g steps.",
+    "nl": "Laat alle vier de wielen balanceren tot minder dan 5 g restonbalans per wiel, liefst 3 g; vraag om de fijne modus van de balanceermachine, want de normale modus rondt af op stappen van 5 g."
+  },
   "SHOP_TIRE_MATCH": {
     "en": "Match-mount any assembly over the limit and fit the lowest road-force assembly front-left.",
     "nl": "Match combinaties boven de grens en monteer de combinatie met de laagste road force linksvoor."
   },
   "SHOP_TIRE_ROAD_FORCE": {
-    "en": "Road-force all four wheel/tire assemblies and write down each value in lb (GM guidance: at most 18 lb on passenger P-metric tires).",
-    "nl": "Meet alle vier de wiel/band-combinaties met road force en noteer elke waarde in lb (GM-richtlijn: hoogstens 18 lb bij personenwagenbanden)."
+    "en": "Road-force all four wheel/tire assemblies and write down each value in lb (GM guidance: at most 18 lb on passenger P-metric tires; Volvo: at most 65 N / 15 lb for a car with a vibration complaint, against 120 N in production).",
+    "nl": "Meet alle vier de wiel/band-combinaties met road force en noteer elke waarde in lb (GM-richtlijn: hoogstens 18 lb bij personenwagenbanden; Volvo: hoogstens 65 N / 15 lb bij een trillingsklacht, tegen 120 N in de productie)."
   },
   "SHOP_TIRE_RUNOUT": {
     "en": "Check radial and lateral runout of tire and wheel (at most 0.040 in / 1 mm).",
