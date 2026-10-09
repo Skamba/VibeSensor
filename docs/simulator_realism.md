@@ -115,10 +115,12 @@ were read at each order's line, "Order-tracked reads" in
   strongest peaks are the hump's.
 - Cases expecting "about N x stronger at the corner than at the next sensor"
   read "about as strong at the corner as at" another wheel (26 runs; 362
-  read "strongest at the corner" before the order-tracked reads): the
-  wheel-hop hump's curvature at the knuckles the fault does not reach reads
-  as part of the order's level there, so the ratio is understated. A sensor
-  too lossy for its spectra to be rebuilt falls back to the matched peaks.
+  read "strongest at the corner" before the order-tracked reads). In 15 no
+  sensor's level stands out of the hump's scatter (short stretches at the
+  heard speeds, lossy sensors) and the report falls back to the matched
+  peaks; in 11 a second sensor's level stands out, carrying its share of the
+  scatter, or the injected ratio itself is near the 1.5x the wording turns
+  at (1.7x for one front and the diagonal rear corner).
 - Healthy cars driven in town are given a moderate wheel or brake fault
   (19 runs) or a weak guess (29): hump peaks near the wheel order at city
   speeds match it in about a quarter of the windows at every corner.

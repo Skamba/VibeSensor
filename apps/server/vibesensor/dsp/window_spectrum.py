@@ -11,25 +11,28 @@ from vibesensor.dsp.constants import PEAK_BANDWIDTH_HZ
 
 __all__ = ["LineRead", "WindowSpectrum"]
 
-# The flanks a line is compared with start this far past the line's own band and
-# span this much: close enough that a broad hump's curvature barely shows, wide
-# enough to hold a few bins.
-_FLANK_GAP_HZ = 0.8
-_FLANK_SPAN_HZ = 1.8
+# A Hann window spreads a steady tone over its main lobe, two bins either side
+# of the tone's nearest bin: 99.95 % of its power whatever its offset from the
+# bin centre.
+_MAIN_LOBE_BINS = 2
+# The floor a line is compared with is read in this many bins either side, just
+# past its band: the closer they sit, the less a broad resonance's curvature
+# under the line reads as the line's level.
+_FLANK_BINS = 3
 
 
 @dataclass(frozen=True, slots=True)
 class LineRead:
     """One window's power at an order's line over the floor beside it (g²).
 
-    ``excess`` is the power in the line's band (``PEAK_BANDWIDTH_HZ`` about
-    it, or the band its frequency swept through in the window) above the
-    local floor, per bin of a peak's band: a steady tone's ``excess`` is its
-    peak level squared (band RMS, ``PEAK_BANDWIDTH_HZ``) over the floor, and a
-    swept one's adds up the same way. ``flanks`` is the local floor, the mean
-    power per bin either side of the band. ``excess`` comes out below zero in
-    a window where the order is absent about as often as above: it is meant to
-    be averaged.
+    ``excess`` is the power in the line's band (the window's main lobe about
+    it, widened by the band its frequency swept through in the window) above
+    the local floor, per bin of a peak's band: a steady tone's ``excess`` is
+    its peak level squared (band RMS, ``PEAK_BANDWIDTH_HZ``) over the floor,
+    and a swept one's adds up the same way. ``flanks`` is the local floor, the
+    mean power per bin of the few bins either side of the band. ``excess``
+    comes out below zero in a window where the order is absent about as often
+    as above: it is meant to be averaged.
     """
 
     excess: float
@@ -52,8 +55,9 @@ class WindowSpectrum:
     def line_read(self, hz: float, half_width_hz: float) -> LineRead | None:
         """The power in the band about a line at *hz* swept over ``±half_width_hz``, and beside it.
 
-        At the ends of the spectrum the flanks are the bins on the side that has
-        them. ``None`` when the band, or both flanks, fall outside it.
+        The band is the sweep plus the window's main lobe either side. At the
+        ends of the spectrum the flanks are the bins on the side that has them.
+        ``None`` when the band, or both flanks, fall outside it.
         """
         freq = self.freq_hz
         size = freq.size
@@ -61,18 +65,15 @@ class WindowSpectrum:
             return None
         start, bin_hz = float(freq[0]), float(freq[1] - freq[0])
         centre = int(round((hz - start) / bin_hz))
-        peak_half = int(PEAK_BANDWIDTH_HZ / bin_hz + 1e-9)
-        swept = max(1, int(round(half_width_hz / bin_hz)))
-        half = max(peak_half, swept)
-        gap = swept + max(1, int(round(_FLANK_GAP_HZ / bin_hz)))
-        span = max(2, int(round(_FLANK_SPAN_HZ / bin_hz)))
+        half = int(round(half_width_hz / bin_hz)) + _MAIN_LOBE_BINS
         if centre - half < 0 or centre + half >= size:
             return None
-        lower = self.amp_g[max(0, centre - gap - span) : max(0, centre - gap + 1)]
-        upper = self.amp_g[min(size, centre + gap) : min(size, centre + gap + span + 1)]
-        if max(lower.size, upper.size) <= span:
+        lower = self.amp_g[max(0, centre - half - _FLANK_BINS) : centre - half]
+        upper = self.amp_g[centre + half + 1 : centre + half + 1 + _FLANK_BINS]
+        if max(lower.size, upper.size) < _FLANK_BINS:
             return None
         flanks = float(np.mean(np.square(np.concatenate((lower, upper)), dtype=np.float64)))
         band = np.square(self.amp_g[centre - half : centre + half + 1], dtype=np.float64)
-        excess = (float(np.sum(band)) - band.size * flanks) / (2 * peak_half + 1)
+        peak_bins = 2 * int(PEAK_BANDWIDTH_HZ / bin_hz + 1e-9) + 1
+        excess = (float(np.sum(band)) - band.size * flanks) / peak_bins
         return LineRead(excess=excess, flanks=flanks)

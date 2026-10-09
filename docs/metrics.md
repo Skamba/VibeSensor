@@ -58,13 +58,13 @@ location's own noise floor next to it:
 - `location_amplitudes[].amplitude_mg`: the order's level at that location,
   read at its line in every window at the speeds it was heard
   (`Finding.sensor_levels[].level_g`, g × 1000; "Order-tracked reads" in
-  `docs/order_tracking.md`). Over a smooth floor a sensor the order does not
-  reach reads about 0; a broad resonance under the line (the wheel hop at a
-  wheel order on a real road) reads as a level of its own there, so the ratio
-  to the next sensor understates a single corner's fault. A brake finding's
-  level is read over the braking windows only.
+  `docs/order_tracking.md`). A sensor whose mean read does not stand two
+  standard errors out of its reads' own scatter reads 0, so a sensor the
+  order does not reach reads 0 whatever road noise it carries (the report
+  then says the order is measurable only at the strongest sensor). A brake
+  finding's level is read over the braking windows only.
   Without reads at every location that matched the order (no raw capture, or
-  windows the replay could not rebuild), or with no location above 0, the
+  windows the replay could not rebuild), or with no location standing out, the
   median amplitude of the order's matched points at each location
   (`OrderMatchObservation.amp`); `None` where the order was not matched.
 - `location_amplitudes[].db_above_floor`:

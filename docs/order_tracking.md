@@ -435,19 +435,21 @@ as floor):
 - The line is at `k ×` the prediction, `k` placed by the clear matches as in
   "Order lines" above (`_tracked_line_scale()`, the median over the judged
   clear matches when 12 or more are judged, else 1).
-- The band is `PEAK_BANDWIDTH_HZ` (±1.2 Hz) about it, or the band the line
-  swept through in the window where that is wider: `f·|dv/dt|·T / (2v)`
-  either side (`line_half_width_hz()`), with `T` the window's length (2.56 s)
-  and `dv/dt` from the same sensor's neighbouring samples up to 2 s apart
-  (`speed_rates_kmh_per_s()`). Braking from 100 km/h at 5 m/s² sweeps a
-  45 Hz order ±10.4 Hz within one window: read over ±1.2 Hz it shows a
-  quarter of its level, at 2 m/s² 70 %; read over its sweep, all of it.
-- The floor is the mean power per bin of two flanks, each 1.8 Hz wide,
-  starting 0.8 Hz past the line's swept half-width (one bin for a steady
-  line, so past the Hann window's main lobe). A floor that slopes straight
-  across the band cancels between them; a curved one does not (see Limits).
-  At the ends of the spectrum only the flank that exists is used; with
-  neither, or with the band outside the spectrum, there is no read.
+- The band is the Hann window's main lobe about it, two bins (0.78 Hz)
+  either side, which holds 99.95 % of a steady tone's power whatever its
+  offset from a bin centre, widened by the band the line swept through in
+  the window: `f·|dv/dt|·T / (2v)` either side (`line_half_width_hz()`),
+  with `T` the window's length (2.56 s) and `dv/dt` from the same sensor's
+  neighbouring samples up to 2 s apart (`speed_rates_kmh_per_s()`). Braking
+  from 100 km/h at 5 m/s² sweeps a 45 Hz order ±10.4 Hz within one window:
+  read at its centre it shows a quarter of its level, at 2 m/s² 70 %; read
+  over its sweep, all of it.
+- The floor is the mean power per bin of the 3 bins (1.2 Hz) either side,
+  just past the band: a floor that slopes straight across the band cancels
+  between them, and the closer they sit, the less a curved one (a broad
+  resonance under the line) reads as level. At the ends of the spectrum
+  only the flank that exists is used; with neither, or with the band outside
+  the spectrum, there is no read.
 - The read is the band's power above that floor, per bin of a peak band
   (`excess`, g²): a steady tone's is its peak level squared over the floor, a
   swept one's adds up the same way. In a window the order is absent from, it
@@ -461,10 +463,22 @@ as floor):
 summed per sensor, 10 km/h speed bin and braking or not. An order's level at
 a sensor is `sqrt(mean excess)` over the cells at the speed bins and braking
 side where a heard sensor's clear match was ("Heard matches"), over every
-cell when it had none. Averaging the power before taking the root leaves an
-absent order near 0 over a smooth floor: on the idealised road (CI seed),
-the knuckles a corner's imbalance does not reach read a median 0.7 mg at its
-order (see Limits for a broad resonance). Its floor is `sqrt(mean flanks)`.
+cell when it had none. Its floor is `sqrt(mean flanks)`. Averaging the
+power before taking the root leaves an absent order's mean scattering about
+0, by the floor's own randomness: on a knuckle's wheel-hop hump (about
+250 mg per bin at motorway speed on the ISO 8608 road) a drive's mean reads
+tens of mg at a sensor the order does not reach. So a sensor has a level
+only where its mean stands two standard errors over 0
+(`_MIN_STANDARD_ERRORS`), about one absent sensor in 40 reading one, else 0.
+The standard error counts the windows as independent reads by how much they
+overlap: two Hann windows `hop` apart read the same noise with a power
+correlation of `rho(hop)²`, `rho` their overlap correlation (16.7 % at half a
+window; Harris, *Proc. IEEE* 66(1), 1978), so `n` windows 0.25 s apart in a
+2.56 s window weigh as `n / (1 + 2 Σ rho(k·hop)²)`, about `n / 5`, independent
+ones (Welch, *IEEE Trans. Audio Electroacoust.* 15(2), 1967). On the ISO 8608
+road (seeds 1-6) the knuckles a corner's imbalance does not reach read a
+median of 0 at its wheel order (90th percentile 61 mg) against 51 mg (109 mg)
+without this test; on the idealised road, 0 (19 mg).
 A finding put down to the brakes ("Brake judder" below) is read over the
 braking cells alone (`braking_sensor_levels`): averaged with the windows
 between stops, a judder present in a quarter of the windows would read at
@@ -478,7 +492,8 @@ diagnosed order, `diagnosis.location_amplitudes[].amplitude_mg` and
 `db_above_floor` (see "Diagnosis amplitude (mg)" in
 [metrics.md](metrics.md)). The diagnosis falls back to the median of the
 matched peaks when any sensor with matched peaks has no reads (its spectra
-were not rebuilt), or when no sensor's level is above 0.
+were not rebuilt), or when no sensor's level stands out (a short stretch at
+the heard speeds on a rough road).
 
 **What the reads do not decide.** Whether an order is there, its
 confidence, and its strength stay on the ranked peaks ("Heard matches").
@@ -495,14 +510,12 @@ vibration no checked order explains.
 **Limits.** A line within its band plus 0.5 Hz (or 2 %) of its sensor's
 fixed tone is not read there. Two orders whose lines share a band (an engine
 order on a wheel harmonic in one gear) read the same power. A floor that
-bends across the band and its flanks reads as a level: the flank of a narrow
-resonance, or a broad resonance under the line. On the ISO 8608 road
-(seeds 1-6) the wheel-hop hump's curvature gives the knuckles a corner's
-imbalance does not reach a median 51 mg at its wheel order, a quarter of the
-faulty corner's level (90th percentile, about half). The faulty corner still
-reads strongest, but the ratio the report states to the next sensor is lower
-than the fault's. The levels are for the speeds the order was heard at: an
-order heard nowhere is averaged over the whole drive.
+bends sharply across the band and its flanks (the flank of a narrow
+resonance) reads as a level. A sensor whose mean passes the two-standard-error
+test still carries its scatter: on the wheel-hop hump a second corner's level
+reads up to about a third high, so two faulty corners whose levels differ by
+under 2x can read "about as strong". The levels are for the speeds the order
+was heard at: an order heard nowhere is averaged over the whole drive.
 
 **Cost.** On x86, the 30-minute benchmark drive (4 sensors,
 `make benchmark-post-analysis-30min`): post-analysis 11.7 s on main and

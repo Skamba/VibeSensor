@@ -87,11 +87,13 @@ def test_a_line_at_the_edge_of_the_spectrum_reads_the_flank_it_has() -> None:
 def test_an_order_heard_only_while_braking_reads_its_level_over_the_stops_alone() -> None:
     # Brake judder at one sensor through 10 braking windows, absent from the 30
     # cruising windows at the same speed: averaged over both it reads half its level.
-    cells = TrackedCells()
-    for _ in range(10):
-        cells.add(("front_left", "60-70", True), LineRead(excess=1e-4, flanks=1e-6))
-    for _ in range(30):
-        cells.add(("front_left", "60-70", False), LineRead(excess=0.0, flanks=1e-6))
+    cells = TrackedCells(window_s=2.56)
+    for index in range(10):
+        cells.add(("front_left", "60-70", True), LineRead(excess=1e-4, flanks=1e-6), 3.0 * index)
+    for index in range(30):
+        cells.add(
+            ("front_left", "60-70", False), LineRead(excess=0.0, flanks=1e-6), 30 + 3.0 * index
+        )
 
     (whole,) = cells.sensor_levels({("60-70", True), ("60-70", False)})
     (braking,) = cells.sensor_levels({("60-70", True)}, braking_only=True)
@@ -101,3 +103,24 @@ def test_an_order_heard_only_while_braking_reads_its_level_over_the_stops_alone(
     assert any_stop == braking
     assert whole.level_g == pytest.approx(0.005)
     assert braking.floor_g == pytest.approx(0.001)
+
+
+@pytest.mark.parametrize(("hop_s", "heard"), [(2.56, True), (0.25, False)])
+def test_a_level_is_read_only_where_it_stands_out_of_the_reads_scatter(
+    hop_s: float, heard: bool
+) -> None:
+    # Reads scattering by the floor's randomness (0.4 of the floor's power)
+    # about a faint order 0.1 of it: over 200 independent windows the order
+    # stands out; over 200 windows 0.25 s apart, overlapping so much that they
+    # read the floor as about 40 independent ones would, it does not.
+    cells = TrackedCells(window_s=2.56)
+    for index in range(200):
+        excess = 0.1 + 0.4 * (-1) ** index
+        cells.add(
+            ("rear_left", "90-100", False), LineRead(excess=excess, flanks=1.0), hop_s * index
+        )
+
+    (level,) = cells.sensor_levels(())
+
+    assert (level.level_g > 0) is heard
+    assert level.floor_g == pytest.approx(1.0)
