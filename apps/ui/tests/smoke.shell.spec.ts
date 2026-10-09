@@ -194,4 +194,36 @@ test.describe("on a phone in Dutch", () => {
       await expect(tab).toBeInViewport({ ratio: 1 });
     }
   });
+
+  test("journey: on a 320 px phone the tabs share one row and no label breaks inside a word", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 320, height: 700 });
+    await bootLiveDashboard(page, {
+      fakeWebSocket: { payload: { clients: [], spectra: { clients: {} } } },
+      settingsHandler: async (route) => {
+        if (requestPath(route) === "/api/settings/language") {
+          await fulfillJson(route, { language: "nl" });
+          return;
+        }
+        await fulfillJson(route, {});
+      },
+    });
+    await expect(page.locator("#tab-history")).toHaveText("Geschiedenis");
+    const labels = await page.locator(".menu-btn span").evaluateAll((spans) =>
+      spans.map((span) => {
+        const box = span.getBoundingClientRect();
+        return {
+          lines:
+            box.height / Number.parseFloat(getComputedStyle(span).lineHeight),
+          top: Math.round(box.top),
+        };
+      }),
+    );
+    expect(labels).toHaveLength(3);
+    for (const label of labels) {
+      expect(label.lines).toBeCloseTo(1, 0);
+      expect(label.top).toBe(labels[0].top);
+    }
+  });
 });
