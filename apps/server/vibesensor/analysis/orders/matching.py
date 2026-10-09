@@ -566,11 +566,11 @@ def _line_reads(
     ``fixed_tones``) is not read: the tone's level is no part of the order's.
     See "Order-tracked reads" in docs/order_tracking.md.
     """
-    cells = TrackedCells()
+    window_s = window_duration_s(read.context)
+    cells = TrackedCells(window_s=window_s)
     if not any(samples[window.sample_idx].spectrum is not None for window in windows):
         return cells
     scale = _tracked_line_scale(windows, masked, read.bin_hz, read.compliance)
-    window_s = window_duration_s(read.context)
     band_hz = PEAK_BANDWIDTH_HZ
     for window in windows:
         sample = samples[window.sample_idx]
@@ -585,7 +585,11 @@ def _line_reads(
             continue
         line = spectrum.line_read(line_hz, half_width_hz)
         if line is not None:
-            cells.add((window.location, window.speed_bin, window.phase_key == BRAKING_PHASE), line)
+            cells.add(
+                (window.location, window.speed_bin, window.phase_key == BRAKING_PHASE),
+                line,
+                sample.t_s,
+            )
     return cells
 
 
