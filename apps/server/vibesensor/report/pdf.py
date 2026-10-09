@@ -719,8 +719,10 @@ def _mechanic_tables(canvas: Canvas, page: MechanicPage) -> float:
     if page.worksheet_empty:
         y = _paragraph(canvas, page.worksheet_empty, MARGIN, y - 1 * MM, CONTENT_W, size=8.5)
     if page.felt_title:
-        y = _felt_table(canvas, page, y - GAP)
-    y -= GAP + 5 * MM
+        # The felt note ends a line lower than a table's rule, so less space follows it.
+        y = _felt_table(canvas, page, y - GAP - 2 * MM) - GAP - 1 * MM
+    else:
+        y -= GAP + 5 * MM
 
     half = (CONTENT_W - GAP) / 2
     top = y
@@ -758,6 +760,8 @@ def _felt_table(canvas: Canvas, page: MechanicPage, y: float) -> float:
             size=7.5,
             highlight=[row.first for row in page.felt],
         )
+        # Room for the note's first line below the table's bottom rule.
+        y -= 2.5 * MM
     if page.felt_note:
         y = _paragraph(canvas, page.felt_note, MARGIN, y - 1 * MM, CONTENT_W, size=7.5)
     return y

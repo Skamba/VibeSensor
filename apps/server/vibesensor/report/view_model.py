@@ -102,7 +102,8 @@ _WEAK_REASON_KEYS = {
     "loose_mount": "WEAK_LOOSE_MOUNT",
 }
 # Why locations could not be compared: shown with every verdict, not just a weak one.
-_SENSOR_REASONS = ("single_sensor", "single_wheel_sensor")
+# Reasons about the sensors themselves: a fault's description states them too.
+_SENSOR_REASONS = ("single_sensor", "single_wheel_sensor", "loose_mount")
 _SPEED_DEPENDENCE_KEYS = {
     "vehicle_speed": "SPEED_DEPENDENCE_VEHICLE",
     "engine_speed": "SPEED_DEPENDENCE_ENGINE",
@@ -1366,7 +1367,7 @@ def _diagram(ctx: _Ctx, diagnosis: DiagnosisPayload) -> CarDiagram:
         code = location_code_for_label(row["location"])
         if code is None:
             continue
-        amplitude = row["amplitude_mg"]
+        amplitude = _detected_mg(row)
         markers.append(
             DiagramMarker(
                 code=code,
@@ -1601,8 +1602,18 @@ def _worksheet_empty(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str | None:
     return ctx.t("WS_NONE_EV" if ctx.electric else ctx.driveline_key("WS_NONE"))
 
 
+def _detected_mg(row: LocationAmplitudeRow) -> float | None:
+    """The row's amplitude; ``None`` where the order did not reach that sensor.
+
+    An order read at its line at a sensor it does not reach reads 0 mg (with a
+    floor-relative dB that only reflects the floor), so it shows as not detected.
+    """
+    amplitude = row["amplitude_mg"]
+    return amplitude if amplitude else None
+
+
 def _amplitude_row(ctx: _Ctx, row: LocationAmplitudeRow) -> AmplitudeRow:
-    amplitude, db, ratio = row["amplitude_mg"], row["db_above_floor"], row["ratio_to_strongest"]
+    amplitude, db, ratio = _detected_mg(row), row["db_above_floor"], row["ratio_to_strongest"]
     if amplitude is None:
         text = ctx.t("AMP_NOT_DETECTED")
     elif db is not None:
@@ -1612,7 +1623,7 @@ def _amplitude_row(ctx: _Ctx, row: LocationAmplitudeRow) -> AmplitudeRow:
     return AmplitudeRow(
         location=ctx.location(row["location"]),
         amplitude=text,
-        ratio=ctx.ratio(ratio) if ratio is not None else "-",
+        ratio=ctx.ratio(ratio) if ratio is not None and amplitude is not None else "-",
         strongest=ratio == 1.0,
     )
 

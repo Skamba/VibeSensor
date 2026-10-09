@@ -41,7 +41,7 @@
   },
   "AMP_NOT_DETECTED": {
     "en": "not detected",
-    "nl": "niet gemeten"
+    "nl": "niet waargenomen"
   },
   "AMP_RATIO": {
     "en": "vs strongest",
@@ -508,8 +508,8 @@
     "nl": "Werkplaats grijpt in vanaf"
   },
   "FELT_FALLBACK_NO_CABIN_SENSOR": {
-    "en": "No sensor in the cabin or the trunk measured this vibration, so this report cannot say how much of what you feel this cause explains.",
-    "nl": "Geen sensor in het interieur of de kofferbak heeft deze trilling gemeten, dus dit rapport kan niet zeggen hoeveel van wat je voelt deze oorzaak verklaart."
+    "en": "This run had no sensor in the cabin or the trunk, so this report cannot say how much of what you feel this cause explains.",
+    "nl": "Deze rit had geen sensor in het interieur of de kofferbak, dus dit rapport kan niet zeggen hoeveel van wat je voelt deze oorzaak verklaart."
   },
   "FELT_FALLBACK_NO_ORDER_LEVELS": {
     "en": "This run kept no raw data to measure the vibration where you sit, so this report cannot say how much of what you feel this cause explains.",
