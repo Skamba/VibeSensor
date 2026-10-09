@@ -2,16 +2,21 @@
 
 from __future__ import annotations
 
+import math
+from dataclasses import replace
+
 import numpy as np
 import pytest
 
+from vibesensor.ingest.sensor_units import ADXL345_SCALE_G_PER_LSB
 from vibesensor.live.compute import SignalMetricsComputer
 from vibesensor.live.models import ProcessorConfig
 from vibesensor.simulator.commands import (
     apply_one_wheel_mild_scenario,
     apply_road_fixed_scenario,
 )
-from vibesensor.simulator.profiles import SIMULATOR_CAR
+from vibesensor.simulator.fault_forces import OrderForce
+from vibesensor.simulator.profiles import PROFILE_LIBRARY, SIMULATOR_CAR
 from vibesensor.simulator.sim_client import SimClient, make_client_id
 from vibesensor.simulator.wheel_kinematics import DriveState
 
@@ -139,6 +144,47 @@ def test_one_wheel_fault_injects_only_wheel_orders() -> None:
         for order_key in ("shaft_1x", "engine_2x"):
             prominence = _order_prominence(client, client.order_tone_hz(order_key))
             assert prominence < 4.0, (client.name, order_key, prominence)
+
+
+def test_a_wheels_unbalance_shakes_its_own_knuckle_far_harder_than_any_other_sensor(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """40 g at the front-left rim at 100 km/h: about 0.4 g at that knuckle
+    through the quarter car, about 14 mg anywhere else through the rigid body
+    ("Fault amplitudes" in docs/simulator_realism.md)."""
+    force = OrderForce("wheel_1x@front-left", unbalance_g=40.0)
+    # On a silent road, so the frame shows the tone alone.
+    profile = replace(
+        PROFILE_LIBRARY["rough_road"],
+        name="lost_weight",
+        order_forces=(force,),
+        noise_std=0.0,
+        bump_probability=0.0,
+        modulation_depth=0.0,
+        road_resonances=(),
+    )
+    monkeypatch.setitem(PROFILE_LIBRARY, profile.name, profile)
+    clients = {name: _make_client(seed=seed, name=name) for seed, name in enumerate(_SENSORS, 1)}
+    levels = {}
+    for name, client in clients.items():
+        client.profile_name = profile.name
+        client.current_speed_kmh = 100.0
+        levels[name] = math.hypot(*client.order_force_tone(force)[1])
+
+    assert levels["front-left"] == pytest.approx(410.0, rel=0.05)
+    # The knuckle's frames carry the tone at that level.
+    knuckle = clients["front-left"]
+    knuckle.noise_floor_std = 0.0
+    frames = np.concatenate([knuckle.make_frame() for _ in range(40)]).astype(np.float64)
+    window = np.hanning(frames.shape[0])
+    freqs = np.fft.rfftfreq(frames.shape[0], d=1.0 / knuckle.sample_rate_hz)
+    line = np.abs(np.fft.rfft(frames * window[:, None], axis=0)) * 2.0 / window.sum()
+    t1 = line[np.argmin(np.abs(freqs - knuckle.order_tone_hz(force.order_key)))]
+    assert np.hypot.reduce(t1) * ADXL345_SCALE_G_PER_LSB * 1000.0 == pytest.approx(
+        levels["front-left"], rel=0.1
+    )
+    for name in _SENSORS[1:]:
+        assert levels[name] == pytest.approx(13.5, rel=0.1), name
 
 
 @pytest.mark.parametrize("fault_wheel", ["front-left", "front-right", "rear-left"])

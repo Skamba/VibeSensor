@@ -17,7 +17,9 @@ from __future__ import annotations
 import io
 import itertools
 import math
+import os
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass, field, replace
 from enum import Enum
 from pathlib import Path
@@ -49,6 +51,7 @@ from vibesensor.report.i18n import tr
 from vibesensor.report.pdf import render_report_pdf
 from vibesensor.report.view_model import build_report_view
 from vibesensor.simulator.confounders import AccessoryTone, FlatSpot, MountSlip, SensorFixing
+from vibesensor.simulator.fault_forces import OrderForce
 from vibesensor.simulator.profiles import (
     DEFAULT_SPEED_KMH,
     PROFILE_LIBRARY,
@@ -315,6 +318,8 @@ class Case:
     # generated ISO 8608 road through a quarter car and the ADXL345 front end
     # (``docs/simulator_realism.md``), as every real car drives.
     idealised_floor: IdealisedFloor | None = None
+    # Why the case runs only with physical fault amplitudes (``FAULT_AMPLITUDES``).
+    physical_only: str | None = None
 
     def sensors(self) -> tuple[BenchSensor, ...]:
         return tuple(
@@ -611,13 +616,14 @@ class _Layer:
 def _road_with(
     name: str,
     *layers: _Layer,
+    forces: tuple[OrderForce, ...] = (),
     resonance: tuple[float, float] | None = None,
     **speed_laws: object,
 ) -> Profile:
-    """Road noise that grows with speed, plus *layers* and a fixed *resonance* ``(hz, gain)``.
+    """Road noise that grows with speed, plus *layers*, *forces* and a fixed *resonance*.
 
-    The resonance is a body or seat mode: the engine-idle profile's 13 Hz shake
-    at *gain*, moved to *hz*.
+    The resonance ``(hz, gain)`` is a body or seat mode: the engine-idle
+    profile's 13 Hz shake at *gain*, moved to *hz*.
     """
     road = PROFILE_LIBRARY["rough_road"]
     order_tones = tuple(
@@ -636,19 +642,202 @@ def _road_with(
         tones=tones,
         order_tones=order_tones,  # type: ignore[arg-type]
         reference_speed_kmh=DEFAULT_SPEED_KMH if order_tones else None,
+        order_forces=tuple(force.scaled(1.0 / _ROAD_GAIN) for force in forces),
         noise_speed_exponent=_ROAD_NOISE_SPEED_EXPONENT,
         order_speed_exponent=max(
             (PROFILE_LIBRARY[layer.profile].order_speed_exponent for layer in layers), default=0.0
         ),
         **speed_laws,  # type: ignore[arg-type]
     )
-    _LAYERED_PROFILES[profile.name] = profile
+    assert _LAYERED_PROFILES.setdefault(profile.name, profile) == profile, profile.name
     return profile
 
 
 def _on(target: str, profile: Profile, coupling: float = 1.0) -> PhaseOverride:
     """*target* plays *profile* under the road's gains; *coupling* scales all it hears."""
     return _ov(target, profile.name, _ROAD_SCENE_GAIN, _ROAD_AMP * coupling)
+
+
+# -- fault amplitudes: tuned or physical ----------------------------------------
+# Each fault comes in two sizes. Tuned (the default, what CI gates on): order
+# tones at levels set per sensor, sized so the analysis finds what a real car
+# with that fault shows. Physical (VIBESENSOR_BENCH_FAULT_AMPLITUDES=physical):
+# the fault as a force in the car, in grams or newtons, which every sensor
+# reads through the car to its own mount (``simulator/fault_forces.py``): a
+# measured yardstick, not a gate (``tools/dev/physical_fault_tally.py``). The
+# basis of each size is in "Fault amplitudes" in docs/simulator_realism.md.
+
+
+class FaultAmplitudes(Enum):
+    TUNED = "tuned"
+    PHYSICAL = "physical"
+
+
+FAULT_AMPLITUDES = FaultAmplitudes(os.environ.get("VIBESENSOR_BENCH_FAULT_AMPLITUDES", "tuned"))
+
+
+def _sized(
+    tuned: tuple[PhaseOverride, ...], physical: tuple[PhaseOverride, ...]
+) -> tuple[PhaseOverride, ...]:
+    """The fault's *tuned* overrides, or its *physical* ones (see FAULT_AMPLITUDES)."""
+    return physical if FAULT_AMPLITUDES is FaultAmplitudes.PHYSICAL else tuned
+
+
+# A wheel that lost a balancing weight, or was fitted unbalanced: 40 g at the rim.
+_LOST_WEIGHT_G = 40.0
+# A wheel noticeably but mildly out of balance.
+_MILD_G = 15.0
+# A wheel a little out of balance, felt only at motorway speed.
+_WEAK_G = 10.0
+# The balancing tolerance: a balancer shows under 5 g (a quarter ounce) as zero.
+_BARELY_THERE_G = 5.0
+# A propshaft that lost a balance weight: 15 g on its 40 mm tube radius.
+_PROPSHAFT_RADIUS_M = 0.04
+_PROPSHAFT_IMBALANCE_FORCES = (
+    OrderForce("shaft_1x", unbalance_g=15.0, radius_m=_PROPSHAFT_RADIUS_M),
+)
+# An inline-4 without (or with a failed) balance shaft: its pistons'
+# second-order free force (0.5 kg reciprocating per cylinder, 45 mm crank
+# radius, 0.3 crank-to-rod ratio) as an unbalance turning at twice the crank
+# speed (E2), over the crankshaft and flywheel's residual unbalance at E1,
+# balanced four times worse than ISO 21940-11 G6.3.
+_CRANK_RADIUS_M, _FLYWHEEL_RADIUS_M = 0.045, 0.1
+_I4_SECOND_ORDER_FORCES = (
+    OrderForce("engine_2x", unbalance_g=150.0, radius_m=_CRANK_RADIUS_M),
+    OrderForce("engine_1x", unbalance_g=20.0, radius_m=_FLYWHEEL_RADIUS_M),
+)
+# The simulator's fault profiles with the physical sizes, for the scripted
+# scenarios that play them.
+_PHYSICAL_LIBRARY = {
+    name: replace(
+        PROFILE_LIBRARY[name],
+        order_tones=(),
+        reference_speed_kmh=None,
+        order_speed_exponent=0.0,
+        order_forces=forces,
+    )
+    for name, forces in (
+        ("wheel_imbalance", (OrderForce("wheel_1x", unbalance_g=_LOST_WEIGHT_G),)),
+        ("wheel_mild_imbalance", (OrderForce("wheel_1x", unbalance_g=_MILD_G),)),
+        ("driveshaft_imbalance", _PROPSHAFT_IMBALANCE_FORCES),
+        ("engine_order", _I4_SECOND_ORDER_FORCES),
+    )
+}
+# An engine whose first order dominates: a flywheel or crank pulley out by
+# 50 g at 0.1 m (25 times ISO 21940-11 G6.3).
+_ENGINE_FIRST_ORDER_FORCES = (
+    OrderForce("engine_1x", unbalance_g=50.0, radius_m=_FLYWHEEL_RADIUS_M),
+)
+# An engine's firing pulses rock it on its mounts: about 150 N·m of torque at
+# the firing order (about the mean torque at part load), reacted by mounts
+# about 0.3 m apart, so about 500 N at each, the same at every speed.
+_FIRING_FORCE_N = 500.0
+_SIX_FIRING_FORCES = (OrderForce("engine_1x", 3.0, force_n=_FIRING_FORCE_N),)
+# An inline-3's firing rhythm over the rocking couple its counterweights leave
+# at E1 (about 60 g at the crank radius at the mounts).
+_THREE_FIRING_FORCES = (
+    OrderForce("engine_1x", 1.5, force_n=_FIRING_FORCE_N),
+    OrderForce("engine_1x", unbalance_g=60.0, radius_m=_CRANK_RADIUS_M),
+)
+_V8_FIRING_FORCES = (OrderForce("engine_1x", 4.0, force_n=_FIRING_FORCE_N),)
+# An even engine hum (E2 over E1): an inline-4 whose balance shafts cancel
+# most of its second-order force (about 20 g at the crank radius left) and a
+# crankshaft balanced to G6.3 (5 g at 0.1 m).
+_ENGINE_HUM_FORCES = (
+    OrderForce("engine_2x", unbalance_g=20.0, radius_m=_CRANK_RADIUS_M),
+    OrderForce("engine_1x", unbalance_g=5.0, radius_m=_FLYWHEEL_RADIUS_M),
+)
+# A propshaft joint working at too steep an angle pulses the shaft's torque
+# twice per turn (P2): about 30 N at its bearings, over a 5 g residual at P1.
+_PROPSHAFT_JOINT_FORCES = (
+    OrderForce("shaft_1x", 2.0, force_n=30.0),
+    OrderForce("shaft_1x", unbalance_g=5.0, radius_m=_PROPSHAFT_RADIUS_M),
+)
+# A tyre's radial force variation (non-uniform stiffness or runout) is a force
+# its shape fixes, the same at every speed: an OEM tyre passes uniformity
+# grading under about 100 N at the first harmonic (Gent & Walter, *The
+# Pneumatic Tire*, NHTSA 2006, ch. 9); a faulty one is well over. It pushes up
+# through the contact patch.
+_RFV_FAULT_N = 150.0
+_RADIAL = (0.0, 0.0, 1.0)
+# An out-of-round tyre: twice per wheel turn dominates.
+_TIRE_OUT_OF_ROUND_FORCES = (
+    OrderForce("wheel_2x", force_n=_RFV_FAULT_N, direction=_RADIAL),
+    OrderForce("wheel_1x", force_n=_RFV_FAULT_N / 3.0, direction=_RADIAL),
+)
+# An unbalanced tyre that is also oval: once and twice per turn about equally strong.
+_IMBALANCED_OVAL_TIRE_FORCES = (
+    OrderForce("wheel_1x", unbalance_g=30.0),
+    OrderForce("wheel_2x", force_n=_RFV_FAULT_N / 2.0, direction=_RADIAL),
+)
+# Radial force variation at the first four wheel orders, falling off about as 1/n.
+_NON_UNIFORM_TYRE_FORCES = tuple(
+    OrderForce("wheel_1x", float(n), force_n=_RFV_FAULT_N / n, direction=_RADIAL)
+    for n in (1, 2, 3, 4)
+)
+# Brake judder: about 50 N·m of brake torque variation (Jacobsson, *Proc.
+# IMechE D* 217, 2003: tens of N·m), about 150 N fore-aft at the tyre.
+_BRAKE_JUDDER_FORCES = (OrderForce("wheel_1x", force_n=150.0, direction=(1.0, 0.0, 0.0)),)
+
+
+def _unbalance(corner: str, grams: float, hz_scale: float = 1.0) -> OrderForce:
+    """*grams* out of balance at the rim of the wheel at *corner*.
+
+    A wheel on a tire 0.5 % smaller turns 0.5 % faster (*hz_scale* 1.005).
+    """
+    return OrderForce(f"wheel_1x@{corner}", hz_scale, unbalance_g=grams)
+
+
+def _on_wheel(corner: str, *forces: OrderForce) -> tuple[OrderForce, ...]:
+    """A tyre's or brake disc's wheel-order *forces*, on the wheel at *corner*."""
+    return tuple(replace(force, order_key=f"{force.order_key}@{corner}") for force in forces)
+
+
+def _car(
+    name: str,
+    *forces: OrderForce,
+    resonance: tuple[float, float] | None = None,
+    coupling: Mapping[str, float] | None = None,
+    **speed_laws: object,
+) -> tuple[PhaseOverride, ...]:
+    """A car with the fault *forces* (and a body *resonance*), which every sensor reads.
+
+    Each sensor plays one profile, so the forces ride on the road profile under
+    the road override's gains, scaled back so each force is as named.
+    *coupling* reads a target's sensors that many times as strongly: a sensor
+    on a stiff spot, or a broken mount that passes more.
+    """
+    profile = _road_with(f"physical_{name}", forces=forces, resonance=resonance, **speed_laws)
+    return (
+        _on("all", profile),
+        *(_on(target, profile, gain) for target, gain in (coupling or {}).items()),
+    )
+
+
+def _imbalance(corner: str, grams: float = _LOST_WEIGHT_G) -> tuple[PhaseOverride, ...]:
+    """A car whose wheel at *corner* is *grams* out of balance."""
+    return _car(f"{corner}_{grams:g}g", _unbalance(corner, grams))
+
+
+def _lost_weight(corner: str) -> tuple[PhaseOverride, ...]:
+    """The wheel at *corner* lost a balancing weight."""
+    return _sized((_ov(corner, "wheel_imbalance", 0.85, 1.0),), _imbalance(corner))
+
+
+_I4 = _car("i4_second_order", *_I4_SECOND_ORDER_FORCES)
+_PROPSHAFT = _car("propshaft_imbalance", *_PROPSHAFT_IMBALANCE_FORCES)
+_ENGINE_HUM = _car("engine_hum", *_ENGINE_HUM_FORCES)
+_ENGINE_FIRST_ORDER_CAR = _car("engine_first_order", *_ENGINE_FIRST_ORDER_FORCES)
+_FRONT_JUDDER = _car(
+    "front_brake_judder",
+    *_on_wheel("front-left", *_BRAKE_JUDDER_FORCES),
+    *_on_wheel("front-right", *_BRAKE_JUDDER_FORCES),
+)
+_REAR_JUDDER = _car(
+    "rear_brake_judder",
+    *_on_wheel("rear-left", *_BRAKE_JUDDER_FORCES),
+    *_on_wheel("rear-right", *_BRAKE_JUDDER_FORCES),
+)
 
 
 _ROAD_SPEED_NOISE = _road_with("road_speed_noise")
@@ -659,7 +848,9 @@ _ROAD_SPEED_NOISE = _road_with("road_speed_noise")
 # (With rear-right twice the others, 0.08 against 0.03-0.05, rear-right stands
 # out 1.7x and the benchmark calls it a mild rear-right imbalance: where
 # residual ends and a fault begins is a product decision, not set here.)
+# Physically: 2-3.5 g at each rim, under the balancing tolerance.
 _RESIDUAL_BODY = (11.5, 0.02)
+_RESIDUAL_G = {"front-left": 2.0, "front-right": 2.5, "rear-left": 3.0, "rear-right": 3.5}
 _RESIDUAL_COUPLING = {"front-left": 1.0, "front-right": 1.25, "rear-left": 0.8, "rear-right": 1.1}
 
 
@@ -676,9 +867,17 @@ def _residual_imbalance(
             ("rear-right", 0.035),
         )
     }
-    return (
-        _on("all", _road_with(f"{name}_road", resonance=body), 0.9),
-        *(_on(corner, corners[corner], _RESIDUAL_COUPLING[corner]) for corner in corners),
+    return _sized(
+        (
+            _on("all", _road_with(f"{name}_road", resonance=body), 0.9),
+            *(_on(corner, corners[corner], _RESIDUAL_COUPLING[corner]) for corner in corners),
+        ),
+        _car(
+            name,
+            *(_unbalance(corner, grams) for corner, grams in _RESIDUAL_G.items()),
+            resonance=body,
+            coupling={"all": 0.9, **_RESIDUAL_COUPLING},
+        ),
     )
 
 
@@ -687,24 +886,40 @@ _RESIDUAL_IMBALANCE = _residual_imbalance(_RESIDUAL_BODY)
 # passes through on the motorway: a vibration found, but no cause. The faint
 # wheel order it lifts is a healthy car's residual, not a worksheet row.
 _RESIDUAL_UNDER_13HZ = _residual_imbalance((13.0, 0.1), "residual_13hz")
-# A faint front-left imbalance under a strong 12 Hz body resonance every sensor feels.
+# A faint (physically: mild) front-left imbalance under a strong 12 Hz body
+# resonance every sensor feels.
 _BODY_12HZ = (12.0, 0.3)
-_FAINT_FL_UNDER_RESONANCE = (
-    _on("all", _road_with("body_12hz", resonance=_BODY_12HZ)),
-    _on(
-        "front-left",
-        _road_with(
-            "faint_fl_body_12hz", _Layer("wheel_mild_imbalance", 0.15), resonance=_BODY_12HZ
+_FAINT_FL_UNDER_RESONANCE = _sized(
+    (
+        _on("all", _road_with("body_12hz", resonance=_BODY_12HZ)),
+        _on(
+            "front-left",
+            _road_with(
+                "faint_fl_body_12hz", _Layer("wheel_mild_imbalance", 0.15), resonance=_BODY_12HZ
+            ),
         ),
     ),
+    _car("mild_fl_body_12hz", _unbalance("front-left", _MILD_G), resonance=_BODY_12HZ),
 )
 # An imbalance (which shakes with the square of the speed) a suspension mode
 # amplifies threefold between 95 and 115 km/h.
 _RESONANT_BAND_KMH = (95.0, 115.0)
-_FL_SPEED_SQUARED_RESONANT = _road_with(
-    "fl_speed_squared_resonant",
-    _Layer("wheel_imbalance", 0.85),
-    order_resonance_kmh=(*_RESONANT_BAND_KMH, 3.0),
+_FL_SPEED_SQUARED_RESONANT = _sized(
+    (
+        _on(
+            "front-left",
+            _road_with(
+                "fl_speed_squared_resonant",
+                _Layer("wheel_imbalance", 0.85),
+                order_resonance_kmh=(*_RESONANT_BAND_KMH, 3.0),
+            ),
+        ),
+    ),
+    _car(
+        "fl_speed_squared_resonant",
+        _unbalance("front-left", _LOST_WEIGHT_G),
+        order_resonance_kmh=(*_RESONANT_BAND_KMH, 3.0),
+    ),
 )
 # A front-left imbalance: the other corners feel some of it through the
 # subframe (front-right most), and the front-right sensor is mounted on a stiff
@@ -712,16 +927,24 @@ _FL_SPEED_SQUARED_RESONANT = _road_with(
 _FL_IMBALANCE_LAYERED = _road_with("fl_imbalance", _Layer("wheel_imbalance", 0.85))
 _FL_FELT_AT_FR = _road_with("fl_felt_at_fr", _Layer("wheel_imbalance", 0.85 * 0.3))
 _FL_FELT_AT_REAR = _road_with("fl_felt_at_rear", _Layer("wheel_imbalance", 0.85 * 0.12))
-_FR_STIFF_MOUNT = (
-    _on("all", _FL_FELT_AT_REAR),
-    _on("front-left", _FL_IMBALANCE_LAYERED),
-    _on("front-right", _FL_FELT_AT_FR, 2.5),
+_FR_STIFF_MOUNT = _sized(
+    (
+        _on("all", _FL_FELT_AT_REAR),
+        _on("front-left", _FL_IMBALANCE_LAYERED),
+        _on("front-right", _FL_FELT_AT_FR, 2.5),
+    ),
+    _car(
+        "fl_imbalance_stiff_fr",
+        _unbalance("front-left", _LOST_WEIGHT_G),
+        coupling={"front-right": 2.5},
+    ),
 )
-# Both front wheels out of balance after a tire fitting (0.6 and 0.5), the new
-# front-right tire 0.5 % smaller than the front-left, so the two tones beat.
-# Each front sensor also feels the other front wheel, the rear ones both, faintly.
+# Both front wheels out of balance after a tire fitting (0.6 and 0.5;
+# physically 25 g and 20 g), the new front-right tire 0.5 % smaller than the
+# front-left, so the two tones beat. Each front sensor also feels the other
+# front wheel, the rear ones both, faintly.
 _FR_TIRE = 1.005
-_BOTH_FRONT = (
+_BOTH_FRONT_TUNED = (
     _on(
         "all",
         _road_with(
@@ -745,6 +968,14 @@ _BOTH_FRONT = (
             _Layer("wheel_imbalance", 0.5, _FR_TIRE),
             _Layer("wheel_imbalance", 0.6 * 0.3),
         ),
+    ),
+)
+_BOTH_FRONT = _sized(
+    _BOTH_FRONT_TUNED,
+    _car(
+        "both_front",
+        _unbalance("front-left", 25.0),
+        _unbalance("front-right", 20.0, _FR_TIRE),
     ),
 )
 
@@ -780,9 +1011,16 @@ def _healthy_with(mode: RoadResonance) -> PhaseOverride:
 
 def _mild_front_left_with(mode: RoadResonance) -> tuple[PhaseOverride, ...]:
     """bench-mild-front-left-wheel-sweep's imbalance, on a road that rings *mode*."""
-    return (
-        _healthy_with(mode),
-        _ov("front-left", _with_mode("wheel_mild_imbalance", mode).name, 0.15, 1.0),
+    return _sized(
+        (
+            _healthy_with(mode),
+            _ov("front-left", _with_mode("wheel_mild_imbalance", mode).name, 0.15, 1.0),
+        ),
+        _car(
+            f"mild_fl_{mode.hz:g}hz_q{mode.q:g}",
+            _unbalance("front-left", _MILD_G),
+            road_resonances=(*ROAD_RESONANCES, mode),
+        ),
     )
 
 
@@ -811,9 +1049,19 @@ _BENCH_PROFILES = {
 
 @pytest.fixture(autouse=True)
 def _bench_profiles(monkeypatch: pytest.MonkeyPatch) -> None:
-    # Profiles layered further down the module register after this table is built.
-    for name, profile in {**_BENCH_PROFILES, **_LAYERED_PROFILES}.items():
+    for name, profile in bench_profiles().items():
         monkeypatch.setitem(PROFILE_LIBRARY, name, profile)
+
+
+def bench_profiles() -> dict[str, Profile]:
+    """The simulator profiles the benchmark's drives play, by name.
+
+    Profiles layered further down the module register after ``_BENCH_PROFILES``
+    is built. With physical fault amplitudes the simulator's own fault
+    profiles play their physical sizes too.
+    """
+    physical = FAULT_AMPLITUDES is FaultAmplitudes.PHYSICAL
+    return {**_BENCH_PROFILES, **_LAYERED_PROFILES, **(_PHYSICAL_LIBRARY if physical else {})}
 
 
 def _guided(
@@ -920,9 +1168,12 @@ def _ev_stops(*judder: PhaseOverride) -> tuple[ScenarioPhase, ...]:
 # Held at 75-76 km/h, and the tone is there for 12 s of the 28 s drive.
 _FAINT_ENGINE_REASONS = frozenset({"narrow_speed_range", "intermittent"})
 
-_ENGINE_AT_ENGINE_BAY = (
-    _ov("front-axle", "engine_order", 0.74, 0.94),
-    _ov("VS-70 engine", "engine_order", 0.74, 0.94),
+_ENGINE_AT_ENGINE_BAY = _sized(
+    (
+        _ov("front-axle", "engine_order", 0.74, 0.94),
+        _ov("VS-70 engine", "engine_order", 0.74, 0.94),
+    ),
+    _I4,
 )
 # A hatchback's 5-speed gearbox: 3rd, 4th and 5th (its top gear, the car's own).
 _THIRD, _FOURTH, _FIFTH = 1.29, 0.97, 0.80
@@ -981,8 +1232,13 @@ GEAR_CASES = (
     Case(
         "bench-obd-rpm-upshift-engine",
         _upshifts(
-            _ov("VS-70 engine", "engine_order", 0.74, 0.94),
-            _ov("front-axle", "engine_order", 0.42, 0.94),
+            *_sized(
+                (
+                    _ov("VS-70 engine", "engine_order", 0.74, 0.94),
+                    _ov("front-axle", "engine_order", 0.42, 0.94),
+                ),
+                _I4,
+            )
         ),
         _fault("engine", {"engine_bay"}, "E2"),
         layout=WITH_ENGINE_BAY,
@@ -992,7 +1248,7 @@ GEAR_CASES = (
     ),
     Case(
         "bench-obd-rpm-upshift-front-left-wheel",
-        _upshifts(_ov("front-left", "wheel_imbalance", 0.85, 1.0)),
+        _upshifts(*_lost_weight("front-left")),
         _fault("wheel/tire", {"front_left_wheel"}, "T1", dominant_corner=True),
         speed_source="obd2",
         obd_rpm=True,
@@ -1002,7 +1258,7 @@ GEAR_CASES = (
     # ones, and the faulty wheel's order moves with every bend: still that wheel.
     Case(
         "bench-winding-road-front-right-wheel",
-        _winding_road(_ov("front-right", "wheel_imbalance", 0.85, 1.0)),
+        _winding_road(*_lost_weight("front-right")),
         _fault("wheel/tire", {"front_right_wheel"}, "T1", dominant_corner=True),
     ),
     # Pulling hard the driven wheels slip about 3.5 % ahead of the road speed,
@@ -1010,13 +1266,13 @@ GEAR_CASES = (
     # the speed sets while pulling, and back on it when the driver lifts off.
     Case(
         "bench-hard-pulls-driven-rear-left-wheel",
-        _hard_pulls(_ov("rear-left", "wheel_imbalance", 0.85, 1.0)),
+        _hard_pulls(*_lost_weight("rear-left")),
         _fault("wheel/tire", {"rear_left_wheel"}, "T1", dominant_corner=True),
         cars=("rwd",),
     ),
     Case(
         "bench-hard-pulls-driven-front-right-wheel",
-        _hard_pulls(_ov("front-right", "wheel_imbalance", 0.85, 1.0)),
+        _hard_pulls(*_lost_weight("front-right")),
         _fault("wheel/tire", {"front_right_wheel"}, "T1", dominant_corner=True),
         cars=("fwd",),
     ),
@@ -1025,7 +1281,7 @@ GEAR_CASES = (
     # reported speed places it, still that wheel.
     Case(
         "bench-obd-speed-over-read-front-left-wheel-sweep",
-        _sweep(_ov("front-left", "wheel_imbalance", 0.85, 1.0)),
+        _sweep(*_lost_weight("front-left")),
         _fault("wheel/tire", {"front_left_wheel"}, "T1", dominant_corner=True),
         speed_source="obd2",
         obd_speed_over_read=0.04,
@@ -1043,13 +1299,19 @@ def _eight_speed_upshifts(*faults: PhaseOverride) -> tuple[ScenarioPhase, ...]:
     )
 
 
-_SIX_AT_ENGINE_BAY = (
-    _ov("front-axle", _SIX_FIRING.name, 0.74, 0.94),
-    _ov("VS-70 engine", _SIX_FIRING.name, 0.74, 0.94),
+_SIX_AT_ENGINE_BAY = _sized(
+    (
+        _ov("front-axle", _SIX_FIRING.name, 0.74, 0.94),
+        _ov("VS-70 engine", _SIX_FIRING.name, 0.74, 0.94),
+    ),
+    _car("six_firing", *_SIX_FIRING_FORCES),
 )
-_PROPSHAFT_JOINT_AT_REAR = (
-    _ov("rear-axle", _PROPSHAFT_JOINT.name, 0.80, 0.95),
-    _ov("front-axle", _PROPSHAFT_JOINT.name, 0.35, 0.60),
+_PROPSHAFT_JOINT_AT_REAR = _sized(
+    (
+        _ov("rear-axle", _PROPSHAFT_JOINT.name, 0.80, 0.95),
+        _ov("front-axle", _PROPSHAFT_JOINT.name, 0.35, 0.60),
+    ),
+    _car("propshaft_joint", *_PROPSHAFT_JOINT_FORCES),
 )
 ENGINE_PROFILE_CASES = (
     # The six shaking at its firing rhythm in top gear, GPS only: E3 and
@@ -1110,8 +1372,13 @@ ENGINE_PROFILE_CASES = (
     Case(
         "bench-inline-3-firing-sweep",
         _sweep(
-            _ov("front-axle", _THREE_FIRING.name, 0.74, 0.94),
-            _ov("rear-axle", _THREE_FIRING.name, 0.42, 0.94),
+            *_sized(
+                (
+                    _ov("front-axle", _THREE_FIRING.name, 0.74, 0.94),
+                    _ov("rear-axle", _THREE_FIRING.name, 0.42, 0.94),
+                ),
+                _car("three_firing", *_THREE_FIRING_FORCES),
+            )
         ),
         _fault("engine", {"engine_bay"}, "E1.5"),
         cars=("inline_3",),
@@ -1119,8 +1386,13 @@ ENGINE_PROFILE_CASES = (
     Case(
         "bench-inline-4-firing-sweep",
         _sweep(
-            _ov("front-axle", "engine_order", 0.74, 0.94),
-            _ov("rear-axle", "engine_order", 0.42, 0.94),
+            *_sized(
+                (
+                    _ov("front-axle", "engine_order", 0.74, 0.94),
+                    _ov("rear-axle", "engine_order", 0.42, 0.94),
+                ),
+                _I4,
+            )
         ),
         _fault("engine", {"engine_bay"}, "E2"),
         cars=("inline_4",),
@@ -1128,8 +1400,13 @@ ENGINE_PROFILE_CASES = (
     Case(
         "bench-v8-firing-sweep",
         _sweep(
-            _ov("front-axle", _V8_FIRING.name, 0.74, 0.94),
-            _ov("rear-axle", _V8_FIRING.name, 0.42, 0.94),
+            *_sized(
+                (
+                    _ov("front-axle", _V8_FIRING.name, 0.74, 0.94),
+                    _ov("rear-axle", _V8_FIRING.name, 0.42, 0.94),
+                ),
+                _car("v8_firing", *_V8_FIRING_FORCES),
+            )
         ),
         _fault("engine", {"engine_bay"}, "E4"),
         cars=("v8",),
@@ -1139,7 +1416,7 @@ ENGINE_PROFILE_CASES = (
 EV_CASES = (
     Case(
         "bench-ev-front-left-wheel-sweep",
-        _sweep(_ov("front-left", "wheel_imbalance", 0.85, 1.0)),
+        _sweep(*_lost_weight("front-left")),
         _fault("wheel/tire", {"front_left_wheel"}, "T1", dominant_corner=True),
         cars=("ev", "ev_no_ratio"),
     ),
@@ -1147,8 +1424,13 @@ EV_CASES = (
     Case(
         "bench-ev-rear-motor-sweep",
         _sweep(
-            _ov("rear-axle", "driveshaft_imbalance", 0.80, 0.95),
-            _ov("front-axle", "driveshaft_imbalance", 0.35, 0.60),
+            *_sized(
+                (
+                    _ov("rear-axle", "driveshaft_imbalance", 0.80, 0.95),
+                    _ov("front-axle", "driveshaft_imbalance", 0.35, 0.60),
+                ),
+                _PROPSHAFT,
+            )
         ),
         _fault("driveline", DRIVELINE_ZONES, "P1"),
         # Without the motor's ratio no order explains the shake: the report has
@@ -1223,11 +1505,18 @@ HEALTHY_OR_SPREAD = Expected(
     levels=WEAK_ONLY,
     weak_reasons=frozenset({"spread_across_locations"}),
 )
-_FL_IMBALANCE = _ov("front-left", "wheel_imbalance", 0.85, 1.0)
+_FL_IMBALANCE = _lost_weight("front-left")
+# A rear-right wheel that lost a weight; the rear-left keeps a little imbalance.
+_RR_LOST_WEIGHT_PHYSICAL = _car(
+    "rr_lost_weight", _unbalance("rear-right", _LOST_WEIGHT_G), _unbalance("rear-left", 2.5)
+)
 _FL_FAULT = _fault("wheel/tire", {"front_left_wheel"}, "T1", dominant_corner=True)
-_DRIVELINE_UNDER_LOAD = (
-    _ov("rear-axle", "driveshaft_imbalance", 0.80, 0.95),
-    _ov("front-axle", "driveshaft_imbalance", 0.35, 0.60),
+_DRIVELINE_UNDER_LOAD = _sized(
+    (
+        _ov("rear-axle", "driveshaft_imbalance", 0.80, 0.95),
+        _ov("front-axle", "driveshaft_imbalance", 0.35, 0.60),
+    ),
+    _PROPSHAFT,
 )
 
 REALISM_CASES = (
@@ -1259,9 +1548,9 @@ REALISM_CASES = (
     Case(
         "bench-front-left-resonant-speed-band-sweep",
         (
-            _phase("sweep", 16.0, 50.0, 130.0, _on("front-left", _FL_SPEED_SQUARED_RESONANT)),
-            _phase("hold", 4.0, 130.0, 130.0, _on("front-left", _FL_SPEED_SQUARED_RESONANT)),
-            _phase("coast", 12.0, 130.0, 70.0, _on("front-left", _FL_SPEED_SQUARED_RESONANT)),
+            _phase("sweep", 16.0, 50.0, 130.0, *_FL_SPEED_SQUARED_RESONANT),
+            _phase("hold", 4.0, 130.0, 130.0, *_FL_SPEED_SQUARED_RESONANT),
+            _phase("coast", 12.0, 130.0, 70.0, *_FL_SPEED_SQUARED_RESONANT),
         ),
         replace(_FL_FAULT, peak_speed_kmh=_RESONANT_BAND_KMH),
     ),
@@ -1269,7 +1558,7 @@ REALISM_CASES = (
     # from 30 to 100 km/h the speed it gives lags the wheels by 2-3 km/h.
     Case(
         "bench-gps-lag-upshift-front-left-wheel",
-        _upshifts(_FL_IMBALANCE),
+        _upshifts(*_FL_IMBALANCE),
         _FL_FAULT,
         speed_lag_s=0.8,
         speed_report_period_s=1.0,
@@ -1323,7 +1612,7 @@ REALISM_CASES = (
     ),
     Case(
         "bench-front-left-wheel-city",
-        _city(_FL_IMBALANCE),
+        _city(*_FL_IMBALANCE),
         _FL_FAULT,
         idealised_floor=IdealisedFloor.HUMP_MATCHES_IN_TOWN,
     ),
@@ -1343,7 +1632,16 @@ REALISM_CASES = (
         cars=("other",),
         idealised_floor=IdealisedFloor.UNEXPLAINED_BAR,
     ),
-    Case("bench-front-left-wheel-motorway", _motorway(_FL_IMBALANCE), _FL_FAULT),
+    Case("bench-front-left-wheel-motorway", _motorway(*_FL_IMBALANCE), _FL_FAULT),
+    # A wheel a little out of balance (10 g): felt only at motorway speed, where
+    # its force has grown with the square of the speed; still that one wheel.
+    Case(
+        "bench-weak-front-left-wheel-motorway",
+        _motorway(*_imbalance("front-left", _WEAK_G)),
+        _FL_FAULT,
+        physical_only="sized in grams: tuned levels have no gram scale, and the mild and "
+        "barely-there cases already gate the tuned levels a 10 g wheel would sit between",
+    ),
     # A healthy car whose road-excited seat mode or wheel hop sits where the
     # orders run: every window has a peak somewhere in the order's tolerance,
     # scattered over it, not a line on the prediction. Not a fault.
@@ -1536,7 +1834,7 @@ _LAYERED_PROFILES[_NON_UNIFORM_TYRE.name] = _NON_UNIFORM_TYRE
 # Two real faults at once, each sensor hearing both as its distance gives them.
 _FL_GAIN = 0.85
 _SHAFT_REAR, _SHAFT_FRONT = 0.80 * 0.95, 0.35 * 0.60
-_FL_AND_PROPSHAFT = (
+_FL_AND_PROPSHAFT_TUNED = (
     _on(
         "rear-axle",
         _road_with(
@@ -1563,10 +1861,17 @@ _FL_AND_PROPSHAFT = (
         ),
     ),
 )
-# Front-left and rear-right out of balance (0.85 and 0.5), each felt faintly
-# across the car; the rear-right tyre 0.4 % smaller, so it turns a little faster.
+_FL_AND_PROPSHAFT = _sized(
+    _FL_AND_PROPSHAFT_TUNED,
+    _car(
+        "fl_and_propshaft", _unbalance("front-left", _LOST_WEIGHT_G), *_PROPSHAFT_IMBALANCE_FORCES
+    ),
+)
+# Front-left and rear-right out of balance (0.85 and 0.5; physically 40 g and
+# 20 g), each felt faintly across the car; the rear-right tyre 0.4 % smaller, so
+# it turns a little faster.
 _RR_TIRE = 1.004
-_FL_AND_RR = (
+_FL_AND_RR_TUNED = (
     _on(
         "all",
         _road_with(
@@ -1592,6 +1897,19 @@ _FL_AND_RR = (
         ),
     ),
 )
+_FL_AND_RR = _sized(
+    _FL_AND_RR_TUNED,
+    _car(
+        "fl_and_rr",
+        _unbalance("front-left", _LOST_WEIGHT_G),
+        _unbalance("rear-right", 20.0, _RR_TIRE),
+    ),
+)
+_FRONT_JUDDER_SIZED = _sized((_ov("front-axle", _BRAKE_JUDDER.name, 0.6, 1.0),), _FRONT_JUDDER)
+_ENGINE_FIRST_ORDER_SIZED = _sized(
+    (_ov("all", _ENGINE_FIRST_ORDER.name, 0.7, 0.9),), _ENGINE_FIRST_ORDER_CAR
+)
+_FAINT_INTERMITTENT_ENGINE = _sized((_ov("front-axle", "engine_order", 0.30, 0.6),), _ENGINE_HUM)
 _PROPSHAFT_FAULT = _fault("driveline", DRIVELINE_ZONES, "P1", levels=MODERATE)
 _ENGINE_FAULT = _fault("engine", {"engine_bay"}, "E2")
 
@@ -1696,7 +2014,7 @@ CONFOUNDER_CASES = (
     # so the corner may read only Moderate (and faint) where a firm one reads Strong.
     Case(
         "bench-front-left-wheel-on-a-loose-mount-potholes",
-        _potholes(_FL_IMBALANCE),
+        _potholes(*_FL_IMBALANCE),
         replace(_FL_FAULT, levels=MODERATE_OR_STRONG),
         fixings={"front_left_wheel": _LOOSE_FIXING},
     ),
@@ -1713,14 +2031,14 @@ CONFOUNDER_CASES = (
     # wheel, but how strong it was there rests on a loose sensor, so never Strong.
     Case(
         "bench-front-left-wheel-pad-lets-go-broken-stretch",
-        _broken_stretch(_FL_IMBALANCE),
+        _broken_stretch(*_FL_IMBALANCE),
         replace(_FL_FAULT, levels=MODERATE),
         slips={"front_left_wheel": _PAD_LETS_GO},
         loose_mounts=frozenset({"front_left_wheel"}),
     ),
     # Grades and braking downhill turn every sensor's gravity alike: no sensor is loose.
     Case("bench-healthy-hills", _hills(), NO_FAULT),
-    Case("bench-front-left-wheel-hills", _hills(_FL_IMBALANCE), _FL_FAULT),
+    Case("bench-front-left-wheel-hills", _hills(*_FL_IMBALANCE), _FL_FAULT),
     # A propshaft imbalance whose order runs through a rear sensor's bracket ring.
     Case(
         "bench-driveline-springy-rear-right-bracket-sweep",
@@ -1746,7 +2064,7 @@ CONFOUNDER_CASES = (
     ),
     Case(
         "bench-front-left-wheel-worn-accessories-every-mount-sweep",
-        _sweep(_FL_IMBALANCE),
+        _sweep(*_FL_IMBALANCE),
         _FL_FAULT,
         layout=EVERY_MOUNT,
         accessories=_ACCESSORIES,
@@ -1773,13 +2091,18 @@ CONFOUNDER_CASES = (
     # engine or propshaft orders its harmonics land on.
     Case(
         "bench-front-left-non-uniform-tyre-long-sweep",
-        _long_sweep(_ov("front-left", _NON_UNIFORM_TYRE.name, 0.85, 1.0)),
+        _long_sweep(
+            *_sized(
+                (_ov("front-left", _NON_UNIFORM_TYRE.name, 0.85, 1.0),),
+                _car("fl_non_uniform_tyre", *_on_wheel("front-left", *_NON_UNIFORM_TYRE_FORCES)),
+            )
+        ),
         _FL_FAULT,
     ),
     # Real driving: the speed is never truly steady, with a short stop.
     Case(
         "bench-front-left-wheel-real-traffic",
-        _real_traffic(_FL_IMBALANCE),
+        _real_traffic(*_FL_IMBALANCE),
         _FL_FAULT,
         idealised_floor=IdealisedFloor.LEVEL_UNDER_THE_HUMP,
     ),
@@ -1792,7 +2115,7 @@ CONFOUNDER_CASES = (
     # The imbalance that shakes hardest at 95-115 km/h, on a drive that never gets there.
     Case(
         "bench-front-left-resonant-band-never-reached-town",
-        _town_only(_on("front-left", _FL_SPEED_SQUARED_RESONANT)),
+        _town_only(*_FL_SPEED_SQUARED_RESONANT),
         replace(
             _FL_FAULT,
             verdicts=frozenset({"fault", "weak_evidence"}),
@@ -1815,7 +2138,7 @@ BENCH_CASES = (
     ),
     Case(
         "bench-front-left-wheel-staggered-tires-sweep",
-        _sweep(_FL_IMBALANCE),
+        _sweep(*_FL_IMBALANCE),
         _FL_FAULT,
         cars=("staggered",),
     ),
@@ -1824,7 +2147,7 @@ BENCH_CASES = (
     # It is the brakes, not a wheel to balance.
     Case(
         "bench-front-brake-judder-stops",
-        _motorway_stops(braking=(_ov("front-axle", _BRAKE_JUDDER.name, 0.6, 1.0),)),
+        _motorway_stops(braking=_FRONT_JUDDER_SIZED),
         _fault(
             "brakes",
             {"front_axle"},
@@ -1834,10 +2157,13 @@ BENCH_CASES = (
         ),
         idealised_floor=IdealisedFloor.MISSED_UNDER_WHEEL_HOP,
     ),
-    # Rear discs judder more faintly (the rear axle brakes less): felt in the seat.
+    # Rear discs judder more faintly (tuned: the rear axle brakes less; physically
+    # the same disc variation as at the front): felt in the seat.
     Case(
         "bench-rear-brake-judder-stops",
-        _motorway_stops(braking=(_ov("rear-axle", _BRAKE_JUDDER.name, 0.4, 1.0),)),
+        _motorway_stops(
+            braking=_sized((_ov("rear-axle", _BRAKE_JUDDER.name, 0.4, 1.0),), _REAR_JUDDER)
+        ),
         _fault(
             "brakes",
             {"rear_axle"},
@@ -1852,7 +2178,7 @@ BENCH_CASES = (
     # never brakes firmly, and the brakes go unchecked.
     Case(
         "bench-guided-front-brake-judder",
-        (*_guided(), *_brake_step(braking=(_ov("front-axle", _BRAKE_JUDDER.name, 0.6, 1.0),))),
+        (*_guided(), *_brake_step(braking=_FRONT_JUDDER_SIZED)),
         _fault(
             "brakes",
             {"front_axle"},
@@ -1873,7 +2199,7 @@ BENCH_CASES = (
     # regeneration alone (no disc contact) do not count against it.
     Case(
         "bench-ev-brake-judder-regen-stops",
-        _ev_stops(_ov("front-axle", _BRAKE_JUDDER.name, 0.6, 1.0)),
+        _ev_stops(*_FRONT_JUDDER_SIZED),
         _fault(
             "brakes",
             {"front_axle"},
@@ -1892,7 +2218,7 @@ BENCH_CASES = (
     # not the brakes.
     Case(
         "bench-front-left-wheel-brake-stops",
-        _motorway_stops(always=(_ov("front-left", "wheel_imbalance", 0.85, 1.0),)),
+        _motorway_stops(always=_lost_weight("front-left")),
         _fault("wheel/tire", {"front_left_wheel"}, "T1", dominant_corner=True),
     ),
     # Fixed-frequency body resonances (13/26/39 Hz) that the orders sweep through:
@@ -1910,30 +2236,52 @@ BENCH_CASES = (
     Case(
         "bench-rear-right-wheel-sweep",
         _sweep(
-            _ov("rear-right", "wheel_imbalance", 0.85, 1.0),
-            _ov("rear-left", "wheel_mild_imbalance", 0.30, 0.55),
+            *_sized(
+                (
+                    _ov("rear-right", "wheel_imbalance", 0.85, 1.0),
+                    _ov("rear-left", "wheel_mild_imbalance", 0.30, 0.55),
+                ),
+                _RR_LOST_WEIGHT_PHYSICAL,
+            )
         ),
         _fault("wheel/tire", {"rear_right_wheel"}, "T1", dominant_corner=True),
     ),
-    # A mild imbalance (about 20 mg at its corner, ten times the other sensors):
-    # quiet elsewhere on the car, yet clearly the one source at that corner.
+    # A mild imbalance (tuned: about 85 mg at its corner at 100 km/h; physically
+    # 15 g, about 150 mg there): quiet elsewhere on the car, yet clearly the one
+    # source at that corner.
     Case(
         "bench-mild-front-left-wheel-sweep",
-        _sweep(_ov("front-left", "wheel_mild_imbalance", 0.15, 1.0)),
+        _sweep(
+            *_sized(
+                (_ov("front-left", "wheel_mild_imbalance", 0.15, 1.0),),
+                _imbalance("front-left", _MILD_G),
+            )
+        ),
         _fault("wheel/tire", {"front_left_wheel"}, "T1", dominant_corner=True),
         idealised_floor=IdealisedFloor.MISSED_UNDER_WHEEL_HOP,
     ),
-    # Barely above the road noise (under 16 dB over the floor at its corner):
-    # found and located, but never "go fix it".
+    # Barely above the road noise (tuned: under 16 dB over the floor at its
+    # corner; physically 5 g, the balancing tolerance): found and located, but
+    # never "go fix it".
     Case(
         "bench-barely-there-front-left-wheel-sweep",
-        _sweep(_ov("front-left", "wheel_mild_imbalance", 0.04, 1.0)),
+        _sweep(
+            *_sized(
+                (_ov("front-left", "wheel_mild_imbalance", 0.04, 1.0),),
+                _imbalance("front-left", _BARELY_THERE_G),
+            )
+        ),
         _fault("wheel/tire", {"front_left_wheel"}, "T1", levels=frozenset({"moderate", "weak"})),
         idealised_floor=IdealisedFloor.MISSED_UNDER_WHEEL_HOP,
     ),
     Case(
         "bench-rear-left-out-of-round-sweep",
-        _sweep(_ov("rear-left", _TIRE_OUT_OF_ROUND.name, 0.85, 1.0)),
+        _sweep(
+            *_sized(
+                (_ov("rear-left", _TIRE_OUT_OF_ROUND.name, 0.85, 1.0),),
+                _car("rl_out_of_round", *_on_wheel("rear-left", *_TIRE_OUT_OF_ROUND_FORCES)),
+            )
+        ),
         _fault("wheel/tire", {"rear_left_wheel"}, "T2", dominant_corner=True),
         # The default car's engine turns at T2 in top gear: never Strong without RPM.
         {
@@ -1947,8 +2295,13 @@ BENCH_CASES = (
     Case(
         "bench-rear-right-wheel-sweep-lossy-sensor",
         _sweep(
-            _ov("rear-right", "wheel_imbalance", 0.85, 1.0),
-            _ov("rear-left", "wheel_mild_imbalance", 0.30, 0.55),
+            *_sized(
+                (
+                    _ov("rear-right", "wheel_imbalance", 0.85, 1.0),
+                    _ov("rear-left", "wheel_mild_imbalance", 0.30, 0.55),
+                ),
+                _RR_LOST_WEIGHT_PHYSICAL,
+            )
         ),
         _fault("wheel/tire", {"rear_right_wheel"}, "T1", dominant_corner=True),
         frame_loss={"rear_right_wheel": 0.15},
@@ -1959,8 +2312,13 @@ BENCH_CASES = (
     Case(
         "bench-rear-right-wheel-sweep-very-lossy-sensor",
         _sweep(
-            _ov("rear-right", "wheel_imbalance", 0.85, 1.0),
-            _ov("rear-left", "wheel_mild_imbalance", 0.30, 0.55),
+            *_sized(
+                (
+                    _ov("rear-right", "wheel_imbalance", 0.85, 1.0),
+                    _ov("rear-left", "wheel_mild_imbalance", 0.30, 0.55),
+                ),
+                _RR_LOST_WEIGHT_PHYSICAL,
+            )
         ),
         _fault("wheel/tire", {"rear_right_wheel"}, "T1", dominant_corner=True),
         frame_loss={"rear_right_wheel": 0.3},
@@ -1987,8 +2345,13 @@ BENCH_CASES = (
     Case(
         "bench-rear-right-wheel-sweep-busy-wifi",
         _sweep(
-            _ov("rear-right", "wheel_imbalance", 0.85, 1.0),
-            _ov("rear-left", "wheel_mild_imbalance", 0.30, 0.55),
+            *_sized(
+                (
+                    _ov("rear-right", "wheel_imbalance", 0.85, 1.0),
+                    _ov("rear-left", "wheel_mild_imbalance", 0.30, 0.55),
+                ),
+                _RR_LOST_WEIGHT_PHYSICAL,
+            )
         ),
         _fault("wheel/tire", {"rear_right_wheel"}, "T1", dominant_corner=True),
         uplink_latency_spike_s=0.03,
@@ -1998,8 +2361,13 @@ BENCH_CASES = (
     Case(
         "bench-rear-right-wheel-sweep-car-start",
         _sweep(
-            _ov("rear-right", "wheel_imbalance", 0.85, 1.0),
-            _ov("rear-left", "wheel_mild_imbalance", 0.30, 0.55),
+            *_sized(
+                (
+                    _ov("rear-right", "wheel_imbalance", 0.85, 1.0),
+                    _ov("rear-left", "wheel_mild_imbalance", 0.30, 0.55),
+                ),
+                _RR_LOST_WEIGHT_PHYSICAL,
+            )
         ),
         _fault("wheel/tire", {"rear_right_wheel"}, "T1", dominant_corner=True),
         car_start=True,
@@ -2007,8 +2375,13 @@ BENCH_CASES = (
     Case(
         "bench-rear-right-wheel-sweep-car-start-congested",
         _sweep(
-            _ov("rear-right", "wheel_imbalance", 0.85, 1.0),
-            _ov("rear-left", "wheel_mild_imbalance", 0.30, 0.55),
+            *_sized(
+                (
+                    _ov("rear-right", "wheel_imbalance", 0.85, 1.0),
+                    _ov("rear-left", "wheel_mild_imbalance", 0.30, 0.55),
+                ),
+                _RR_LOST_WEIGHT_PHYSICAL,
+            )
         ),
         _fault("wheel/tire", {"rear_right_wheel"}, "T1", dominant_corner=True),
         car_start=True,
@@ -2016,7 +2389,12 @@ BENCH_CASES = (
     ),
     Case(
         "bench-rear-left-imbalanced-oval-sweep",
-        _sweep(_ov("rear-left", _IMBALANCED_OVAL_TIRE.name, 0.85, 1.0)),
+        _sweep(
+            *_sized(
+                (_ov("rear-left", _IMBALANCED_OVAL_TIRE.name, 0.85, 1.0),),
+                _car("rl_imbalanced_oval", *_on_wheel("rear-left", *_IMBALANCED_OVAL_TIRE_FORCES)),
+            )
+        ),
         _fault("wheel/tire", {"rear_left_wheel"}, "T1", dominant_corner=True),
         idealised_floor=IdealisedFloor.HUMP_SCATTER,
     ),
@@ -2025,7 +2403,7 @@ BENCH_CASES = (
     Case(
         "bench-guided-wheel-long-coastdown",
         _guided(
-            _ov("front-left", "wheel_imbalance", 0.85, 1.0),
+            *_lost_weight("front-left"),
             top_kmh=110.0,
             coast_to_kmh=40.0,
             coast_s=14.0,
@@ -2045,9 +2423,9 @@ BENCH_CASES = (
     Case(
         "bench-guided-steps-tapped-at-a-steady-speed",
         (
-            _phase("sweep", 8.0, 80.0, 82.0, _FL_IMBALANCE, guided="sweep"),
-            _phase("hold", 8.0, 82.0, 82.0, _FL_IMBALANCE, guided="hold"),
-            _phase("coast", 8.0, 82.0, 80.0, _FL_IMBALANCE, guided="coast_down"),
+            _phase("sweep", 8.0, 80.0, 82.0, *_FL_IMBALANCE, guided="sweep"),
+            _phase("hold", 8.0, 82.0, 82.0, *_FL_IMBALANCE, guided="hold"),
+            _phase("coast", 8.0, 82.0, 80.0, *_FL_IMBALANCE, guided="coast_down"),
         ),
         _fault("wheel/tire", {"front_left_wheel"}, "T1", levels=MODERATE),
         guided_undetected=("sweep", "coast_down"),
@@ -2057,8 +2435,13 @@ BENCH_CASES = (
     Case(
         "bench-driveline-sweep",
         _sweep(
-            _ov("rear-axle", "driveshaft_imbalance", 0.80, 0.95),
-            _ov("front-axle", "driveshaft_imbalance", 0.35, 0.60),
+            *_sized(
+                (
+                    _ov("rear-axle", "driveshaft_imbalance", 0.80, 0.95),
+                    _ov("front-axle", "driveshaft_imbalance", 0.35, 0.60),
+                ),
+                _PROPSHAFT,
+            )
         ),
         _fault("driveline", DRIVELINE_ZONES, "P1", levels=MODERATE),
         cars=(*BOTH_CARS, "rwd"),
@@ -2070,8 +2453,13 @@ BENCH_CASES = (
     Case(
         "bench-fwd-front-driveline-sweep",
         _sweep(
-            _ov("front-axle", "driveshaft_imbalance", 0.80, 0.95),
-            _ov("rear-axle", "driveshaft_imbalance", 0.35, 0.60),
+            *_sized(
+                (
+                    _ov("front-axle", "driveshaft_imbalance", 0.80, 0.95),
+                    _ov("rear-axle", "driveshaft_imbalance", 0.35, 0.60),
+                ),
+                _PROPSHAFT,
+            )
         ),
         _fault("driveline", {"front_axle"}, "P1", levels=MODERATE),
         cars=("fwd",),
@@ -2082,8 +2470,13 @@ BENCH_CASES = (
     Case(
         "bench-awd-front-driveline-sweep",
         _sweep(
-            _ov("front-axle", "driveshaft_imbalance", 0.80, 0.95),
-            _ov("rear-axle", "driveshaft_imbalance", 0.35, 0.60),
+            *_sized(
+                (
+                    _ov("front-axle", "driveshaft_imbalance", 0.80, 0.95),
+                    _ov("rear-axle", "driveshaft_imbalance", 0.35, 0.60),
+                ),
+                _PROPSHAFT,
+            )
         ),
         _fault("driveline", {"front_axle", "driveshaft_tunnel"}, "P1", levels=MODERATE),
         cars=("awd",),
@@ -2091,46 +2484,64 @@ BENCH_CASES = (
     Case(
         "bench-engine-sweep",
         _sweep(
-            _ov("front-axle", "engine_order", 0.74, 0.94),
-            _ov("rear-axle", "engine_order", 0.42, 0.94),
+            *_sized(
+                (
+                    _ov("front-axle", "engine_order", 0.74, 0.94),
+                    _ov("rear-axle", "engine_order", 0.42, 0.94),
+                ),
+                _I4,
+            )
         ),
         _fault("engine", {"engine_bay"}, "E2"),
     ),
-    # A faint engine tone only the front sensors hear, just over the moderate
-    # strength band there (16-17 dB). Floor-level road noise the other sensors
-    # match near its frequency must not dilute its strength into "no fault".
+    # A faint engine tone (tuned: only the front sensors hear it, just over the
+    # moderate strength band there, 16-17 dB; physically an inline-4 whose
+    # balance shafts leave 20 g of its second-order force, felt through the
+    # car). Floor-level road noise the other sensors match near its frequency
+    # must not dilute its strength into "no fault".
     # That close to the band's edge it is Moderate or Strong: the score ramps
     # across 16 dB rather than doubling at it.
     Case(
         "bench-faint-engine-front-wheels-sweep",
-        _sweep(_ov("front-axle", "engine_order", 0.027, 0.94)),
+        _sweep(*_sized((_ov("front-axle", "engine_order", 0.027, 0.94),), _ENGINE_HUM)),
         _fault("engine", {"engine_bay"}, "E2", levels=MODERATE_OR_STRONG),
         idealised_floor=IdealisedFloor.MISSED_UNDER_WHEEL_HOP,
     ),
     # The same with a sensor on every mounting point: the engine bay, subframe
-    # and gearbox sensors hear a faint tone, the nine others do not.
+    # and gearbox sensors hear a faint tone (tuned: the nine others do not).
     Case(
         "bench-faint-engine-every-mount-sweep",
         _sweep(
-            _ov("VS-70 engine", "engine_order", 0.03, 0.94),
-            _ov("VS-74 subframe", "engine_order", 0.03, 0.94),
-            _ov("VS-72 gearbox", "engine_order", 0.025, 0.94),
+            *_sized(
+                (
+                    _ov("VS-70 engine", "engine_order", 0.03, 0.94),
+                    _ov("VS-74 subframe", "engine_order", 0.03, 0.94),
+                    _ov("VS-72 gearbox", "engine_order", 0.025, 0.94),
+                ),
+                _ENGINE_HUM,
+            )
         ),
         _fault("engine", {"engine_bay"}, "E2", levels=MODERATE_OR_STRONG),
         layout=EVERY_MOUNT,
     ),
-    # Two real faults: an engine tone the rear sensors do not hear, and a
-    # rear-left imbalance about four times the second one in the rear-right
-    # cases. Either is a right answer. On the default car the engine's E1 sits on T2, and the
-    # imbalance carries some T2 at rear-left; that must not add up to a wheel
-    # fault on the front axle, which has none. The engine is judged on the
-    # sensors that hear it, not diluted by the two that cannot.
+    # Two real faults: an engine tone (tuned: the rear sensors do not hear it),
+    # and a rear-left imbalance (tuned: about four times the second one in the
+    # rear-right cases; physically 10 g). Either is a right answer. On the
+    # default car the engine's E1 sits on T2, and the imbalance carries some T2
+    # at rear-left; that must not add up to a wheel fault on the front axle,
+    # which has none. The engine is judged on the sensors that hear it, not
+    # diluted by those that cannot.
     Case(
         "bench-engine-front-and-cabin-with-rear-left-imbalance-sweep",
         _sweep(
-            _ov("front-axle", "engine_order", 0.74, 0.94),
-            _ov("body", "engine_order", 0.42, 0.94),
-            _ov("rear-left", "wheel_imbalance", 0.30, 1.0),
+            *_sized(
+                (
+                    _ov("front-axle", "engine_order", 0.74, 0.94),
+                    _ov("body", "engine_order", 0.42, 0.94),
+                    _ov("rear-left", "wheel_imbalance", 0.30, 1.0),
+                ),
+                _car("i4_with_weak_rl", *_I4_SECOND_ORDER_FORCES, _unbalance("rear-left", _WEAK_G)),
+            )
         ),
         _fault("engine", {"engine_bay"}, "E2"),
         second_fault=_fault("wheel/tire", {"rear_left_wheel"}, "T1", dominant_corner=True),
@@ -2145,7 +2556,7 @@ BENCH_CASES = (
                 8.0,
                 50.0,
                 100.0,
-                _ov("all", _ENGINE_FIRST_ORDER.name, 0.7, 0.9),
+                *_ENGINE_FIRST_ORDER_SIZED,
                 guided="sweep",
             ),
             _phase(
@@ -2153,7 +2564,7 @@ BENCH_CASES = (
                 6.0,
                 100.0,
                 100.0,
-                _ov("all", _ENGINE_FIRST_ORDER.name, 0.7, 0.9),
+                *_ENGINE_FIRST_ORDER_SIZED,
                 guided="hold",
             ),
             _phase(
@@ -2182,8 +2593,17 @@ BENCH_CASES = (
     Case(
         "bench-guided-engine-mount-front-right",
         _guided(
-            _ov("all", _ENGINE_FIRST_ORDER.name, 0.25, 0.9),
-            _ov("front-right", _ENGINE_FIRST_ORDER.name, 0.9, 0.9),
+            *_sized(
+                (
+                    _ov("all", _ENGINE_FIRST_ORDER.name, 0.25, 0.9),
+                    _ov("front-right", _ENGINE_FIRST_ORDER.name, 0.9, 0.9),
+                ),
+                _car(
+                    "engine_first_order_fr_mount",
+                    *_ENGINE_FIRST_ORDER_FORCES,
+                    coupling={"front-right": 3.6},
+                ),
+            ),
             coast=(_ov("all", "engine_idle", 0.2, 0.6),),
         ),
         _fault("engine", {"engine_bay"}, "E1", speed_dependence="engine_speed"),
@@ -2207,16 +2627,21 @@ BENCH_CASES = (
     # sensor's own corner least of all) and never Strong.
     Case(
         "bench-one-sensor-front-left-wheel-sweep",
-        _sweep(_ov("front-left", "wheel_imbalance", 0.85, 1.0)),
+        _sweep(*_lost_weight("front-left")),
         _fault("wheel/tire", {None}, "T1", levels=MODERATE),
         layout=ONE_SENSOR,
     ),
-    # One sensor at the front-left wheel, the imbalance at the
-    # rear-right wheel, felt there at about a third of its level. Still a wheel
-    # fault, never "at the front-left wheel".
+    # One sensor at the front-left wheel, the imbalance at the rear-right wheel,
+    # felt there through the car (tuned: at about a third of its level). Still
+    # a wheel fault, never "at the front-left wheel".
     Case(
         "bench-one-sensor-rear-right-imbalance-felt-at-front-left-sweep",
-        _sweep(_ov("front-left", "wheel_imbalance", 0.85 * 0.3, 1.0)),
+        _sweep(
+            *_sized(
+                (_ov("front-left", "wheel_imbalance", 0.85 * 0.3, 1.0),),
+                _imbalance("rear-right"),
+            )
+        ),
         _fault("wheel/tire", {None}, "T1", levels=MODERATE),
         layout=ONE_SENSOR,
         idealised_floor=IdealisedFloor.MISSED_UNDER_WHEEL_HOP,
@@ -2225,7 +2650,7 @@ BENCH_CASES = (
     # problem, but no corner can be named and it is never Strong.
     Case(
         "bench-cabin-only-wheel-sweep",
-        _sweep(_ov("body", "wheel_imbalance", 0.35, 1.0)),
+        _sweep(*_sized((_ov("body", "wheel_imbalance", 0.35, 1.0),), _imbalance("front-left"))),
         Expected(
             verdicts=frozenset({"fault", "weak_evidence"}),
             source="wheel/tire",
@@ -2241,34 +2666,59 @@ BENCH_CASES = (
     Case(
         "bench-one-wheel-and-cabin-front-left-wheel-sweep",
         _sweep(
-            _ov("front-left", "wheel_imbalance", 0.85, 1.0),
-            _ov("body", "wheel_imbalance", 0.12, 1.0),
+            *_sized(
+                (
+                    _ov("front-left", "wheel_imbalance", 0.85, 1.0),
+                    _ov("body", "wheel_imbalance", 0.12, 1.0),
+                ),
+                _imbalance("front-left"),
+            )
         ),
         _fault("wheel/tire", {None}, "T1", levels=MODERATE),
         layout=ONE_WHEEL_AND_CABIN,
     ),
-    # The same with a body that carries the imbalance well into the cabin (about
-    # half the wheel's level there): no wheel or axle named, and never the
+    # The same with a body that carries the imbalance well into the cabin
+    # (tuned: about half the wheel's level there; physically 3.75 times what a
+    # rigid body passes): no wheel or axle named, and never the
     # engine order that on the default car shares T2's frequency.
     Case(
         "bench-one-wheel-and-cabin-strong-coupling-sweep",
         _sweep(
-            _ov("front-left", "wheel_imbalance", 0.85, 1.0),
-            _ov("body", "wheel_imbalance", 0.45, 1.0),
+            *_sized(
+                (
+                    _ov("front-left", "wheel_imbalance", 0.85, 1.0),
+                    _ov("body", "wheel_imbalance", 0.45, 1.0),
+                ),
+                _car(
+                    "fl_strong_cabin_coupling",
+                    _unbalance("front-left", _LOST_WEIGHT_G),
+                    coupling={"body": 3.75},
+                ),
+            )
         ),
         _fault("wheel/tire", {None}, "T1", levels=MODERATE),
         layout=ONE_WHEEL_AND_CABIN,
     ),
-    # A front-left imbalance with an even engine tone 12 dB under it at that
-    # corner. Scoring spares the engine tone the spread penalty the wheel takes
-    # (an engine is a zone), so the tone the whole car shares must not outrank
-    # the imbalance. On the other car the tone costs the wheel order part of its
-    # matches, so the verdict there is Moderate.
+    # A front-left imbalance with an even engine tone (tuned: 12 dB under it at
+    # that corner; physically a 20 g second-order hum). Scoring spares the
+    # engine tone the spread penalty the wheel takes (an engine is a zone), so
+    # the tone the whole car shares must not outrank the imbalance. On the other
+    # car the tone costs the wheel order part of its matches, so the verdict
+    # there is Moderate.
     Case(
         "bench-front-left-wheel-with-engine-hum-sweep",
         _sweep(
-            _ov("all", "bench_rough_road_engine_hum", 0.28, 0.52),
-            _ov("front-left", "bench_wheel_imbalance_engine_hum", 0.85, 1.0),
+            *_sized(
+                (
+                    _ov("all", "bench_rough_road_engine_hum", 0.28, 0.52),
+                    _ov("front-left", "bench_wheel_imbalance_engine_hum", 0.85, 1.0),
+                ),
+                _car(
+                    "fl_with_engine_hum",
+                    _unbalance("front-left", _LOST_WEIGHT_G),
+                    *_ENGINE_HUM_FORCES,
+                ),
+            )
         ),
         _fault("wheel/tire", {"front_left_wheel"}, "T1", dominant_corner=True),
     ),
@@ -2277,7 +2727,7 @@ BENCH_CASES = (
     Case("bench-healthy-sweep-every-mount", _sweep(), NO_FAULT, layout=EVERY_MOUNT),
     Case(
         "bench-front-left-wheel-sweep-every-mount",
-        _sweep(_ov("front-left", "wheel_imbalance", 0.85, 1.0)),
+        _sweep(*_lost_weight("front-left")),
         _fault("wheel/tire", {"front_left_wheel"}, "T1", dominant_corner=True),
         layout=EVERY_MOUNT,
     ),
@@ -2287,8 +2737,8 @@ BENCH_CASES = (
         "bench-standstill-pull-away-front-left-wheel",
         (
             _phase("idle", 8.0, 0.0, 0.0),
-            _phase("pull_away", 6.0, 0.0, 50.0, _ov("front-left", "wheel_imbalance", 0.85, 1.0)),
-            *_sweep(_ov("front-left", "wheel_imbalance", 0.85, 1.0)),
+            _phase("pull_away", 6.0, 0.0, 50.0, *_lost_weight("front-left")),
+            *_sweep(*_lost_weight("front-left")),
         ),
         _fault("wheel/tire", {"front_left_wheel"}, "T1", dominant_corner=True),
         speed_source="obd2",
@@ -2296,9 +2746,9 @@ BENCH_CASES = (
     Case(
         "bench-faint-intermittent-engine",
         (
-            _phase("a", 6.0, 75.0, 75.0, _ov("front-axle", "engine_order", 0.30, 0.6)),
+            _phase("a", 6.0, 75.0, 75.0, *_FAINT_INTERMITTENT_ENGINE),
             _phase("b", 8.0, 75.0, 76.0),
-            _phase("c", 6.0, 76.0, 76.0, _ov("front-axle", "engine_order", 0.30, 0.6)),
+            _phase("c", 6.0, 76.0, 76.0, *_FAINT_INTERMITTENT_ENGINE),
             _phase("d", 8.0, 76.0, 75.0),
         ),
         # Faint and present in under half the drive: found as the engine, never
@@ -2440,9 +2890,16 @@ _ORDER_SOURCES = {"T": "wheel/tire", "P": "driveline", "E": "engine"}
 
 
 def _tone(key: str, multiple: float) -> tuple[str, float]:
-    """A simulator order tone as (base key, multiple of it)."""
-    base, base_multiple = _TONE_KEYS[key]
+    """A simulator order tone as (base key, multiple of it); a wheel's tone may name its wheel."""
+    base, base_multiple = _TONE_KEYS[key.partition("@")[0]]
     return base, base_multiple * multiple
+
+
+def _order_keys(profile: Profile) -> list[tuple[str, float]]:
+    """Each order tone and force *profile* plays, as ``(order_key, multiple)``."""
+    return [(key, multiple) for key, multiple, _amps in profile.order_tones] + [
+        (force.order_key, force.multiple) for force in profile.order_forces
+    ]
 
 
 def _order_tone(order_code: str) -> tuple[str, float]:
@@ -2512,6 +2969,7 @@ def injected_order_mg(
             server_data_port=0,
             server_control_port=0,
             profile_name="rough_road",
+            car=car.sim_car(CI_SEED),
         )
         for index, sensor in enumerate(layout)
     ]
@@ -2529,11 +2987,25 @@ def injected_order_mg(
             )
             counts *= max(profile.order_amplitude_gain(speed) for speed in speeds)
             mg = counts * client.scene_gain * client.amp_scale * _SIM_MG_PER_COUNT
+            forces = [
+                force
+                for force in profile.order_forces
+                if _is_tone(force.order_key, force.multiple, tones)
+            ]
+            if forces:
+                forces_mg = max(_order_forces_mg(client, forces, speed) for speed in speeds)
+                mg += forces_mg * client.scene_gain * client.amp_scale
             mg += _flat_spot_mg(sensor.flat_spot, car, order_code, phase.gear_ratio)
             mg += _accessory_mg(sensor.accessories, car, order_code, phase.gear_ratio)
             mg *= max(_fixing_gain(sensor.fixing, car, order_code, speed) for speed in speeds)
             injected[sensor.location_code] = max(injected[sensor.location_code], mg)
     return injected
+
+
+def _order_forces_mg(client: SimClient, forces: list[OrderForce], speed_kmh: float) -> float:
+    """Level (mg, 3-axis vector) at which *client* reads *forces* at *speed_kmh*."""
+    client.current_speed_kmh = speed_kmh
+    return sum(math.hypot(*client.order_force_tone(force)[1]) for force in forces)
 
 
 def _flat_spot_mg(
@@ -2614,6 +3086,7 @@ MATRIX_MIN_PASSES = 4
 CASE_PARAMS = [
     pytest.param(case, car_key, id=f"{case.case_id}-{car_key}")
     for case in CASES
+    if case.physical_only is None or FAULT_AMPLITUDES is FaultAmplitudes.PHYSICAL
     for car_key in case.cars
 ]
 
@@ -2989,7 +3462,7 @@ def injected_sweep_kmh(
                 or any(
                     _is_tone(key, multiple, _phase_tones(phase, order_code, car))
                     for override in phase.overrides
-                    for key, multiple, _amps in PROFILE_LIBRARY[override.profile_name].order_tones
+                    for key, multiple in _order_keys(PROFILE_LIBRARY[override.profile_name])
                 )
             )
         ),
@@ -3269,7 +3742,7 @@ def _assert_report_view(
             _tone(key, multiple)[0]
             for phase in case.phases
             for override in phase.overrides
-            for key, multiple, _amps in PROFILE_LIBRARY[override.profile_name].order_tones
+            for key, multiple in _order_keys(PROFILE_LIBRARY[override.profile_name])
         }
         listed = {row["order_code"] for row in diagnosis["order_findings"]}
         uncarried = {code for code in listed if _order_tone(code)[0] not in carried}
@@ -3523,8 +3996,8 @@ def test_a_drive_cut_off_before_stop_is_recovered_and_diagnosed(tmp_path: Path) 
     replay, with the same diagnosis as a drive stopped normally, and the report
     says the recording was cut off.
     """
-    fault = _ov("front-left", "wheel_imbalance", 0.85, 1.0)
-    phases = (*_sweep(fault), _phase("cruise", 13.0, 70.0, 70.0, fault))
+    fault = _FL_IMBALANCE
+    phases = (*_sweep(*fault), _phase("cruise", 13.0, 70.0, 70.0, *fault))
     result = run_sim_pipeline(
         tmp_path,
         car=DEFAULT_CAR,
@@ -3555,8 +4028,8 @@ def test_a_drive_cut_off_before_stop_is_recovered_and_diagnosed(tmp_path: Path) 
 
 
 def test_recording_stops_at_the_configured_cap_and_is_still_analysed(tmp_path: Path) -> None:
-    fault = _ov("front-left", "wheel_imbalance", 0.85, 1.0)
-    phases = (*_sweep(fault), _phase("cruise", 13.0, 70.0, 70.0, fault))
+    fault = _FL_IMBALANCE
+    phases = (*_sweep(*fault), _phase("cruise", 13.0, 70.0, 70.0, *fault))
     assert sum(phase.duration_s for phase in phases) == 35.0
     result = run_sim_pipeline(
         tmp_path,
@@ -3592,8 +4065,8 @@ _FALLBACK_KMH = 50.0
 def test_a_live_speed_dropout_is_recorded_as_unknown_not_as_the_fallback_speed(
     tmp_path: Path, speed_source: SpeedSource
 ) -> None:
-    fault = _ov("front-left", "wheel_imbalance", 0.85, 1.0)
-    phases = (*_sweep(fault), _phase("cruise", 13.0, 70.0, 70.0, fault))
+    fault = _FL_IMBALANCE
+    phases = (*_sweep(*fault), _phase("cruise", 13.0, 70.0, 70.0, *fault))
     result = run_sim_pipeline(
         tmp_path,
         car=DEFAULT_CAR,
@@ -3632,8 +4105,8 @@ def test_a_live_speed_dropout_is_recorded_as_unknown_not_as_the_fallback_speed(
 def test_a_drive_started_before_the_gps_has_a_fix_records_no_speed_until_it_has(
     tmp_path: Path,
 ) -> None:
-    fault = _ov("front-left", "wheel_imbalance", 0.85, 1.0)
-    phases = (*_sweep(fault), _phase("cruise", 13.0, 70.0, 70.0, fault))
+    fault = _FL_IMBALANCE
+    phases = (*_sweep(*fault), _phase("cruise", 13.0, 70.0, 70.0, *fault))
     result = run_sim_pipeline(
         tmp_path,
         car=DEFAULT_CAR,
@@ -3693,7 +4166,7 @@ def test_a_stop_is_recorded_at_zero_speed(tmp_path: Path) -> None:
         # A fix only for the last 7 s: too little speed to place any rhythm.
         pytest.param(
             (0.0, 28.0),
-            (_ov("front-left", "wheel_imbalance", 0.85, 1.0),),
+            _FL_IMBALANCE,
             id="late-fix-wheel-fault",
         ),
     ],

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from vibesensor.simulator.fault_forces import OrderForce
 from vibesensor.simulator.wheel_kinematics import SimCar
 
 DEFAULT_SPEED_KMH = 100.0
@@ -77,8 +78,15 @@ class Profile:
     # amplitudes are scaled by ``(speed / reference_speed) ** order_speed_exponent``
     # (0: the same amplitude at every speed).
     order_speed_exponent: float = 0.0
+    # Order tones sized as the fault's forces instead, each turning with its
+    # order like ``order_tones``; a sensor reads each through the car to its
+    # mount (``simulator/fault_forces.py``). The accuracy benchmark plays these
+    # with VIBESENSOR_BENCH_FAULT_AMPLITUDES=physical ("Fault amplitudes" in
+    # docs/simulator_realism.md).
+    order_forces: tuple[OrderForce, ...] = ()
     # ``(low_kmh, high_kmh, gain)``: a suspension or body resonance the order
-    # passes through amplifies its tones by ``gain`` inside that speed band.
+    # passes through amplifies its tones (and forces) by ``gain`` inside that
+    # speed band.
     order_resonance_kmh: tuple[float, float, float] | None = None
     # Structural modes the road excites at this sensor, scaled by
     # ``road_roughness`` (each ISO 8608 class rougher doubles it) and the speed.
@@ -87,14 +95,17 @@ class Profile:
 
     def order_amplitude_gain(self, speed_kmh: float) -> float:
         """How much the order tones are amplified at *speed_kmh* (1 at the reference speed)."""
-        gain = 1.0
+        gain = self.order_resonance_gain(speed_kmh)
         if self.order_speed_exponent and self.reference_speed_kmh:
-            gain = (max(0.0, speed_kmh) / self.reference_speed_kmh) ** self.order_speed_exponent
-        if self.order_resonance_kmh is not None:
-            low_kmh, high_kmh, resonance_gain = self.order_resonance_kmh
-            if low_kmh <= speed_kmh <= high_kmh:
-                gain *= resonance_gain
+            gain *= (max(0.0, speed_kmh) / self.reference_speed_kmh) ** self.order_speed_exponent
         return gain
+
+    def order_resonance_gain(self, speed_kmh: float) -> float:
+        """How much ``order_resonance_kmh`` amplifies the order tones at *speed_kmh*."""
+        if self.order_resonance_kmh is None:
+            return 1.0
+        low_kmh, high_kmh, resonance_gain = self.order_resonance_kmh
+        return resonance_gain if low_kmh <= speed_kmh <= high_kmh else 1.0
 
     def resonance_gain(self, speed_kmh: float) -> float:
         """How strongly the road excites the resonances at *speed_kmh* (none at a standstill)."""
