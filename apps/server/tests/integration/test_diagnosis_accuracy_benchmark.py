@@ -251,15 +251,15 @@ class IdealisedFloor(Enum):
     """
 
     # A mild or faint order (wheel, brake judder, engine) under the knuckles'
-    # wheel-hop hump is missed: each window's strongest peaks are the hump's.
+    # wheel-hop hump is missed: its line carries a few percent of the hump's
+    # power beside it.
     MISSED_UNDER_WHEEL_HOP = "missed under the wheel-hop hump"
-    # At town speeds the wheel order runs through the hump at every corner: a
-    # healthy car reads a weak or moderate wheel or brake fault, and a faulty
-    # corner reads spread over all four.
-    HUMP_MATCHES_IN_TOWN = "the hump matches the wheel order in town"
-    # A clear fault reads a confidence level lower: the hump's matches at the
-    # other corners count as evidence spread over them.
-    LEVEL_UNDER_THE_HUMP = "one confidence level lower"
+    # At town speeds the wheel order runs at 5-7 Hz, at the bottom of the
+    # stored spectra and on the hump's flank: a faulty corner is missed, and a
+    # healthy car with worn accessories reads a weak wheel guess.
+    HUMP_MATCHES_IN_TOWN = "the wheel order in town is on the hump's flank"
+    # Brake judder in the guided brake step is missed or read as a wheel.
+    LEVEL_UNDER_THE_HUMP = "brake judder in the brake step"
     # On more than one seed in five the hump moves what the report names: the
     # wheel order's second harmonic, another corner, one of two equal corners
     # alone, a level over the injected tone's, or a healthy car's fault.
@@ -1602,13 +1602,11 @@ REALISM_CASES = (
         "bench-healthy-city",
         _city(),
         NO_FAULT,
-        idealised_floor=IdealisedFloor.HUMP_MATCHES_IN_TOWN,
     ),
     Case(
         "bench-healthy-residual-imbalance-city",
         _city(*_RESIDUAL_IMBALANCE),
         HEALTHY_OR_SPREAD,
-        idealised_floor=IdealisedFloor.HUMP_MATCHES_IN_TOWN,
     ),
     Case(
         "bench-front-left-wheel-city",
@@ -1651,7 +1649,6 @@ REALISM_CASES = (
         "bench-healthy-seat-mode-city",
         _city(_HEALTHY_SEAT_MODE),
         NO_FAULT,
-        idealised_floor=IdealisedFloor.HUMP_MATCHES_IN_TOWN,
     ),
     Case("bench-healthy-wheel-hop-sweep", _sweep(_HEALTHY_WHEEL_HOP), NO_FAULT),
     Case(
@@ -1975,7 +1972,6 @@ CONFOUNDER_CASES = (
         _WHEEL_ORDERS_AT_MOST_MODERATE,
         cars=("other",),
         flat_spots=_FOUR_FLAT_SPOTS,
-        idealised_floor=IdealisedFloor.HUMP_SCATTER,
     ),
     # One tyre far worse: it is that tyre, at its first order.
     Case(
@@ -2104,13 +2100,11 @@ CONFOUNDER_CASES = (
         "bench-front-left-wheel-real-traffic",
         _real_traffic(*_FL_IMBALANCE),
         _FL_FAULT,
-        idealised_floor=IdealisedFloor.LEVEL_UNDER_THE_HUMP,
     ),
     Case(
         "bench-healthy-real-traffic",
         _real_traffic(),
         NO_FAULT,
-        idealised_floor=IdealisedFloor.HUMP_MATCHES_IN_TOWN,
     ),
     # The imbalance that shakes hardest at 95-115 km/h, on a drive that never gets there.
     Case(
@@ -2193,7 +2187,6 @@ BENCH_CASES = (
         "bench-guided-healthy-brake-step",
         (*_guided(), *_brake_step()),
         NO_FAULT,
-        idealised_floor=IdealisedFloor.HUMP_MATCHES_IN_TOWN,
     ),
     # An EV's judder shows only in its stops on the discs; the stops it made on
     # regeneration alone (no disc contact) do not count against it.
@@ -2322,7 +2315,6 @@ BENCH_CASES = (
         ),
         _fault("wheel/tire", {"rear_right_wheel"}, "T1", dominant_corner=True),
         frame_loss={"rear_right_wheel": 0.3},
-        idealised_floor=IdealisedFloor.HUMP_SCATTER,
     ),
     # Every sensor loses a fifth of its frames: a mild imbalance on the wheel
     # hop is still found, and a healthy car's seat mode is still no fault.
@@ -2396,7 +2388,6 @@ BENCH_CASES = (
             )
         ),
         _fault("wheel/tire", {"rear_left_wheel"}, "T1", dominant_corner=True),
-        idealised_floor=IdealisedFloor.HUMP_SCATTER,
     ),
     # A long neutral coast-down to 40 km/h: the imbalance fades with speed, so it
     # is seen in fewer windows than at speed, yet clearly keeps going.
@@ -2584,7 +2575,6 @@ BENCH_CASES = (
                 levels=MODERATE_OR_STRONG,
             )
         },
-        idealised_floor=IdealisedFloor.HUMP_SCATTER,
     ),
     # A failing engine mount passes the engine's first order mostly into the
     # front-right corner. On the default car E1 sits on T2, so the order evidence
@@ -2791,12 +2781,10 @@ SCRIPTED_CASES = (
     _scripted(
         "launch-engine-flare",
         _fault("engine", {"engine_bay"}, "E2"),
-        idealised_floor=IdealisedFloor.HUMP_SCATTER,
     ),
     _scripted(
         "pothole-recovery-loop",
         NO_FAULT,
-        idealised_floor=IdealisedFloor.HUMP_SCATTER,
     ),
     # Left-side wheels, then right-side wheels: any one wheel, spread evidence,
     # or all four (each side carried the imbalance in turn, and with real tire
@@ -2844,7 +2832,6 @@ SCRIPTED_CASES = (
     _scripted(
         "guided-brake-stops",
         _fault("wheel/tire", {"front_left_wheel"}, "T1", dominant_corner=True),
-        idealised_floor=IdealisedFloor.LEVEL_UNDER_THE_HUMP,
     ),
 )
 

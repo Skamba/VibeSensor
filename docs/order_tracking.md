@@ -326,8 +326,20 @@ orders are matched:
   an order and its harmonic meeting one frequency at two speeds is not a
   tone.
 
-The order-tracked reads skip a window whose read band takes in one of its
-sensor's fixed tones (`near_fixed_tone()`; see "Order-tracked reads" below).
+The order-tracked reads skip only the fixed tones that **ring as a line**
+(`ringing_tones()`): each run of the car's fixed tones within a tone's width
+of each other is read as a line over its span in every spectrum of each
+sensor, and judged as an order is (three standard errors, "Order-tracked
+reads" below). A broad resonance the peak picker also holds fixed (the
+wheel-hop hump) reads no level over the floor that follows its curve, so an
+order crossing it is still read. A ringing tone reaches past its span by its
+main lobe (two bins), or as far as a Hann window's sidelobes leak its power
+within 10 dB of the floor beside it (`_leak_reach_hz()`: `k` bins away a
+tone passes `1 / (pi k (k² − 1))` of its level; Harris 1978), up to 40 bins.
+A 12 Hz pure-tone resonance 30 dB over the floor otherwise read 95 mg of the
+wheel order at the trunk through its sidelobes. A window whose read reaches
+a ringing tone keeps its ranked peak's match instead ("What the reads
+decide" below).
 
 An engine order placed from measured RPM is matched on every peak: the
 engine's revs cycle through the same range on each gear while the speed
@@ -444,45 +456,101 @@ as floor):
   from 100 km/h at 5 m/s² sweeps a 45 Hz order ±10.4 Hz within one window:
   read at its centre it shows a quarter of its level, at 2 m/s² 70 %; read
   over its sweep, all of it.
-- The floor is the mean power per bin of the 3 bins (1.2 Hz) either side,
-  just past the band: a floor that slopes straight across the band cancels
-  between them, and the closer they sit, the less a curved one (a broad
-  resonance under the line) reads as level. At the ends of the spectrum
-  only the flank that exists is used; with neither, or with the band outside
-  the spectrum, there is no read.
+- The floor is read in the 3 bins (1.2 Hz) either side, just past the band.
+  Under the band it follows a parabola `a + c·x²` fitted through them
+  (paired by their distance `x` from the centre), so the curve of a broad
+  resonance the line sits on (the wheel-hop hump) is floor, not level: a body
+  mode 6 Hz wide read over a flat floor would add 8 % of the floor's power
+  to the order's read. `flanks` is the mean power per bin of those 6 bins. At
+  the ends of the spectrum only the flank that exists is used, flat; with
+  neither, or with the band outside the spectrum, there is no read. The
+  stored spectra start at 5.08 Hz, so a line under about 5.9 Hz (a wheel
+  order at about 40 km/h) has no read.
 - The read is the band's power above that floor, per bin of a peak band
   (`excess`, g²): a steady tone's is its peak level squared over the floor, a
   swept one's adds up the same way. In a window the order is absent from, it
   is below zero about as often as above.
-- A window whose band takes in one of its sensor's fixed tones (see "Fixed
-  tones" above; widened by the band) is not read: a body mode's level is no
-  part of the order's. An engine order placed from measured RPM has no fixed
-  tones, as in matching.
+- A window whose read (band and flanks, `line_reach_hz()`) reaches one of
+  its sensor's ringing tones or that tone's leak (see "Fixed tones" above)
+  is not read: a body mode's level is no part of the order's. An engine
+  order placed from measured RPM has no fixed tones, as in matching.
+- Each read comes with two **control reads** the same width, twice its reach
+  either side of the line (where neither tone nor order is): they place the
+  floor's scatter the reads are judged by (below).
+- The line's place (`_tracked_line_scale()`) is judged from the windows whose
+  line held still within a peak's width: on a sweep a window's peak lands
+  anywhere on the stretch its line swept.
 
-**The level at each sensor** (`TrackedCells.sensor_levels()`). The reads are
-summed per sensor, 10 km/h speed bin and braking or not. An order's level at
-a sensor is `sqrt(mean excess)` over the cells at the speed bins and braking
-side where a heard sensor's clear match was ("Heard matches"), over every
-cell when it had none. Its floor is `sqrt(mean flanks)`. Averaging the
-power before taking the root leaves an absent order's mean scattering about
-0, by the floor's own randomness: on a knuckle's wheel-hop hump (about
-250 mg per bin at motorway speed on the ISO 8608 road) a drive's mean reads
-tens of mg at a sensor the order does not reach. So a sensor has a level
-only where its mean stands two standard errors over 0
-(`_MIN_STANDARD_ERRORS`), about one absent sensor in 40 reading one, else 0.
-The standard error counts the windows as independent reads by how much they
-overlap: two Hann windows `hop` apart read the same noise with a power
-correlation of `rho(hop)²`, `rho` their overlap correlation (16.7 % at half a
-window; Harris, *Proc. IEEE* 66(1), 1978), so `n` windows 0.25 s apart in a
-2.56 s window weigh as `n / (1 + 2 Σ rho(k·hop)²)`, about `n / 5`, independent
-ones (Welch, *IEEE Trans. Audio Electroacoust.* 15(2), 1967). On the ISO 8608
-road (seeds 1-6) the knuckles a corner's imbalance does not reach read a
-median of 0 at its wheel order (90th percentile 61 mg) against 51 mg (109 mg)
-without this test; on the idealised road, 0 (19 mg).
+**Whether a sensor hears the order** (`TrackedCells`). The reads are grouped
+per sensor, 10 km/h speed bin and driving phase (the rest of the drive,
+braking, and the guided test's coast-down in neutral), and each is divided by
+its cell's median floor. Where the order is absent they scatter about 0 by the
+floor's own randomness, so a sensor hears the order only where the **median**
+of all its reads stands three standard errors over 0
+(`_SENSOR_STANDARD_ERRORS`). The median, not the mean: a pothole's few wild
+windows shift a mean far more than an order does.
+
+- The standard error is `1.2533 · s / sqrt(n_ind)`: the median of normal reads
+  scatters `sqrt(pi/2)` times more than their mean (Rousseeuw & Croux, JASA
+  88(424), 1993).
+- `s`, one read's scatter, is `1.4826 ×` the median distance of the
+  **control reads** from their own cell's median (cells of 5 control reads or
+  more; else from the median of all the sensor's control reads, when there
+  are 5 or more), scaled to a standard deviation. A line's power beats with
+  the floor under it, so the order's own reads scatter more the stronger it
+  is; the controls scatter as the floor alone does. Without control reads
+  (the line runs along the spectrum's lower edge) it is the reads' own
+  distance from their cell's median, over the cells of 5 reads or more.
+- `n_ind` counts the windows as independent reads by how much they overlap:
+  two Hann windows `hop` apart read the same noise with a power correlation
+  of `rho(hop)²`, `rho` their overlap correlation (16.7 % at half a window;
+  Harris, *Proc. IEEE* 66(1), 1978), so `n` windows 0.25 s apart in a 2.56 s
+  window weigh as `n / (1 + 2 Σ rho(k·hop)²)`, about `n / 5`, independent
+  ones (Welch, *IEEE Trans. Audio Electroacoust.* 15(2), 1967).
+- Three standard errors (one-sided 0.13 %): one drive asks this of about ten
+  orders at each of about five sensors, so about one drive in fifteen has one
+  absent sensor hear an order.
+- A wheel order (`TrackedCells.braking_alone`: brake judder shakes at the
+  wheel's order, only while braking) is also heard where its braking windows
+  alone pass the same test, judged by their own scatter, and one of its
+  braking cells stands clear (below). An engine or driveline order is not:
+  there it was a gear's tone that happens to sit on a stop's speeds.
+
+A driving phase **hears** the order at a sensor where the median of that
+phase's reads stands two standard errors over 0 (`_PHASE_STANDARD_ERRORS`,
+`heard_phases()`). A **cell hears the order** where its sensor does, its
+sensor hears it in the cell's driving phase, and the cell's median read
+stands `heard_peak_over_floor` (6 dB: three times the floor's power) over its
+median floor, as a ranked peak must stand over its window's floor
+(`heard_cells()`). A cell of a few windows stands clear by chance now and
+then: at physical amplitudes, one 40–50 km/h driving cell of a front wheel
+did on a brake-judder drive, and it made the judder look heard while driving
+(below) until the phase had to hear it too.
+
+**The level at each sensor** (`TrackedCells.sensor_levels()`), over the
+cells at the speed bins of the heard matches ("Heard matches"; every cell when
+there are none), the coast-down test left out:
+
+- Each cell's median read **while the order is there**
+  (`_Cell.present()`): its reads are split into blocks two windows long
+  (5.12 s); a block of 5 reads or more whose median stands 6 dB clear is a
+  stretch the order is there. The read-weighted mean of those blocks'
+  medians, or the cell's median where no block is clear. A misfire there in
+  half the drive reads its level while there, not half of it (the median over
+  the whole cell would put it under the floor's).
+- The level is the root of the read-weighted mean of those cells' reads
+  where the sensor's reads over them stand three standard errors out, else 0
+  (`level_g`). `read_g` keeps the root either way: it places the order
+  between sensors none of which hears it (location scoring, below).
+- A sensor with fewer than 2 independent reads over the whole drive
+  (`_MIN_INDEPENDENT_READS`, a sensor that dropped out) has no level at all:
+  a level of 0 there would place the order at another sensor.
+- The floor is `sqrt(median flanks)`.
+
 A finding put down to the brakes ("Brake judder" below) is read over the
-braking cells alone (`braking_sensor_levels`): averaged with the windows
-between stops, a judder present in a quarter of the windows would read at
-half its level.
+braking cells alone (`braking_sensor_levels`): with the windows between
+stops, a judder there in a quarter of the windows would read at half its
+level.
 
 **Where the levels are.** `Finding.sensor_levels` (domain,
 `SensorOrderLevel`: `location`, `level_g`, `floor_g`, `windows`, strongest
@@ -498,33 +566,121 @@ matched peaks when any sensor with matched peaks has no reads (its spectra
 were not rebuilt), or when no sensor's level stands out (a short stretch at
 the heard speeds on a rough road).
 
-**What the reads do not decide.** Whether an order is there, its
-confidence, and its strength stay on the ranked peaks ("Heard matches").
-Counting a window as heard when its read stood clear of the floor, on the
-benchmark with the ISO 8608 road on every case (CI seed), gave 166 passes
-against 169 without, and 5 healthy cars with a fault verdict against 3: it
-heard a healthy car's residual wheel imbalance in town and called it a
-Moderate fault on both cars. That imbalance is real; how much of it is a
-fault is a severity decision, not a detection one. Matching against
-unranked locally prominent peaks as well as the 8 ranked ones gave 169
-passes either way. Neither was kept. The peak search also keeps finding
-vibration no checked order explains.
+**What the reads decide** (`matching._tracked()`). Where the run kept its
+spectra, each window's match comes from its read, and every metric under
+"Heard matches" reads those matches as before:
 
-**Limits.** A line within its band plus 0.5 Hz (or 2 %) of its sensor's
-fixed tone is not read there. Two orders whose lines share a band (an engine
-order on a wheel harmonic in one gear) read the same power. A floor that
-bends sharply across the band and its flanks (the flank of a narrow
-resonance) reads as a level. A sensor whose mean passes the two-standard-error
-test still carries its scatter: on the wheel-hop hump a second corner's level
-reads up to about a third high, so two faulty corners whose levels differ by
-under 2x can read "about as strong". The levels are for the speeds the order
-was heard at: an order heard nowhere is averaged over the whole drive.
+- A window in a cell that hears the order **matches** it, clear and heard, at
+  the cell's level, whether or not the order ranked among the window's 8
+  peaks. Its frequency is its ranked peak's where one sits within the line's
+  tolerance and sweep, else the line's. An order under the wheel-hop hump is
+  matched where its own line stands out, not where the hump's peaks let it
+  rank.
+- A window in a cell that does not hear it keeps its ranked peak's match only
+  where some sensor hears the order in that driving phase (`heard_phases`);
+  elsewhere it **does not match**. A hump peak near the wheel order in town
+  matches a healthy car's wheel order at every corner in about a quarter of
+  the windows; it no longer does at a sensor and phase the order's line is
+  absent from.
+- A window whose line could not be read keeps its ranked peak's match: on a
+  ringing tone (the tone hides the order from the read, not from the peaks),
+  and at the spectrum's lower edge only at a sensor that hears the order in
+  some phase (a floor-level peak at the lowest bins says nothing elsewhere).
+  A window off the order's line (`_masked`) keeps no match.
+- A window in the guided coast-down is judged by its ranked peak alone, as
+  the coast test judges it (`diagnosis._speed_dependence`): a cell there
+  spans the shift into neutral, where an engine order still sounds for a
+  window or two. On a loaded machine the live e2e drive's first coast-down
+  windows at 90-100 km/h read an engine E2 clear, and the coast test no
+  longer saw it vanish.
 
-**Cost.** On x86, the 30-minute benchmark drive (4 sensors,
-`make benchmark-post-analysis-30min`): post-analysis 11.7 s on main and
-13.4 s with the reads (0.94 s of it in 120,000 reads, about 8 µs each); peak
-traced memory 92 MB and 118 MB, the spectra kept (about 2 KB per window).
-The live view does not keep or read spectra.
+Three rules follow the reads into the existing scoring:
+
+- **Location** (`scoring._at_tracked_levels()`): the matched points are placed
+  by their sensor's tracked level (`level_g`, else `read_g`) instead of their
+  peaks' amplitudes, where some sensor hears the order and every matched
+  sensor has a level: the peaks are the order plus the hump under it.
+- **Heard match rate** (`OrderMatchAccumulator.heard_match_rate`): where the
+  order is heard only in its braking cells, over the heard sensors' braking
+  windows (`_phase_heard_rate()`) where that rate is the higher one; the
+  windows between stops have no judder to match. A wheel order near the floor
+  that stands clear in one braking cell alone still matches between the
+  stops: its braking rate (0.08 at physical amplitudes on a firm-stops drive)
+  would cap a finding heard in 0.79 of its windows at Weak.
+- **Match-rate rescue** (`_compute_effective_match_rate()`): a phase label
+  whose driving phase has cells that hear the order rescues the rate where
+  its own matches reach the minimum rate, with the same minimum windows and
+  matches as the speed-band rescue.
+
+**Results.** The accuracy benchmark (seeds 1-6, CI rule: seed 1 passes and 4
+of seeds 2-6), main against this design:
+
+| | main | tracked |
+|---|---|---|
+| CI configuration (cases on their `IdealisedFloor` stay there) | 222/224 | 222/224 |
+| healthy runs there given a fault / a weak guess (of 318) | 2 / 0 | 1 / 0 |
+| fault runs whose report text and amplitude table name different locations | 15 of 968 (8 on seed 1) | 3 of 964 (0) |
+| every case on the ISO 8608 road | 158/224 | 177/224 |
+| healthy runs there given a fault / a weak guess (of 318) | 22 / 35 | 3 / 3 |
+| fault runs there whose report text and amplitude table disagree | 24 of 820 (10 on seed 1) | 12 of 808 (0) |
+| physical fault amplitudes (`tools/dev/physical_fault_tally.py`), cases where main has them | 117/224 | 119/224 |
+| physical fault amplitudes, the 13 cases below on the road | 100/224 | 112/224 |
+
+The physical-amplitude limit drives (`physical_fault_tally.py limits`,
+steady speeds, 1200 runs): main finds the fault on 796 and names a wrong
+source or corner on 37 as a fault and 35 as a weak guess; this design finds
+it on 765 and names a wrong one on 18 and 0. A front-left imbalance at a
+steady 50 km/h on the road (under the read limit, below) was a wheel fault
+at all four wheels or the rear-left at every size on main; it is no fault
+now. Lost: an inline-4's E2 at 20 g on the idealised floor (found on 7 of 20
+runs, main 19): its strength is now the order's own level, about 0.7 dB under
+its peaks', at 8.3 dB just past the 8 dB strength edge.
+
+13 cases moved off the idealised floor (they pass on the road for every
+car): the healthy city, residual-imbalance, seat-mode, real-traffic,
+flat-spot and brake-step drives, the pothole loop, the front-left wheel in
+traffic, the guided brake stops, the rear-left oval, the very lossy
+rear-right sensor, the launch flare and the guided engine test (see
+"Benchmark on the realistic road" in `docs/simulator_realism.md`).
+
+**Limits.**
+
+- A line within its read's reach of a ringing tone's leak is not read there.
+- Two orders whose lines share a band (an engine order on a wheel harmonic in
+  one gear) read the same power.
+- An order far under the floor beside its line is not heard, whatever the
+  drive's length allows: a mild front-left imbalance (113 mg at the knuckle)
+  under the wheel-hop hump (about 1 g there at motorway speed) reads a median
+  of −0.005 of the floor at its knuckle (seed 1), where three standard errors
+  over a sweep's 76 reads are about half the floor. These cases stay on the
+  idealised floor (`MISSED_UNDER_WHEEL_HOP`).
+- A sensor whose reads pass the test still carries their scatter: on the
+  wheel-hop hump a second corner's level reads up to about a third high, so
+  two faulty corners whose levels differ by under 2x can read "about as
+  strong".
+- The levels are for the speeds the order was heard at: an order heard
+  nowhere is read over the whole drive.
+- A sensor that does not hear the order is placed by its read
+  (`read_g`), which under the wheel-hop hump is the floor's scatter: at
+  130 km/h in top gear an inline-4's E2 shares its line with T2, heard only
+  at the trunk, and two unheard wheel sensors' reads (12 and 25 mg under a
+  45 mg floor) put a T2 fault at a wheel on 12 of 25 limit runs (main 3).
+  Placing such sensors at 0 instead makes a lone heard corner look spread
+  (two CI cases lost): location scoring counts only sensors with an
+  amplitude, so a sensor whose read is 0 is no quieter second sensor, and a
+  lone heard sensor scores dominance 1. A faint engine order heard at the
+  trunk alone loses its localization that way (at physical amplitudes, 3 of
+  6 seeds of the faint-engine front-wheels sweep on the second car).
+- A line under about 5.9 Hz has no read (the spectra start at 5.08 Hz): a
+  wheel order at town speeds keeps its ranked peaks there only at a sensor
+  that hears it elsewhere.
+
+**Cost.** On x86, the 30-minute benchmark drive (4 sensors, the drive of
+`make benchmark-post-analysis-30min`): post-analysis 14.4 s on main and
+17.2 s with the tracked verdicts, without memory tracing (each window is
+read three times, at the line and at its two controls, about 6 µs a read);
+peak traced memory 118 MB either way, the spectra kept (about 2 KB per
+window). The live view does not keep or read spectra.
 
 ## Engine tone through a near-1:1 gear
 
@@ -645,11 +801,11 @@ That shared ownership is why `dsp/order_bands.py` exists outside
 | `apps/server/vibesensor/domain/engine_profile.py` | Engine profile and the rules table of the engine orders it excites. |
 | `apps/server/vibesensor/dsp/order_bands.py` | Shared order-match tolerance and live band-payload helpers. |
 | `apps/server/vibesensor/analysis/orders/physics.py` | Fixed hypothesis catalog and per-sample predicted-Hz helpers. |
-| `apps/server/vibesensor/analysis/orders/matching.py` | Match predicted order bands against stored sample peaks and classify each match as heard. |
-| `apps/server/vibesensor/analysis/orders/tracking.py` | Order-tracked reads: speed rates, swept line widths, and per-sensor order levels. |
+| `apps/server/vibesensor/analysis/orders/matching.py` | Match predicted order bands against stored sample peaks, read each window at the order's line, and classify each window's match from its read (or its peak) as heard. |
+| `apps/server/vibesensor/analysis/orders/tracking.py` | Order-tracked reads: speed rates, swept line widths, which sensors, cells and phases hear an order, and per-sensor order levels. |
 | `apps/server/vibesensor/dsp/window_spectrum.py` | A replayed window's combined spectrum and one read at an order's line. |
 | `apps/server/vibesensor/analysis/orders/scoring.py` | Convert matched evidence into confidence and ranking score. |
 | `apps/server/vibesensor/analysis/orders/finding_builder.py` | Project scored evidence into domain `Finding` objects. |
 | `apps/server/vibesensor/analysis/orders/pipeline.py` | Coordinate the full order-analysis pass. |
-| `apps/server/vibesensor/analysis/orders/fixed_tones.py` | Drop each sensor's fixed-frequency tones before speed-following orders are matched. |
+| `apps/server/vibesensor/analysis/orders/fixed_tones.py` | Drop each sensor's fixed-frequency tones before speed-following orders are matched; find the ones that ring as a line, and how far they leak, for the order-tracked reads. |
 | `apps/server/vibesensor/analysis/orders/brake_attribution.py` | Put a wheel order heard only while braking down to the brakes (brake judder). |

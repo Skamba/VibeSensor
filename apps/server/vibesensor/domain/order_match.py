@@ -64,16 +64,19 @@ class SensorOrderLevel:
 
     ``level_g`` is the order alone: the band RMS at its line (over
     ``PEAK_BANDWIDTH_HZ``, a peak's measure) less the local floor's share in
-    power, averaged over ``windows`` windows at the speeds the order is heard.
-    ``floor_g`` is that local floor (band RMS of the spectrum beside the line).
-    A sensor the order does not reach reads about 0 (see "Order-tracked reads"
-    in ``docs/order_tracking.md``).
+    power, the middle of ``windows`` windows at the speeds the order is heard
+    while it is there. ``floor_g`` is that local floor (band RMS of the
+    spectrum beside the line). A sensor that does not hear the order reads 0;
+    ``read_g`` is its read all the same, which places the order between
+    sensors that do not hear it (see "Order-tracked reads" in
+    ``docs/order_tracking.md``).
     """
 
     location: str
     level_g: float
     floor_g: float
     windows: int
+    read_g: float = 0.0
 
 
 def frequency_tracking_slope(points: Sequence[OrderMatchObservation]) -> float | None:

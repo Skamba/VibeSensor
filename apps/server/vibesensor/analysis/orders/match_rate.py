@@ -29,8 +29,16 @@ def _compute_effective_match_rate(
     matched_by_speed_bin: dict[str, int],
     possible_by_location: dict[str, int],
     matched_by_location: dict[str, int],
+    possible_by_phase: dict[str, int],
+    matched_by_phase: dict[str, int],
 ) -> tuple[float, str | None, bool]:
-    """Rescue a below-threshold match rate via focused speed-band or location evidence."""
+    """Rescue a below-threshold match rate via focused speed-band, phase or location evidence.
+
+    A driving phase in *possible_by_phase* rescues it where the order is
+    matched in enough of that phase's windows: brake judder is there only
+    while braking, and the windows between stops would dilute it. The caller
+    passes only the phases where the order's tracked reads hear it.
+    """
     effective_match_rate = match_rate
     focused_speed_band: str | None = None
     if match_rate < min_match_rate and possible_by_speed_bin:
@@ -49,6 +57,16 @@ def _compute_effective_match_rate(
         ):
             focused_speed_band = highest_speed_bin
             effective_match_rate = focused_rate
+
+    if effective_match_rate < min_match_rate:
+        for phase, phase_possible in possible_by_phase.items():
+            phase_matched = int(matched_by_phase.get(phase, 0))
+            if (
+                phase_possible >= ORDER_MIN_COVERAGE_POINTS
+                and phase_matched >= ORDER_MIN_MATCH_POINTS
+                and phase_matched / phase_possible >= min_match_rate
+            ):
+                effective_match_rate = max(effective_match_rate, phase_matched / phase_possible)
 
     per_location_dominant = False
     if effective_match_rate < min_match_rate and possible_by_location:

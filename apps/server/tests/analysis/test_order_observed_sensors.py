@@ -10,13 +10,17 @@ cannot isolate these rules.
 from __future__ import annotations
 
 from collections.abc import Callable
+from dataclasses import replace
+from types import SimpleNamespace
 
+import numpy as np
 import pytest
 from test_support.analysis import run_analysis
 from test_support.core import standard_metadata, wheel_hz
 from test_support.synthetic_samples import make_sample
 
 from vibesensor.analysis._reference_resolution import ESTIMATED_RPM_SOURCE
+from vibesensor.analysis.orders.fixed_tones import ringing_tones
 from vibesensor.analysis.orders.matching import (
     OrderMatchAccumulator,
     _clear_shares,
@@ -34,6 +38,7 @@ from vibesensor.analysis.orders.scoring import (
 from vibesensor.domain.order_match import OrderMatchObservation
 from vibesensor.dsp.constants import FFT_N, SAMPLE_RATE_HZ
 from vibesensor.dsp.order_bands import WHEEL_ORDER_PATH_COMPLIANCE
+from vibesensor.dsp.window_spectrum import WindowSpectrum
 
 # E1 at 2.72 x T1 in top gear (ratio 0.8): engine orders fall between wheel orders.
 _E1_PER_T1 = 2.72
@@ -333,6 +338,52 @@ def test_a_fixed_tone_is_not_tracked_by_the_floor_noise_around_it() -> None:
     assert not any(f.get("finding_key") == "engine_2x" for f in summary["findings"])
 
 
+def _buzzing_samples(buzz_g: float, seed: int) -> list[SimpleNamespace]:
+    # A wheel's hop under the road (12 Hz, damping 0.2, a hump 5 Hz wide) and
+    # an idle buzz (30 Hz, wandering a bin either side) over a 2 mg floor.
+    rng = np.random.default_rng(seed)
+    freq = np.arange(5.0, 200.0, SAMPLE_RATE_HZ / FFT_N)
+    hump = 0.02 / np.sqrt((1 - (freq / 12.0) ** 2) ** 2 + (0.4 * freq / 12.0) ** 2)
+    buzz = np.argmin(np.abs(freq - 30.0))
+    samples = []
+    for index in range(40):
+        power = (0.002**2 + hump**2) * rng.exponential(size=freq.size)
+        power[buzz - 1 : buzz + 2] += buzz_g**2 * np.array([0.25, 1.0, 0.25])
+        spectrum = WindowSpectrum(
+            freq_hz=freq.astype(np.float32), amp_g=np.sqrt(power).astype(np.float32)
+        )
+        samples.append(SimpleNamespace(client_id="a", t_s=2.56 * index, spectrum=spectrum))
+    return samples
+
+
+def test_a_fixed_tone_masks_the_line_reads_only_where_it_rings_as_a_line() -> None:
+    # The sensor's peaks hold still at the hump and at the buzz. An order
+    # crossing the hump is still read; the buzz would read as the order's
+    # level, so a line read takes in none of it.
+    samples = _buzzing_samples(0.01, seed=23)
+    tones = (11.6, 12.1, 29.8, 30.0, 30.2)
+
+    ringing = ringing_tones(samples, [tones] * len(samples), window_s=2.56)
+
+    assert [tuple(tone.hz for tone in sample_tones) for sample_tones in ringing] == [
+        (29.8, 30.0, 30.2)
+    ] * len(samples)
+
+
+def test_a_louder_tone_keeps_line_reads_further_from_it() -> None:
+    # A Hann window leaks a tone's power into the bins either side: a faint
+    # buzz reaches past its span (0.2 Hz either side of its centre) by its
+    # main lobe, two bins; a loud one further, by its leak.
+    tones = (29.8, 30.0, 30.2)
+    reach = [
+        ringing_tones(samples, [tones] * len(samples), window_s=2.56)[0][1].reach_hz
+        for samples in (_buzzing_samples(0.01, seed=23), _buzzing_samples(0.3, seed=23))
+    ]
+
+    assert reach[0] == pytest.approx(0.2 + 2 * SAMPLE_RATE_HZ / FFT_N)
+    assert reach[1] > reach[0] + SAMPLE_RATE_HZ / FFT_N
+
+
 _LOCATIONS = ("Front Left Wheel", "Front Right Wheel", "Rear Left Wheel", "Rear Right Wheel")
 _WINDOWS = 20
 
@@ -439,6 +490,23 @@ def test_the_match_rate_is_taken_where_the_order_is_heard() -> None:
     assert match.match_rate == pytest.approx(42 / 80)
     assert match.heard_match_rate == pytest.approx(34 / 40)
     assert match.heard_share == pytest.approx(26 / 34)
+
+
+@pytest.mark.parametrize(("braking_rate", "heard_rate"), [(0.95, 0.95), (0.08, 34 / 40)])
+def test_an_order_heard_in_its_braking_cells_alone_is_rated_there_where_more_often(
+    braking_rate: float, heard_rate: float
+) -> None:
+    # Brake judder matched in 95 % of its heard sensors' braking windows
+    # takes that rate; a wheel order near the floor that stood clear in one
+    # braking cell alone, matched in 8 % of the braking windows, keeps the
+    # rate it matched at across the drive.
+    matched = dict(zip(_LOCATIONS, (18, 16, 4, 4), strict=True))
+    match = replace(
+        _accumulator(dict(zip(_LOCATIONS, (18, 8, 0, 0), strict=True)), matched),
+        phase_heard_rate=braking_rate,
+    )
+
+    assert match.heard_match_rate == pytest.approx(heard_rate)
 
 
 def _wheel_score(match: OrderMatchAccumulator, *, match_rate: float = 1.0) -> OrderFindingScore:

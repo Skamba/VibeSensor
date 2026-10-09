@@ -40,6 +40,8 @@ def _run_rescue(
     min_match_rate: float = 0.25,
     possible_by_location: dict[str, int] | None = None,
     matched_by_location: dict[str, int] | None = None,
+    possible_by_phase: dict[str, int] | None = None,
+    matched_by_phase: dict[str, int] | None = None,
 ) -> tuple[float, str | None, bool]:
     """Call ``_compute_effective_match_rate`` with common defaults."""
     possible, matched = _bins(*speed_specs)
@@ -50,6 +52,8 @@ def _run_rescue(
         matched_by_speed_bin=matched,
         possible_by_location=possible_by_location or {},
         matched_by_location=matched_by_location or {},
+        possible_by_phase=possible_by_phase or {},
+        matched_by_phase=matched_by_phase or {},
     )
 
 
@@ -451,3 +455,17 @@ def test_driveshaft_order_is_wheel_rate_times_final_drive() -> None:
         _sample(speed_kmh=72.0, final_drive_ratio=3.5), _context(), tire_circumference_m=2.0
     )
     assert result == pytest.approx(35.0)
+
+
+def test_a_driving_phase_rescues_the_match_rate_of_an_order_there_alone() -> None:
+    # Brake judder matched in 9 of 12 braking windows and in none of the 60
+    # between stops: the stops alone carry the match rate.
+    rate, band, per_location = _run_rescue(
+        9 / 72,
+        (),
+        possible_by_phase={"braking": 12, "cruise": 60},
+        matched_by_phase={"braking": 9},
+    )
+
+    assert rate == pytest.approx(0.75)
+    assert (band, per_location) == (None, False)

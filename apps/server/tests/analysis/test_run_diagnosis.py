@@ -205,6 +205,42 @@ def test_one_sensor_is_always_said_and_caps_a_corner_fault_at_moderate(
     assert diagnosis["weak_reasons"] == ["single_sensor", "narrow_speed_range"]
 
 
+def test_the_frequency_is_stated_in_the_gear_of_the_strongest_speed_band() -> None:
+    """An engine order heard through the gears runs at another Hz per km/h in
+    each: its frequency is stated at the strongest band's speed in that band's
+    gear, not in the gear most of the drive was in."""
+    third = [(35.0 + index * 0.5, 1.6) for index in range(6)]
+    fifth = [(95.0 + index, 1.0) for index in range(10)]
+    points = tuple(
+        OrderMatchObservation(
+            predicted_hz=speed * hz_per_kmh,
+            matched_hz=speed * hz_per_kmh,
+            rel_error=0.0,
+            amp=0.1,
+            location="Front Left Wheel",
+            t_s=float(index),
+            speed_kmh=speed,
+        )
+        for index, (speed, hz_per_kmh) in enumerate(third + fifth)
+    )
+    finding = make_finding(
+        finding_id="F001",
+        finding_key="engine_1x",
+        suspected_source=VibrationSource.ENGINE,
+        confidence=0.6,
+        strongest_location="Front Left Wheel",
+        strongest_speed_band="30-40 km/h",
+        vibration_strength_db=30.0,
+        matched_points=points,
+        evidence=FindingEvidence(match_rate=0.9),
+    )
+
+    diagnosis = _diagnosis(finding)
+
+    assert diagnosis["frequency_hz"] == pytest.approx(1.6 * diagnosis["reference_speed_kmh"])
+    assert 30.0 <= diagnosis["reference_speed_kmh"] < 40.0
+
+
 def test_a_no_fault_run_lists_no_order_it_found_only_faintly() -> None:
     """A faint wheel order felt evenly at every corner is a healthy car's residual
     imbalance: the run reads as no fault, so it is not listed as a Moderate
