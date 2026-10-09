@@ -18,6 +18,7 @@ from vibesensor.analysis._types import Sample
 from vibesensor.common.units import SECONDS_PER_MINUTE
 from vibesensor.domain.engine_profile import EngineProfile, engine_orders
 from vibesensor.domain.finding_types import VibrationSource
+from vibesensor.domain.locations import wheel_axle
 from vibesensor.domain.order_reference import OrderReferenceSpec, wheel_hz_from_speed_kmh
 from vibesensor.dsp.order_bands import (
     RIGID_ORDER_PATH_COMPLIANCE,
@@ -35,8 +36,15 @@ def _wheel_hz(
     tire_circumference_m: float | None,
     context: RunMetadata | None = None,
     order_reference_spec: OrderReferenceSpec | None = None,
+    *,
+    own_axle: bool = False,
 ) -> float | None:
-    """Return wheel rotational frequency from speed plus optional reference data."""
+    """Return wheel rotational frequency from speed plus optional reference data.
+
+    With *own_axle*, a wheel sensor's sample turns with the tires on its own
+    axle (staggered tires turn the front and rear wheels at different rates);
+    any other sensor, and the driveline, take the effective tire.
+    """
     speed_kmh = sample.speed_kmh
     if speed_kmh is None or speed_kmh <= 0:
         return None
@@ -44,7 +52,8 @@ def _wheel_hz(
     if spec is None and context is not None:
         spec = _order_reference_spec_from_context(context, sample)
     if spec is not None and spec.supports_wheel_reference:
-        return spec.wheel_hz_from_speed_kmh(speed_kmh)
+        axle = wheel_axle(sample.location) if own_axle else None
+        return spec.wheel_hz_from_speed_kmh(speed_kmh, axle)
     if tire_circumference_m is None:
         return None
     return wheel_hz_from_speed_kmh(speed_kmh, tire_circumference_m)
@@ -127,7 +136,7 @@ class OrderHypothesis:
         tire_circumference_m: float | None,
     ) -> tuple[float | None, str]:
         if self.order_label_base == "wheel":
-            base = _wheel_hz(sample, tire_circumference_m, context)
+            base = _wheel_hz(sample, tire_circumference_m, context, own_axle=True)
             return (base * self.order, "speed+tire") if base is not None else (None, "missing")
         if self.order_label_base == "driveshaft":
             base = _driveshaft_hz(sample, context, tire_circumference_m)

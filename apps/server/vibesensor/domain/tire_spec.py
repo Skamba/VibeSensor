@@ -5,7 +5,10 @@ from __future__ import annotations
 import math
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
+
+if TYPE_CHECKING:
+    from vibesensor.domain.drive_layout import Axle
 
 __all__ = [
     "AxleTireSetup",
@@ -108,3 +111,15 @@ class AxleTireSetup:
         if self.default_axle_for_speed == "rear":
             return self.rear.circumference_m
         return (self.front.circumference_m + self.rear.circumference_m) / 2.0
+
+    def axle_tire_circumference_m(self, axle: Axle | None) -> float:
+        """Circumference of the tires on *axle*; ``None`` (no one axle) takes the effective one.
+
+        On staggered axles the front and rear wheels turn at different rates at
+        one road speed, so each axle's wheel order has its own frequency.
+        """
+        if axle == "front":
+            return self.front.circumference_m
+        if axle == "rear":
+            return self.rear.circumference_m
+        return self.effective_tire_circumference_m

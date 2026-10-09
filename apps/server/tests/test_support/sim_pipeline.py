@@ -36,6 +36,7 @@ import yaml
 from vibesensor.app.composition import AppRuntime, build_runtime
 from vibesensor.app.config_loader import load_config
 from vibesensor.common.time_utils import utc_now_iso
+from vibesensor.domain.drive_layout import Axle
 from vibesensor.domain.engine_profile import EngineProfile, engine_profile_payload
 from vibesensor.dsp.constants import FFT_N, FFT_UPDATE_HZ
 from vibesensor.history.history_db import HistoryDB
@@ -63,7 +64,7 @@ from vibesensor.simulator.scripted_scenario_models import ScenarioPhase, phase_s
 from vibesensor.simulator.scripted_targeting import apply_phase, target_clients
 from vibesensor.simulator.sim_client import SimClient, make_client_id
 from vibesensor.simulator.sim_runtime import ClientProtocol
-from vibesensor.simulator.wheel_kinematics import DrivenAxle, DriveState, SimCar
+from vibesensor.simulator.wheel_kinematics import DrivenAxle, DriveState, SimCar, SimTire
 from vibesensor.speed.gps_speed import GPSSpeedMonitor
 from vibesensor.speed.obd.polling import ObdPidPollResult, ObdPollResult
 from vibesensor.speed.obd.service import ObdService
@@ -140,6 +141,9 @@ class BenchCar:
     # The engine's layout and cylinders as the car library gives them; ``None``
     # for a car entered by hand (and an EV).
     engine_profile: EngineProfile | None = None
+    # Staggered tires: the front axle's (width, aspect, rim) where it differs
+    # from the rear's, which the other tire fields give; ``None`` for one size.
+    front_tire: tuple[float, float, float] | None = None
 
     def sim_car(self, seed: int) -> SimCar:
         """The physical car under the sensors: rear drive unless said, its tires in service.
@@ -147,22 +151,27 @@ class BenchCar:
         *seed* draws how far each tire has worn and how far its pressure is off
         the placard (``SimCar.in_service``): every drive's car is a little different.
         """
-        return SimCar.square(
-            self.tire_width_mm,
-            self.tire_aspect_pct,
-            self.rim_in,
+        rear = SimTire(self.tire_width_mm, self.tire_aspect_pct, self.rim_in)
+        front = SimTire(*self.front_tire) if self.front_tire is not None else rear
+        return SimCar(
+            tires=(front, front, rear, rear),
             final_drive_ratio=self.final_drive_ratio,
             top_gear_ratio=self.current_gear_ratio,
             driven_axle=_DRIVEN_AXLES.get(self.drive_layout or "", "rear"),
         ).in_service(random.Random(f"tires-{seed}"))
 
-    @property
-    def tire_circumference_m(self) -> float:
-        diameter_mm = self.rim_in * 25.4 + 2.0 * self.tire_width_mm * self.tire_aspect_pct / 100.0
+    def tire_circumference_m(self, axle: Axle | None = None) -> float:
+        """The entered tires' circumference on *axle*; ``None``: the rear, the speed reference."""
+        width, aspect, rim = (
+            self.front_tire
+            if axle == "front" and self.front_tire is not None
+            else (self.tire_width_mm, self.tire_aspect_pct, self.rim_in)
+        )
+        diameter_mm = rim * 25.4 + 2.0 * width * aspect / 100.0
         return diameter_mm / 1000.0 * math.pi * self.tire_deflection_factor
 
-    def wheel_hz(self, speed_kmh: float) -> float:
-        return speed_kmh / 3.6 / self.tire_circumference_m
+    def wheel_hz(self, speed_kmh: float, axle: Axle | None = None) -> float:
+        return speed_kmh / 3.6 / self.tire_circumference_m(axle)
 
     def order_hz(self, speed_kmh: float) -> dict[str, float]:
         """Order frequencies at *speed_kmh* from the entered specs, keyed like order tones."""
@@ -186,6 +195,16 @@ class BenchCar:
             "current_gear_ratio": self.current_gear_ratio,
             "tire_deflection_factor": self.tire_deflection_factor,
         }
+        if self.front_tire is not None:
+            width, aspect, rim = self.front_tire
+            aspects |= {
+                "front_tire_width_mm": width,
+                "front_tire_aspect_pct": aspect,
+                "front_rim_in": rim,
+                "rear_tire_width_mm": self.tire_width_mm,
+                "rear_tire_aspect_pct": self.tire_aspect_pct,
+                "rear_rim_in": self.rim_in,
+            }
         if not self.final_drive_entered:
             del aspects["final_drive_ratio"]
         return aspects

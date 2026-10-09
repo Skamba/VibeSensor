@@ -48,7 +48,7 @@ from vibesensor.domain.engine_profile import (
 )
 from vibesensor.domain.finding import Finding
 from vibesensor.domain.finding_types import ConfidenceLevel, DiagnosisVerdict, VibrationSource
-from vibesensor.domain.locations import WHEEL_LOCATION_CODES, location_code_for_label
+from vibesensor.domain.locations import WHEEL_LOCATION_CODES, location_code_for_label, wheel_axle
 from vibesensor.domain.order_match import (
     OrderMatchObservation,
     frequency_tracking_slope,
@@ -86,6 +86,7 @@ from vibesensor.summary.diagnosis_contracts import (
 if TYPE_CHECKING:
     from vibesensor.analysis._types import Sample
     from vibesensor.domain.test_run import TestRun
+    from vibesensor.domain.tire_spec import AxleTireSetup
     from vibesensor.recording.run_schema import RunGuidedPhase, RunMetadata
 
 __all__ = ["build_diagnosis"]
@@ -424,6 +425,8 @@ class _References:
     """Reference data the order analysis used for this run, and where it came from."""
 
     tire_circumference_m: float | None
+    # Each axle's tires; ``None`` without a tire reference.
+    tire_setup: AxleTireSetup | None
     final_drive_ratio: float | None
     gear_ratio: float | None
     tire_provenance: ReferenceProvenance
@@ -478,8 +481,10 @@ def _references(
     final_drive = _positive(metadata.final_drive_ratio)
     gear = _positive(metadata.current_gear_ratio)
     rpm_source, engine_ran = _rpm_readings(metadata, samples)
+    spec = metadata.order_reference_spec
     return _References(
         tire_circumference_m=tire,
+        tire_setup=spec.tire_setup if spec is not None and spec.supports_wheel_reference else None,
         final_drive_ratio=final_drive,
         gear_ratio=gear,
         tire_provenance=reference_provenance(
@@ -1610,20 +1615,26 @@ def _measured_rpm(samples: Sequence[Sample]) -> float | None:
 
 
 def _order_markers(
-    refs: _References, speed_kmh: float, measured_rpm: float | None
+    refs: _References, speed_kmh: float, measured_rpm: float | None, location: str
 ) -> dict[str, float]:
-    """Order frequencies at *speed_kmh*; measured RPM places the engine orders."""
+    """Order frequencies at *speed_kmh* at *location*; measured RPM places the engine orders.
+
+    A wheel sensor's wheel orders turn with the tires on its own axle.
+    """
     tire = refs.tire_circumference_m
     wheel = wheel_hz_from_speed_kmh(speed_kmh, tire) if tire is not None else None
+    setup = refs.tire_setup
+    own_tire = setup.axle_tire_circumference_m(wheel_axle(location)) if setup is not None else tire
+    own_wheel = wheel_hz_from_speed_kmh(speed_kmh, own_tire) if own_tire is not None else None
     markers: dict[str, float] = {}
     engine = measured_rpm / SECONDS_PER_MINUTE if measured_rpm is not None else None
-    if wheel is not None:
-        markers |= {"T1": wheel, "T2": 2 * wheel}
-        if refs.final_drive_ratio is not None:
-            shaft = wheel * refs.final_drive_ratio
-            markers |= {"P1": shaft, "P2": 2 * shaft}
-            if engine is None and refs.gear_ratio is not None:
-                engine = shaft * refs.gear_ratio
+    if own_wheel is not None:
+        markers |= {"T1": own_wheel, "T2": 2 * own_wheel}
+    if wheel is not None and refs.final_drive_ratio is not None:
+        shaft = wheel * refs.final_drive_ratio
+        markers |= {"P1": shaft, "P2": 2 * shaft}
+        if engine is None and refs.gear_ratio is not None:
+            engine = shaft * refs.gear_ratio
     # An EV's motor is the driveshaft order (P1/P2); it has no engine orders.
     if engine is not None:
         markers |= {order.code: order.multiple * engine for order in refs.engine_orders}
@@ -1689,5 +1700,5 @@ def _spectrum(
         "speed_max_kmh": max(window_speeds),
         "floor_mg": _mg(median(floors)) if floors else None,
         "peaks": peaks,
-        "order_markers": _order_markers(refs, window_centre, _measured_rpm(window)),
+        "order_markers": _order_markers(refs, window_centre, _measured_rpm(window), location),
     }

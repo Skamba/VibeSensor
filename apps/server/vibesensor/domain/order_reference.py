@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import TypedDict
+from typing import TYPE_CHECKING, TypedDict
 
 from vibesensor.domain.tire_spec import AxleTireSetup, TireSpec
+
+if TYPE_CHECKING:
+    from vibesensor.domain.drive_layout import Axle
 
 __all__ = [
     "OrderFrequencies",
@@ -128,8 +131,13 @@ class OrderReferenceSpec:
         result = whz * self.final_drive_ratio * self.current_gear_ratio
         return result if math.isfinite(result) else None
 
-    def wheel_hz_from_speed_kmh(self, speed_kmh: float) -> float | None:
-        return wheel_hz_from_speed_kmh(speed_kmh, self.tire_circumference_m)
+    def wheel_hz_from_speed_kmh(self, speed_kmh: float, axle: Axle | None = None) -> float | None:
+        """Wheel rotational frequency (Hz) at *speed_kmh* of the wheels on *axle*.
+
+        ``None`` takes the effective tire (``default_axle_for_speed``).
+        """
+        circumference_m = self.tire_setup.axle_tire_circumference_m(axle)
+        return wheel_hz_from_speed_kmh(speed_kmh, circumference_m)
 
     def wheel_hz_from_speed_mps(self, speed_mps: float) -> float | None:
         return self.wheel_hz(speed_mps)

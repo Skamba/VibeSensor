@@ -90,6 +90,28 @@ class TestOrderReferenceSpecFromSettings:
         assert spec.tire_spec.width_mm == 275.0
         assert spec.tire_circumference_m == spec.tire_setup.rear.circumference_m
 
+    def test_staggered_axles_turn_their_wheels_at_their_own_tires_rate(self) -> None:
+        spec = order_reference_spec_from_mapping(
+            {
+                "front_tire_width_mm": 245.0,
+                "front_tire_aspect_pct": 40.0,
+                "front_rim_in": 21.0,
+                "rear_tire_width_mm": 275.0,
+                "rear_tire_aspect_pct": 35.0,
+                "rear_rim_in": 21.0,
+            }
+        )
+        assert spec is not None
+        front = spec.wheel_hz_from_speed_kmh(100.0, "front")
+        rear = spec.wheel_hz_from_speed_kmh(100.0, "rear")
+        assert front is not None and rear is not None
+        setup = spec.tire_setup
+        assert front / rear == pytest.approx(
+            setup.rear.circumference_m / setup.front.circumference_m
+        )
+        # No one axle (a sensor off the wheels): the speed reference's, the rear.
+        assert spec.wheel_hz_from_speed_kmh(100.0) == rear
+
     def test_staggered_tire_setup_supports_average_effective_circumference(self) -> None:
         spec = order_reference_spec_from_mapping(
             {

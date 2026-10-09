@@ -42,7 +42,7 @@ from vibesensor.analysis.constants import MIN_ANALYSIS_FREQ_HZ
 from vibesensor.analysis.felt_ranking import FELT_LOCATIONS
 from vibesensor.analysis.phase_segmentation import DrivingPhase, segment_run_phases
 from vibesensor.domain.engine_profile import EngineProfile
-from vibesensor.domain.locations import location_code_for_label
+from vibesensor.domain.locations import location_code_for_label, wheel_axle
 from vibesensor.recording.run_schema import GuidedPhaseName
 from vibesensor.recording.sensor_frame import SensorFrame
 from vibesensor.report.i18n import tr
@@ -99,6 +99,17 @@ INLINE_4_CAR = replace(
     OTHER_CAR, name="Inline-4 hatchback", fuel_type="ICE", engine_profile=EngineProfile("inline", 4)
 )
 V8_CAR = replace(OTHER_CAR, name="V8 coupe", fuel_type="ICE", engine_profile=EngineProfile("v", 8))
+# Staggered tires: 235/35 R19 at the front, 265/35 R19 at the rear. The front
+# tires are 3 % smaller, so the front wheels turn 3 % faster at one road speed.
+STAGGERED_CAR = replace(
+    DEFAULT_CAR,
+    name="Staggered RWD coupe",
+    tire_width_mm=265.0,
+    tire_aspect_pct=35.0,
+    rim_in=19.0,
+    drive_layout="RWD",
+    front_tire=(235.0, 35.0, 19.0),
+)
 CARS = {
     "default": DEFAULT_CAR,
     "other": OTHER_CAR,
@@ -111,6 +122,7 @@ CARS = {
     "inline_3": INLINE_3_CAR,
     "inline_4": INLINE_4_CAR,
     "v8": V8_CAR,
+    "staggered": STAGGERED_CAR,
 }
 # Every case runs on these two cars unless it names its own.
 BOTH_CARS = ("default", "other")
@@ -1791,6 +1803,22 @@ CONFOUNDER_CASES = (
 
 BENCH_CASES = (
     Case("bench-healthy-sweep", _sweep(), NO_FAULT, cars=(*BOTH_CARS, "fwd")),
+    # Staggered tires: each axle's wheels turn at their own tires' rate. A
+    # healthy car's front wheels are no fault for turning faster than the
+    # rear tires would, and a front wheel's imbalance is on its own axle's order.
+    Case("bench-healthy-staggered-tires-sweep", _sweep(), NO_FAULT, cars=("staggered",)),
+    Case(
+        "bench-healthy-residual-imbalance-staggered-tires-sweep",
+        _long_sweep(*_RESIDUAL_IMBALANCE),
+        HEALTHY_OR_SPREAD,
+        cars=("staggered",),
+    ),
+    Case(
+        "bench-front-left-wheel-staggered-tires-sweep",
+        _sweep(_FL_IMBALANCE),
+        _FL_FAULT,
+        cars=("staggered",),
+    ),
     # Brake judder from warped front discs: felt in the steering wheel every time
     # the car brakes from motorway speed, gone while cruising and speeding up.
     # It is the brakes, not a wheel to balance.
@@ -3043,15 +3071,19 @@ def _assert_spectrum_markers(diagnosis: dict, car: BenchCar, case: Case) -> None
     if spectrum is None:
         return
     markers = spectrum["order_markers"]
-    low = car.wheel_hz(spectrum["speed_min_kmh"])
-    high = car.wheel_hz(spectrum["speed_max_kmh"])
+    # A wheel sensor's wheel orders turn with its own axle's tires; the
+    # propshaft with the rear's (the speed reference).
+    axle = wheel_axle(spectrum["location"])
+    low = car.wheel_hz(spectrum["speed_min_kmh"], axle)
+    high = car.wheel_hz(spectrum["speed_max_kmh"], axle)
     assert low * 0.98 <= markers["T1"] <= high * 1.02, markers
     assert markers["T2"] == pytest.approx(2.0 * markers["T1"], rel=1e-6)
     engine_markers = {code for code in markers if code.startswith("E")}
     if not car.final_drive_entered:
         assert not {"P1", "P2"} & set(markers) and not engine_markers, markers
         return
-    assert markers["P1"] == pytest.approx(car.final_drive_ratio * markers["T1"], rel=1e-6)
+    rear_wheel = markers["T1"] * car.tire_circumference_m(axle) / car.tire_circumference_m()
+    assert markers["P1"] == pytest.approx(car.final_drive_ratio * rear_wheel, rel=1e-6)
     assert markers["P2"] == pytest.approx(2.0 * markers["P1"], rel=1e-6)
     # The engine's own orders: E1 and its firing rhythm (E1/E2 when not known).
     multiples = _engine_multiples(car)
