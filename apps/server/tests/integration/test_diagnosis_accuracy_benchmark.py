@@ -29,6 +29,7 @@ from test_support.report_rendering import (
     wheel_speed_part_mentions,
 )
 from test_support.sim_pipeline import (
+    SENSORS_RUN_BEFORE_DRIVE_S,
     BenchCar,
     BenchSensor,
     SimPipelineResult,
@@ -42,9 +43,10 @@ from vibesensor.domain.engine_profile import EngineProfile
 from vibesensor.domain.locations import location_code_for_label
 from vibesensor.recording.run_schema import GuidedPhaseName
 from vibesensor.recording.sensor_frame import SensorFrame
+from vibesensor.report.i18n import tr
 from vibesensor.report.pdf import render_report_pdf
 from vibesensor.report.view_model import build_report_view
-from vibesensor.simulator.confounders import AccessoryTone, FlatSpot, SensorFixing
+from vibesensor.simulator.confounders import AccessoryTone, FlatSpot, MountSlip, SensorFixing
 from vibesensor.simulator.profiles import (
     DEFAULT_SPEED_KMH,
     PROFILE_LIBRARY,
@@ -261,6 +263,11 @@ class Case:
     flat_spots: dict[str, FlatSpot] = field(default_factory=dict)
     # Accessories each location's sensor feels running.
     accessories: dict[str, tuple[AccessoryTone, ...]] = field(default_factory=dict)
+    # How each location's sensor turns on its fixing, when it does.
+    slips: dict[str, MountSlip] = field(default_factory=dict)
+    # The locations whose sensor turns on its fixing between steady stretches of
+    # the drive: the report must say it may be loose.
+    loose_mounts: frozenset[str] = frozenset()
     # The drive runs on a generated ISO 8608 road through a quarter car and
     # the ADXL345 front end (``docs/simulator_realism.md``) instead of the
     # idealised white-noise floor.
@@ -274,6 +281,7 @@ class Case:
                 uplink_latency_spike_s=self.uplink_latency_spike_s,
                 wifi_retry_loss=self.wifi_retry_loss,
                 fixing=self.fixings.get(sensor.location_code),
+                slip=self.slips.get(sensor.location_code),
                 flat_spot=self.flat_spots.get(sensor.location_code),
                 accessories=self.accessories.get(sensor.location_code, ()),
             )
@@ -395,6 +403,7 @@ def _phase(
     guided: GuidedPhaseName | None = None,
     gear: float | None = None,
     turn_radius_m: float | None = None,
+    grade_pct: float = 0.0,
 ) -> ScenarioPhase:
     return ScenarioPhase(
         name=name,
@@ -405,6 +414,7 @@ def _phase(
         guided_phase=guided,
         gear_ratio=gear,
         turn_radius_m=turn_radius_m,
+        grade_pct=grade_pct,
     )
 
 
@@ -1336,6 +1346,47 @@ _WHEEL_ORDERS_AT_MOST_MODERATE = Expected(
 # A sensor held by loosened cable ties: the housing rings on them at 35 Hz and
 # lifts off past 0.1 g (Rao ch. 3.6; Trapp & Chen 2012).
 _LOOSE_FIXING = SensorFixing(resonance_hz=35.0, damping_ratio=0.06, rattle_g=0.1)
+# The adhesive pad under a sensor lets go at one corner on a broken stretch
+# (20 s into the drive): the 40 mm housing tips onto its 10 mm edge,
+# atan(10 / 40) = 14 deg.
+_PAD_LETS_GO = MountSlip(steps=((SENSORS_RUN_BEFORE_DRIVE_S + 20.0, 14.0),))
+# A sensor that turned less than this on its fixing reads no more turn than a
+# firm one does as the body rolls and pitches and the sensor warms (docs/metrics.md).
+_UNNOTICED_TURN_DEG = 2.0
+
+
+def _broken_stretch(*faults: PhaseOverride) -> tuple[ScenarioPhase, ...]:
+    """A motorway cruise with a broken stretch in the middle (potholes, 15-25 s in)."""
+    hits = ((0.8, "front-left"), (2.1, "right-side"), (3.0, "rear-axle"), (4.6, "front-axle"))
+    return (
+        _phase("cruise", 15.0, 110.0, 110.0, *faults),
+        replace(
+            _phase("broken", 10.0, 110.0, 100.0, *faults),
+            pulses=tuple(
+                PhasePulse(at_s=at_s + offset, target=target, strength=20.0)
+                for offset in (0, 5)
+                for at_s, target in hits
+            ),
+        ),
+        _phase("cruise-again", 15.0, 100.0, 115.0, *faults),
+    )
+
+
+def _hills(*faults: PhaseOverride) -> tuple[ScenarioPhase, ...]:
+    """Over a hill and down the other side: 8 % up, braking down an 8 % descent, then level.
+
+    8 % is about the steepest grade a main road is built with (AASHTO Green Book).
+    """
+    return (
+        _phase("level", 6.0, 70.0, 80.0, *faults),
+        _phase("climb", 10.0, 80.0, 75.0, *faults, grade_pct=8.0),
+        _phase("crest", 4.0, 75.0, 75.0, *faults),
+        _phase("descent", 8.0, 75.0, 85.0, *faults, grade_pct=-8.0),
+        _phase("brake-downhill", 5.0, 85.0, 50.0, *faults, grade_pct=-8.0),
+        _phase("valley", 8.0, 50.0, 80.0, *faults),
+    )
+
+
 # A sensor on a springy bracket that does not rattle: its 60 Hz ring is where
 # the propshaft order runs at motorway speed.
 _SPRINGY_BRACKET = SensorFixing(resonance_hz=60.0, damping_ratio=0.05)
@@ -1570,6 +1621,27 @@ CONFOUNDER_CASES = (
         replace(_FL_FAULT, levels=MODERATE_OR_STRONG),
         fixings={"front_left_wheel": _LOOSE_FIXING},
     ),
+    # The pad under a rear sensor lets go on a broken stretch: the report says
+    # that sensor may be loose, and nothing else.
+    Case(
+        "bench-healthy-rear-left-pad-lets-go-broken-stretch",
+        _broken_stretch(),
+        NO_FAULT,
+        slips={"rear_left_wheel": _PAD_LETS_GO},
+        loose_mounts=frozenset({"rear_left_wheel"}),
+    ),
+    # The faulty wheel's own sensor tips on its fixing: still the front-left
+    # wheel, but how strong it was there rests on a loose sensor, so never Strong.
+    Case(
+        "bench-front-left-wheel-pad-lets-go-broken-stretch",
+        _broken_stretch(_FL_IMBALANCE),
+        replace(_FL_FAULT, levels=MODERATE),
+        slips={"front_left_wheel": _PAD_LETS_GO},
+        loose_mounts=frozenset({"front_left_wheel"}),
+    ),
+    # Grades and braking downhill turn every sensor's gravity alike: no sensor is loose.
+    Case("bench-healthy-hills", _hills(), NO_FAULT),
+    Case("bench-front-left-wheel-hills", _hills(_FL_IMBALANCE), _FL_FAULT),
     # A propshaft imbalance whose order runs through a rear sensor's bracket ring.
     Case(
         "bench-driveline-springy-rear-right-bracket-sweep",
@@ -2442,6 +2514,7 @@ def _run_case(case: Case, car_key: str, seed: int, tmp_path: Path) -> None:
         if not case.wifi_retry_loss:
             # Congested Wi-Fi may or may not drop a frame for good.
             _assert_frame_integrity(result, lossy=lossy)
+        _assert_loose_mount_warnings(result, case)
         if (case.case_id, car_key) in PDF_CASES:
             _assert_pdf_text(result, case, car)
     finally:
@@ -2843,6 +2916,17 @@ def _assert_spectrum_markers(diagnosis: dict, car: BenchCar, case: Case) -> None
     for multiple in multiples:
         code = _engine_code(multiple)
         assert markers[code] == pytest.approx(multiple * markers["E1"], rel=1e-6)
+
+
+def _assert_loose_mount_warnings(result: SimPipelineResult, case: Case) -> None:
+    """The report says a sensor may be loose when it turned on its fixing, never when it held."""
+    warnings = " ".join(result.report.quality.warnings)
+    for location, turn_deg in result.mount_turn_deg.items():
+        warning = f"The {tr('en', f'LOC_{location.upper()}')} sensor may be loosely mounted"
+        if location in case.loose_mounts:
+            assert warning in warnings, (location, turn_deg, warnings)
+        elif turn_deg < _UNNOTICED_TURN_DEG:
+            assert warning not in warnings, (location, turn_deg, warnings)
 
 
 def _assert_sensor_identity(result: SimPipelineResult) -> None:

@@ -115,4 +115,5 @@ def build_analysis_result(
         peaks_table=peaks_table,
         test_run=test_run,
         diagnostic_case=diagnostic_case,
+        loose_mounts=context.loose_mounts,
     )

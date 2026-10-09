@@ -54,6 +54,7 @@ from vibesensor.report.view_model import ReportView, build_report_view
 from vibesensor.simulator.confounders import (
     AccessoryTone,
     FlatSpot,
+    MountSlip,
     SensorConfounders,
     SensorFixing,
 )
@@ -71,6 +72,7 @@ from vibesensor.summary.persisted_analysis import PersistedAnalysis
 __all__ = [
     "BenchCar",
     "BenchSensor",
+    "SENSORS_RUN_BEFORE_DRIVE_S",
     "SimPipelineResult",
     "run_sim_pipeline",
 ]
@@ -92,8 +94,9 @@ _SPEED_UPDATE_PERIOD_S = 0.5
 _SAMPLE_RATE_HZ = 800
 _FRAME_SAMPLES = 200
 _VIRTUAL_CLOCK_START_S = 50_000.0
-# Sensors apply the server's clock offset from their second sync exchange.
-_CLOCK_SYNC_WARMUP_S = 2.0 * CLOCK_SYNC_INTERVAL_S + 1.0
+# Sensors apply the server's clock offset from their second sync exchange, so
+# they run this long before the drive (and its recording) starts.
+SENSORS_RUN_BEFORE_DRIVE_S = 2.0 * CLOCK_SYNC_INTERVAL_S + 1.0
 # At car start the Pi and the sensors power up together, so a sensor's bare
 # device timer reads within a couple of seconds of the server's monotonic clock.
 _CAR_START_BOOT_SPREAD_S = 2.0
@@ -203,6 +206,8 @@ class BenchSensor:
     wifi_retry_loss: float = 0.0
     # How the sensor is fixed (``None``: firmly, ringing far above the band).
     fixing: SensorFixing | None = None
+    # How the housing turns on its fixing (``None``: it holds still).
+    slip: MountSlip | None = None
     # The parking flat spot of the tyre(s) this sensor feels at the start of the drive.
     flat_spot: FlatSpot | None = None
     # Accessories this sensor feels running (a blower, the alternator).
@@ -222,6 +227,8 @@ class SimPipelineResult:
     stop_reason: RecordingStopReason | None
     # The firm stops the Live page's guided brake step counted just before the stop.
     guided_brake_stops: int = 0
+    # How far (deg) each location's sensor turned on a slipping fixing while recording.
+    mount_turn_deg: dict[str, float] = field(default_factory=dict)
 
     @property
     def diagnosis(self) -> dict[str, Any]:
@@ -457,6 +464,7 @@ class _RecordedDrive:
     run_id: str
     client_ids: dict[str, str]
     guided_brake_stops: int
+    mount_turn_deg: dict[str, float]
     analysis_started: float
     post_analysis_timeout_s: float
     trace_post_analysis_memory: bool
@@ -486,6 +494,7 @@ def _analysed(runtime: AppRuntime, recorded: _RecordedDrive, *, lang: str) -> Si
         post_analysis_peak_bytes=peak_bytes,
         stop_reason=recorder.status().last_stop_reason,
         guided_brake_stops=recorded.guided_brake_stops,
+        mount_turn_deg=recorded.mount_turn_deg,
     )
 
 
@@ -580,9 +589,17 @@ def _record(
                 road=road,
             )
             sim.car = physical_car
-            if spec.fixing is not None or spec.flat_spot is not None or spec.accessories:
+            if (
+                spec.fixing is not None
+                or spec.slip is not None
+                or spec.flat_spot is not None
+                or spec.accessories
+            ):
                 sim.confounders = SensorConfounders(
-                    fixing=spec.fixing, flat_spot=spec.flat_spot, accessories=spec.accessories
+                    fixing=spec.fixing,
+                    slip=spec.slip,
+                    flat_spot=spec.flat_spot,
+                    accessories=spec.accessories,
                 )
             if car_start:
                 boot_rng = random.Random(client_seed * 16 + index)
@@ -657,12 +674,15 @@ def _record(
             _assign_location(runtime, client_id, sensor.spec.location_code)
             client_ids[sensor.spec.location_code] = client_id
         if not car_start:
-            loop.run_until(start_s + _CLOCK_SYNC_WARMUP_S)
+            loop.run_until(start_s + SENSORS_RUN_BEFORE_DRIVE_S)
 
         drive_s = sum(phase.duration_s for phase in phases)
         post_analysis_timeout_s = max(
             _POST_ANALYSIS_TIMEOUT_S, drive_s * _POST_ANALYSIS_S_PER_DRIVE_S
         )
+        tilt_at_start = {
+            sensor.spec.location_code: _tilt_deg(sensor.sim) for sensor in sims.values()
+        }
         recorder.start_recording()
         run_id = recorder.status().run_id
         assert run_id is not None
@@ -686,6 +706,12 @@ def _record(
         )
         loop.run_until(phase_start)
         guided_brake_stops = recorder.status().guided_brake_stops
+        mount_turn_deg = {
+            sensor.spec.location_code: abs(
+                _tilt_deg(sensor.sim) - tilt_at_start[sensor.spec.location_code]
+            )
+            for sensor in sims.values()
+        }
         if guided:
             recorder.mark_guided_phase(None)
         if trace_post_analysis_memory:
@@ -701,10 +727,15 @@ def _record(
         run_id=run_id,
         client_ids=client_ids,
         guided_brake_stops=guided_brake_stops,
+        mount_turn_deg=mount_turn_deg,
         analysis_started=analysis_started,
         post_analysis_timeout_s=post_analysis_timeout_s,
         trace_post_analysis_memory=trace_post_analysis_memory,
     )
+
+
+def _tilt_deg(sim: SimClient) -> float:
+    return sim.confounders.tilt_deg if sim.confounders is not None else 0.0
 
 
 def _start_sensor(

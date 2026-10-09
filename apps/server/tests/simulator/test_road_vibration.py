@@ -165,8 +165,6 @@ def test_front_end_clips_at_16_g_and_outputs_whole_counts() -> None:
     assert out.dtype == np.int16
     assert out[:, 0].min() == -4096
     assert out[:, 0].max() == 4095
-    # Gravity reads +1 g (256 counts) on the vertical axis.
-    assert np.mean(out[:, 2]) == pytest.approx(256.0, abs=1.0)
 
 
 def test_front_end_noise_matches_the_datasheet_at_800_hz() -> None:

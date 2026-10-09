@@ -8,6 +8,7 @@ from vibesensor.analysis._analysis_models import (
     PreparedAnalysisContext,
 )
 from vibesensor.analysis._types import AccelStatistics, Sample
+from vibesensor.analysis.mount_tilt import find_loose_mounts
 from vibesensor.analysis.run_analysis_projection import build_sensor_analysis
 from vibesensor.analysis.run_data_preparation import PreparedRunData
 from vibesensor.analysis.speed_profile_helpers import run_speed_source, speed_typed_in
@@ -27,6 +28,7 @@ def prepare_analysis_context(
     include_samples: bool,
     prepared: PreparedRunData,
     accel_stats: AccelStatistics,
+    window_means: Sequence[tuple[float, float, float] | None] = (),
 ) -> PreparedAnalysisContext:
     """Assemble the one canonical typed context for diagnostics result building."""
 
@@ -61,4 +63,5 @@ def prepare_analysis_context(
         sensor_locations=tuple(sensor_locations),
         connected_locations=frozenset(connected_locations),
         sensor_intensity_by_location=tuple(sensor_intensity_by_location),
+        loose_mounts=find_loose_mounts(typed_samples, window_means, metadata=context),
     )

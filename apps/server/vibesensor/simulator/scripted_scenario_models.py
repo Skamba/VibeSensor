@@ -47,6 +47,9 @@ class ScenarioPhase:
     # The bend the road takes: its radius, positive turning left, negative
     # turning right; ``None`` is straight on.
     turn_radius_m: float | None = None
+    # The road's grade (%, uphill positive) the phase drives on; the car gets
+    # there along a vertical curve from the grade before.
+    grade_pct: float = 0.0
 
     @property
     def accel_mps2(self) -> float:

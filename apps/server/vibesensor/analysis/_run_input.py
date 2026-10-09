@@ -17,6 +17,9 @@ class DiagnosticsRunInput:
 
     context: RunMetadata
     samples: tuple[SensorFrame, ...]
+    # Each sample's raw window mean per axis (gravity and the car's own
+    # acceleration), in sample order; empty without the raw capture.
+    window_means: tuple[tuple[float, float, float] | None, ...] = ()
 
     @property
     def run_id(self) -> str:
@@ -28,6 +31,7 @@ def build_diagnostics_run_input(
     samples: Sequence[SensorFrame],
     *,
     file_name: str = "run",
+    window_means: Sequence[tuple[float, float, float] | None] = (),
 ) -> DiagnosticsRunInput:
     """Normalize typed diagnostics inputs into the canonical run model."""
 
@@ -35,6 +39,7 @@ def build_diagnostics_run_input(
     return DiagnosticsRunInput(
         context=context,
         samples=tuple(samples),
+        window_means=tuple(window_means),
     )
 
 

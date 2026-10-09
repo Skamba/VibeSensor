@@ -61,6 +61,10 @@ class RawReplayWindowCoverage:
     coverage_state: RawReplayCoverageState
     raw_backed: bool
     reason: str | None = None
+    # The window's mean reading per axis (its 0 Hz part: gravity and the car's
+    # own acceleration), in g (counts when the run has no scale); None without
+    # a complete raw window.
+    mean_xyz: tuple[float, float, float] | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -401,6 +405,8 @@ def _rebuild_sample(
         fft_computer=fft_computer,
     )
     last_xyz = fft_block[:, -1]
+    mean = fft_block.sum(axis=1) / fft_n
+    mean_xyz = (float(mean[0]), float(mean[1]), float(mean[2]))
     if not computed_strength.analytically_valid:
         return (
             replace(
@@ -421,6 +427,7 @@ def _rebuild_sample(
                 coverage_state="complete",
                 raw_backed=False,
                 reason="fft_no_valid_bins",
+                mean_xyz=mean_xyz,
             ),
         )
     domain_strength = computed_strength.metrics
@@ -448,6 +455,7 @@ def _rebuild_sample(
                 if sample_rate_mismatch
                 else ("timing_fallback" if window.timing_source == "legacy_t_s" else None)
             ),
+            mean_xyz=mean_xyz,
         ),
     )
 

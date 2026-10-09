@@ -13,6 +13,7 @@ from scipy.signal import lfilter
 from vibesensor.ingest.protocol_messages import client_id_mac
 from vibesensor.ingest.sensor_units import ADXL345_SCALE_G_PER_LSB
 from vibesensor.simulator.adxl345_front_end import Adxl345FrontEnd
+from vibesensor.simulator.body_attitude import SensorAttitude
 from vibesensor.simulator.confounders import SensorConfounders
 from vibesensor.simulator.profiles import (
     DEFAULT_SPEED_KMH,
@@ -46,6 +47,7 @@ _ORDER_MULTIPLES = {
 _RESONANCE_SEED_SALT = 0x5E50
 _ROAD_SEED_SALT = 0x8608
 _FRONT_END_SEED_SALT = 0xAD45
+_MOUNTING_SEED_SALT = 0x6A11
 # Road resonances are specified on a road between ISO 8608 classes A and B.
 _RESONANCE_REFERENCE_GD_N0_M3 = float(np.sqrt(ISO8608_GD_N0_M3["A"] * ISO8608_GD_N0_M3["B"]))
 # A warm engine idles at about 800 rpm.
@@ -91,6 +93,9 @@ class SimClient:
     current_speed_kmh: float = DEFAULT_SPEED_KMH
     current_accel_mps2: float = 0.0
     current_curvature_1pm: float = 0.0
+    # The road's grade (%, uphill positive) the drive is heading for; the car
+    # reaches it along a vertical curve.
+    current_grade_pct: float = 0.0
     # Sensor-clock model mirroring the ESP firmware (see firmware/esp/src):
     # samples are scheduled on the device's own microsecond timer, which
     # drifts by a few tens of ppm against the server clock; ``t0_us`` is the
@@ -130,6 +135,8 @@ class SimClient:
     distance_m: float = 0.0
     road_vibration: RoadVibration = field(init=False)
     front_end: Adxl345FrontEnd = field(init=False)
+    # Gravity and the car's own acceleration as this sensor's mounting reads them.
+    attitude: SensorAttitude = field(init=False)
     # A loose mount, parking flat spots and the like (``simulator/confounders.py``).
     confounders: SensorConfounders | None = None
 
@@ -155,6 +162,9 @@ class SimClient:
         )
         self.front_end = Adxl345FrontEnd.for_sensor(
             self.sample_rate_hz, np.random.default_rng((seed, _FRONT_END_SEED_SALT))
+        )
+        self.attitude = SensorAttitude.for_sensor(
+            self.name, np.random.default_rng((seed, _MOUNTING_SEED_SALT))
         )
 
     @property
@@ -291,13 +301,29 @@ class SimClient:
             size=signal.shape,
         ).astype(np.float32)
         signal += self._road_resonances(profile, 1.0)
-        if self.confounders is not None:
-            signal = self._confounded(signal)
+        signal = self._housing(signal)
         signal += floor_noise
 
         self.phase_s = float(t[-1] + dt)
         result: np.ndarray[Any, np.dtype[Any]] = np.clip(signal, -32768, 32767).astype(np.int16)
         return result
+
+    def _housing(self, signal: np.ndarray) -> np.ndarray:
+        """What the sensor housing reads: the car's vibration (through its fixing),
+        gravity and the car's acceleration, turned by however far a loose fixing slipped."""
+        if self.confounders is not None:
+            signal = self._confounded(signal)
+        signal = signal + self.attitude.frame_counts(
+            speed_kmh=self.current_speed_kmh,
+            accel_mps2=self.current_accel_mps2,
+            curvature_1pm=self.current_curvature_1pm,
+            grade_pct=self.current_grade_pct,
+            samples=self.frame_samples,
+            dt=1.0 / self.sample_rate_hz,
+        )
+        if self.confounders is not None:
+            signal = self.confounders.slipped(signal, self.sample_rate_hz)
+        return signal
 
     def _confounded(self, signal: np.ndarray) -> np.ndarray:
         """The car's motion plus what the confounders add, as the mounted housing reads it."""
@@ -320,7 +346,7 @@ class SimClient:
 
         The road's vibration at this mount replaces the profile's white noise
         and random bumps (a scenario's explicit pulses stay), and the ADXL345
-        front end adds its noise, offset and gravity, rounds and clips.
+        front end adds its noise and offset, rounds and clips.
         """
         assert self.road is not None and self.rng is not None
         local_signal += self._bumps(profile, 0.0)
@@ -331,8 +357,7 @@ class SimClient:
         signal += road_mg * _COUNTS_PER_MG
         roughness = np.sqrt(self.road.gd_n0_m3(self.distance_m) / _RESONANCE_REFERENCE_GD_N0_M3)
         signal += self._road_resonances(profile, float(roughness))
-        if self.confounders is not None:
-            signal = self._confounded(signal)
+        signal = self._housing(signal)
         frame_s = self.frame_samples / self.sample_rate_hz
         self.distance_m += max(0.0, self.current_speed_kmh) / 3.6 * frame_s
         self.phase_s = float(next_phase_s)

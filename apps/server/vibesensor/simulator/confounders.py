@@ -8,6 +8,9 @@ physical model with a cited basis (see "Confounders" in
   base-excited single-degree-of-freedom system; held too loosely, the housing
   lifts off and rattles (the reading clips at the hold-down level, and every
   landing is an impact spike).
+- ``MountSlip``: the housing turns on its fixing, so its reading of gravity
+  tilts: it sags while it floats off a rattling fixing, or steps when a pad
+  lets go at a corner or a tie slips.
 - ``FlatSpot``: a tyre parked overnight keeps a flat where it stood; once per
   turn it presses the wheel like a short bump, with harmonics, and the flat
   creeps back out over the first kilometres as the tyre warms.
@@ -27,13 +30,33 @@ import numpy as np
 from scipy.signal import lfilter
 
 from vibesensor.ingest.sensor_units import ADXL345_SCALE_G_PER_LSB
+from vibesensor.simulator.body_attitude import rotation_about
 
-__all__ = ["AccessoryTone", "FlatSpot", "SensorConfounders", "SensorFixing"]
+__all__ = ["AccessoryTone", "FlatSpot", "MountSlip", "SensorConfounders", "SensorFixing"]
 
 _TWO_PI = 2.0 * math.pi
 _G_MPS2 = 9.80665
 _COUNTS_PER_G = 1.0 / ADXL345_SCALE_G_PER_LSB
 _COUNTS_PER_MG = _COUNTS_PER_G / 1000.0
+
+
+@dataclass(frozen=True, slots=True)
+class MountSlip:
+    """How the housing turns on a fixing that has come loose.
+
+    The housing tips about *axis* (sensor axes, through its contact edge).
+    While it floats off a rattling fixing (``SensorFixing.rattle_g``) nothing
+    holds it against gravity's moment about that edge, so it sags by
+    *sag_deg_per_floating_s* for every second it is off the fixing, until it
+    hangs in the ties or rests on the part (*max_deg*). *steps* are sudden
+    moves, ``(seconds since the sensor started, degrees)``: an adhesive pad
+    letting go at one corner, a cable tie slipping.
+    """
+
+    axis: tuple[float, float, float] = (1.0, 0.0, 0.0)
+    sag_deg_per_floating_s: float = 0.0
+    max_deg: float = 20.0
+    steps: tuple[tuple[float, float], ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -160,6 +183,7 @@ class SensorConfounders:
     """The confounders one sensor gets, with their running state."""
 
     fixing: SensorFixing | None = None
+    slip: MountSlip | None = None
     flat_spot: FlatSpot | None = None
     accessories: tuple[AccessoryTone, ...] = ()
     distance_km: float = 0.0
@@ -171,6 +195,11 @@ class SensorConfounders:
     # relative velocity (m/s) it has gained so far.
     _floating: bool = field(default=False, repr=False)
     _float_velocity: float = field(default=0.0, repr=False)
+    _floating_s: float = field(default=0.0, repr=False)
+    # How far the housing has turned on its fixing (deg), and how long (s) the
+    # sensor has run.
+    tilt_deg: float = 0.0
+    elapsed_s: float = 0.0
 
     def mechanical(
         self, *, wheel_hz: float, engine_hz: float, speed_kmh: float, samples: int, dt: float
@@ -224,12 +253,34 @@ class SensorConfounders:
             return housing
         return self._rattle(housing, fixing, sample_rate_hz)
 
+    def slipped(self, reading: np.ndarray, sample_rate_hz: int) -> np.ndarray:
+        """The housing's whole reading (counts), turned by however far it has slipped so far.
+
+        Call once per frame after ``through_fixing``: the sag of the frame's
+        floating time and any step due in it apply from the next frame on.
+        """
+        frame_s = len(reading) / sample_rate_hz
+        start_s, self.elapsed_s = self.elapsed_s, self.elapsed_s + frame_s
+        slip = self.slip
+        if slip is None:
+            return reading
+        out = reading
+        if self.tilt_deg != 0.0:
+            # Row vectors: v @ R is R^T v, the fixed reading in the turned housing's axes.
+            out = reading @ rotation_about(np.asarray(slip.axis), math.radians(self.tilt_deg))
+        sag = slip.sag_deg_per_floating_s * self._floating_s
+        steps = sum(deg for at_s, deg in slip.steps if start_s <= at_s < self.elapsed_s)
+        self.tilt_deg = float(np.clip(self.tilt_deg + sag + steps, -slip.max_deg, slip.max_deg))
+        self._floating_s = 0.0
+        return out
+
     def _rattle(self, housing: np.ndarray, fixing: SensorFixing, sample_rate_hz: int) -> np.ndarray:
         axis = np.asarray(fixing.rattle_axis, dtype=np.float64)
         axis /= np.linalg.norm(axis)
         along_g = housing @ axis / _COUNTS_PER_G
         hold_g = float(fixing.rattle_g)  # type: ignore[arg-type]
         floating = np.abs(along_g) > hold_g
+        self._floating_s += float(np.count_nonzero(floating)) / sample_rate_hz
         # Floating, the housing no longer follows the car past the hold-down.
         clipped = np.clip(along_g, -hold_g, hold_g)
         out = housing + np.outer((clipped - along_g) * _COUNTS_PER_G, axis)

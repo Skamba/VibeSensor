@@ -6,6 +6,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 
 from vibesensor.analysis._types import AccelStatistics, PhaseLabels, Sample
+from vibesensor.analysis.mount_tilt import LooseMount
 from vibesensor.analysis.run_data_preparation import PreparedRunData
 from vibesensor.domain.driving_segment import DrivingPhaseInterval
 from vibesensor.domain.finding import Finding as DomainFinding
@@ -58,6 +59,7 @@ class PreparedAnalysisContext:
     sensor_locations: tuple[str, ...]
     connected_locations: frozenset[str]
     sensor_intensity_by_location: tuple[LocationIntensitySummary, ...]
+    loose_mounts: tuple[LooseMount, ...] = ()
 
     def findings_request(self) -> FindingsBuildRequest:
         """Project the canonical analysis context into findings-specific inputs."""

@@ -97,6 +97,7 @@ _WEAK_REASON_KEYS = {
     "single_wheel_sensor": "WEAK_SINGLE_WHEEL_SENSOR",
     "coast_test_contradicts": "WEAK_COAST_CONTRADICTS",
     "manual_speed": "WEAK_MANUAL_SPEED",
+    "loose_mount": "WEAK_LOOSE_MOUNT",
 }
 # Why locations could not be compared: shown with every verdict, not just a weak one.
 _SENSOR_REASONS = ("single_sensor", "single_wheel_sensor")
