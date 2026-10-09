@@ -13,8 +13,8 @@ driver feels" in docs/metrics.md.
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-from dataclasses import dataclass
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass, field
 from math import sqrt
 from typing import Literal
 
@@ -27,6 +27,7 @@ from vibesensor.dsp.window_spectrum import tone_line_level_g
 __all__ = [
     "FELT_LOCATIONS",
     "WORKSHOP_LEVELS",
+    "FeltAttribution",
     "FeltCause",
     "FeltFallback",
     "FeltRanking",
@@ -82,6 +83,23 @@ WORKSHOP_LEVELS: dict[VibrationSource, WorkshopLevel] = {
     # at idle; while driving an assumption to calibrate.
     VibrationSource.ENGINE: WorkshopLevel(act_g=0.012, normal_g=0.002),
 }
+
+
+@dataclass(frozen=True, slots=True)
+class FeltAttribution:
+    """How the diagnosis attributes the causes' orders, for the felt block it reports.
+
+    ``ruled_out``: sources the diagnosis rules out (the neutral coast-down);
+    they are not felt causes. ``line_of``: an order on another order's line
+    (without measured RPM, an engine order turning with a wheel or propshaft
+    order in top gear: ``{"E1": "T2"}``), one spectral line read twice.
+    ``owner``: the source the diagnosis names; a line two causes share is
+    its own, else the cause ranked first by evidence.
+    """
+
+    ruled_out: frozenset[VibrationSource] = frozenset()
+    line_of: Mapping[str, str] = field(default_factory=dict)
+    owner: VibrationSource | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -186,12 +204,12 @@ def _overlap(a: tuple[float, float] | None, b: tuple[float, float] | None) -> bo
     return a is None or b is None or (a[0] <= b[1] and b[0] <= a[1])
 
 
-def _with_shares(causes: Sequence[FeltCause]) -> list[FeltCause]:
+def _with_shares(causes: Sequence[FeltCause], line_of: Mapping[str, str]) -> list[FeltCause]:
     """Each measured cause's share of the power of the causes heard at overlapping speeds.
 
     Orders add in power: different frequencies do not interfere over a
-    window. An order two causes share (two corners' T1) is one line and
-    counts once.
+    window. A line two causes share (two corners' T1; an engine order on a
+    wheel order's line, ``line_of``) counts once.
     """
     shared: list[FeltCause] = []
     for cause in causes:
@@ -202,21 +220,51 @@ def _with_shares(causes: Sequence[FeltCause]) -> list[FeltCause]:
         for other in causes:
             if other.level_g > 0 and _overlap(cause.speed_range_kmh, other.speed_range_kmh):
                 for code, level in other.order_levels_g:
-                    lines[code] = max(lines.get(code, 0.0), level * level)
+                    line = line_of.get(code, code)
+                    lines[line] = max(lines.get(line, 0.0), level * level)
         share = min(1.0, cause.level_g**2 / sum(lines.values()))
         shared.append(FeltCause(cause.finding, cause.order_levels_g, cause.speed_range_kmh, share))
     return shared
 
 
-def felt_ranking(top_causes: Sequence[Finding], findings: Sequence[Finding]) -> FeltRanking:
-    """The order causes among *top_causes* by their level at the felt reference sensor."""
+def _attributed(causes: Sequence[FeltCause], attribution: FeltAttribution) -> list[FeltCause]:
+    """Each line to one cause: the diagnosed source's where it shares it, else the
+    first by evidence; a cause left with no line of its own is not one."""
+    owners: dict[str, VibrationSource] = {}
+    for cause in sorted(causes, key=lambda c: c.finding.suspected_source is not attribution.owner):
+        for code, _level in cause.order_levels_g:
+            owners.setdefault(attribution.line_of.get(code, code), cause.finding.suspected_source)
+    kept: list[FeltCause] = []
+    for cause in causes:
+        source = cause.finding.suspected_source
+        own = tuple(
+            (code, level)
+            for code, level in cause.order_levels_g
+            if owners[attribution.line_of.get(code, code)] is source
+        )
+        if own:
+            kept.append(FeltCause(cause.finding, own, cause.speed_range_kmh))
+    return kept
+
+
+def felt_ranking(
+    top_causes: Sequence[Finding],
+    findings: Sequence[Finding],
+    attribution: FeltAttribution | None = None,
+) -> FeltRanking:
+    """The order causes among *top_causes* by their level at the felt reference sensor.
+
+    With the diagnosis's *attribution* (the felt block it reports), the sources
+    it rules out are left out and a line two causes share is one cause's.
+    """
     reference, fallback = _reference(findings)
     if reference is None:
         return FeltRanking(reference=None, fallback=fallback, causes=())
+    ruled_out = attribution.ruled_out if attribution is not None else frozenset()
     # One cause per source: its best-ranked top cause stands for it.
     representatives: dict[VibrationSource, Finding] = {}
     for cause in top_causes:
-        if _is_order_cause(cause):
+        if _is_order_cause(cause) and cause.suspected_source not in ruled_out:
             representatives.setdefault(cause.suspected_source, cause)
     causes = [
         FeltCause(
@@ -226,8 +274,13 @@ def felt_ranking(top_causes: Sequence[Finding], findings: Sequence[Finding]) -> 
         )
         for cause in representatives.values()
     ]
+    if attribution is not None:
+        causes = _attributed(causes, attribution)
     causes.sort(key=lambda cause: -cause.level_g)
-    return FeltRanking(reference=reference, fallback=None, causes=tuple(_with_shares(causes)))
+    line_of = attribution.line_of if attribution is not None else {}
+    return FeltRanking(
+        reference=reference, fallback=None, causes=tuple(_with_shares(causes, line_of))
+    )
 
 
 def rank_by_felt(top_causes: Sequence[Finding], findings: Sequence[Finding]) -> tuple[Finding, ...]:

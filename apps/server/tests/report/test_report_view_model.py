@@ -1641,6 +1641,23 @@ def test_the_felt_wording_says_when_the_cause_may_not_be_what_is_felt(
     assert "is not the seat" not in owner.felt
 
 
+@pytest.mark.parametrize(
+    ("share", "en", "nl"),
+    [
+        (0.92, "nearly all", "vrijwel alles"),
+        (0.7, "most", "het grootste deel"),
+        (0.5, "about half", "ongeveer de helft"),
+        (0.45, "about half", "ongeveer de helft"),
+        (0.3, "part", "een deel"),
+    ],
+)
+def test_the_felt_share_in_words_follows_the_number(share: float, en: str, nl: str) -> None:
+    summary = _felt_summary("Driver Seat", _felt_row("wheel/tire", ["T1"], 60.0, share=share))
+
+    assert f"explains {en} of" in (report_view_for(summary, lang="en").owner.felt or "")
+    assert f"verklaart {nl} van" in (report_view_for(summary, lang="nl").owner.felt or "")
+
+
 def test_a_no_fault_run_says_nothing_about_what_is_felt() -> None:
     view = report_view_for(_healthy_summary(), lang="en")
 

@@ -162,6 +162,21 @@ of every measured cause heard at overlapping speeds (`heard_speed_range`). A
 cause heard at 100-120 km/h and one at 40-60 km/h each explain all of what is
 felt at their speeds.
 
+**The causes the diagnosis keeps** (`diagnosis.felt`, `FeltAttribution`). The
+felt block follows the diagnosis's attribution, so page 2 never weighs a cause
+page 1 rules out:
+- a source the diagnosis rules out (`source_checks` `ruled_out`: the neutral
+  coast-down) is no felt cause;
+- an order the coast-down put on another source counts as that source's (its
+  findings are the diagnosis's);
+- without measured RPM an engine order that turns with a wheel or propshaft
+  order in top gear (`_road_alike`: E1 on T2 on the default car) is one
+  spectral line read twice. It counts once, for the diagnosed source when it
+  is one of the two, else for the cause ranked first by evidence; a cause left
+  with no line of its own is not listed.
+The ranking of the top causes (below) does not use this: it runs before the
+diagnosis.
+
 **Ranking.** With a reference, `TestRun.top_causes` are ordered by their
 source's level there, strongest first; causes the reference does not measure
 follow in their ranking by evidence; a Weak cause stays after every Strong or
@@ -197,7 +212,8 @@ cause.
 
 **In the report.** Page 1 ("What you feel", also in History) says, for the
 diagnosed cause, how much of what the test measured at the reference it
-explains (nearly all from 90 %, most from 50 %, else part) at its speeds, and
+explains (nearly all from 90 %, most from 60 %, about half from 40 %, else
+part) at its speeds, and
 whether a workshop acts on that level; below the wheel limit it adds that a
 workshop may find the wheels in balance and to ask for a road-force check. A
 trunk or tunnel reference adds that it is not the seat workshops measure at.

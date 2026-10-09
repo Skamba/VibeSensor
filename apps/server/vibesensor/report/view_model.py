@@ -1064,7 +1064,14 @@ def _description(ctx: _Ctx, diagnosis: DiagnosisPayload) -> str:
 _FELT_SEATS = frozenset(
     {"driver_seat", "front_passenger_seat", "rear_left_seat", "rear_center_seat", "rear_right_seat"}
 )
-_FELT_SHARE_KEYS = ((0.9, "FELT_SHARE_ALL"), (0.5, "FELT_SHARE_MOST"), (0.0, "FELT_SHARE_PART"))
+# The share in words follows the number: "about half" around 50 %, "most" only
+# clearly above half.
+_FELT_SHARE_KEYS = (
+    (0.9, "FELT_SHARE_ALL"),
+    (0.6, "FELT_SHARE_MOST"),
+    (0.4, "FELT_SHARE_HALF"),
+    (0.0, "FELT_SHARE_PART"),
+)
 _FELT_WORKSHOP_KEYS = {"WHEEL": "FELT_WORKSHOP_WHEEL", "ENGINE": "FELT_WORKSHOP_ENGINE"}
 
 
