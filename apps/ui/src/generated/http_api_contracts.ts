@@ -473,19 +473,17 @@ export interface components {
         /**
          * One cause's level at the felt reference sensor and how a workshop would judge it.
          *
-         * ``level_mg`` is on the scale of ``location_amplitudes`` (0: the reference
-         * does not measure it); ``peak_mg`` the same level as the peak of a tone on
-         * one axis, the scale workshop limits are on (``workshop_mg``: from here a
-         * workshop repairs; ``normal_mg``: up to here it is normal; ``None`` without
-         * one). ``share`` is its part of what the causes heard at the same speeds
-         * shake there.
+         * ``level_mg`` is its orders together, on the scale of ``location_amplitudes``
+         * and of workshop limits (0: the reference does not measure it;
+         * ``workshop_mg``: from here a workshop repairs; ``normal_mg``: up to here it
+         * is normal; ``None`` without one). ``share`` is its part of what the causes
+         * heard at the same speeds shake there.
          */
         FeltCauseRow: {
             finding_id: string;
             level_mg: number;
             normal_mg: number | null;
             order_codes: components["schemas"]["OrderCodeValue"][];
-            peak_mg: number;
             severity: components["schemas"]["FeltSeverityValue"] | null;
             share: number | null;
             source: string;
@@ -959,7 +957,13 @@ export interface components {
         LanguageResponse: {
             language: string;
         };
-        /** Amplitude at one sensor location (mg, with dB above that location's floor). */
+        /**
+         * Amplitude at one sensor location (mg, with dB above that location's floor).
+         *
+         * Every mg of the diagnosis is on one scale: the peak of a steady tone at
+         * that level, the three axes' peaks as a vector, the scale workshop limits
+         * are on ("Diagnosis amplitude (mg)" in docs/metrics.md).
+         */
         LocationAmplitudeRow: {
             amplitude_mg: number | null;
             db_above_floor: number | null;

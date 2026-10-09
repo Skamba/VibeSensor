@@ -53,11 +53,32 @@ units.
 Workshops compare vibration by amplitude per location (GM vibration worksheet,
 PicoScope NVH), so the persisted `diagnosis` block reports amplitude at the
 diagnosed order in **mg** (1 mg = 0.001 g), always with the dB above that
-location's own noise floor next to it:
+location's own noise floor next to it.
+
+**One scale: the peak of a tone.** Every mg in the `diagnosis` block (the
+location amplitudes, amplitude vs speed, the spectrum's peaks and floor, the
+felt levels and the workshop limits) is the peak amplitude of a steady tone,
+the three axes' peaks as a vector `sqrt(x^2 + y^2 + z^2)`: what a vibration
+analyser reads, and the scale workshop limits and the simulator's injected
+levels are on. The analysis reads levels on the combined spectrum (the three
+axes' amplitudes averaged in power), as the RMS over a peak's band
+(`PEAK_BANDWIDTH_HZ` either side). A Hann window puts a tone's power into its
+equivalent noise bandwidth of 1.5 bins (Harris 1978), so a tone of vector peak
+`A` reads there `A * sqrt(1.5 / (3 * 7))`, about `0.267 A`, at 800 Hz / 2048
+samples (7 bins in the band). The mg shown is the level over that factor,
+`level_g / tone_line_level_g(1, bin_hz) * 1000` (`_tone_mg` in
+`analysis/diagnosis.py`; `tone_line_level_g` in `dsp/window_spectrum.py`,
+checked against a synthesised tone in `tests/dsp/test_window_spectrum.py`: a
+30 mg tone on one axis reads a level of 8 mg, and shows as 30 mg). A tone on
+one axis shows its own peak; the same peak on every axis shows `sqrt(3)`
+times it. dB above the floor and ratios between locations do not depend on
+the scale. A broadband floor has no peak: the spectrum's floor line is put on
+the same scale so the peaks stand out of it as on the spectrum.
+
 
 - `location_amplitudes[].amplitude_mg`: the order's level at that location,
   read at its line in every window at the speeds it was heard
-  (`Finding.sensor_levels[].level_g`, g × 1000; "Order-tracked reads" in
+  (`Finding.sensor_levels[].level_g`; "Order-tracked reads" in
   `docs/order_tracking.md`). A sensor whose mean read does not stand two
   standard errors out of its reads' own scatter reads 0, so a sensor the
   order does not reach reads 0 whatever road noise it carries (the report
@@ -73,6 +94,10 @@ location's own noise floor next to it:
   (`sensor_levels[].floor_g`) with reads, else the median floor of that
   location's samples.
 - `location_amplitudes[].ratio_to_strongest`: amplitude / strongest amplitude.
+- Rows run strongest first, except that the diagnosis's `location` leads when
+  the strongest is less than `NEAR_TIE_DOMINANCE_THRESHOLD` (1.15x) above it:
+  location scoring calls that a tie and names its own winner, so the findings,
+  the amplitude table and the car diagram name the same location.
 - With no diagnosed order (`amplitude_basis = "overall"`), each location reports
   the p95 of its dominant-peak amplitude (`strength_peak_amp_g`).
 - `unexplained_vibration`: a no-fault run with no candidate where, at some
@@ -186,16 +211,14 @@ a cause the occupants feel more is named over one with better evidence that
 they feel less.
 
 **Workshop scale.** Workshop limits are peak readings on one axis of a
-vibration analyser on the driver's seat track. A tone of peak `A` on one axis
-reads on the combined spectrum (the three axes' amplitudes averaged in power)
-at a level `A * sqrt(1.5 / (3 * 7))`, about `0.267 A`: the Hann window's
-equivalent noise bandwidth is 1.5 bins (Harris 1978) and the peak band 7 bins
-at 800 Hz / 2048 samples (`tone_line_level_g` in `dsp/window_spectrum.py`,
-checked against a synthesised tone in `tests/dsp/test_window_spectrum.py`).
-`peak_mg` (level / 0.267) is the vector sum of the three axes' peaks, the most
-any one axis can carry at that level: comparing it with a one-axis limit is an
-ISO 2631-1 style vector sum against that limit, and errs towards "workshop
-level" when the vibration is spread over the axes.
+vibration analyser on the driver's seat track. `level_mg` is on the tone-peak
+scale of every diagnosis mg (see "Diagnosis amplitude (mg)"): the vector sum
+of the three axes' peaks, the most any one axis can carry at that level.
+Comparing it with a one-axis limit is an ISO 2631-1 style vector sum against
+that limit, and errs towards "workshop level" when the vibration is spread
+over the axes. A source's `level_mg` adds its orders (T1 and T2) in power, so
+it reads a little over the diagnosed order's `amplitude_mg` at the same
+sensor.
 
 **Workshop limits** (`WORKSHOP_LEVELS`; a starting point, to be calibrated on
 real drives):
@@ -219,7 +242,7 @@ workshop may find the wheels in balance and to ask for a road-force check. A
 trunk or tunnel reference adds that it is not the seat workshops measure at.
 A cause the reference does not measure "may not be what you feel"; without a
 reference the report says it cannot tell. Page 2 lists every cause with its
-`peak_mg`, share, severity and limit. A no-fault run says nothing about it.
+`level_mg`, share, severity and limit. A no-fault run says nothing about it.
 The wheel shop lines pair the limit with what a workshop then checks:
 residual imbalance under 5 g per wheel, 3 g preferred (tire-shop practice;
 balancers round to 5 g steps unless set to their fine mode), and road force

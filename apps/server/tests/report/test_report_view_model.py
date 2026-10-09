@@ -77,18 +77,19 @@ def _weak_summary() -> dict[str, Any]:
     )
 
 
-def _felt_row(source: str, codes: list[str], peak_mg: float, **row: Any) -> dict[str, Any]:
+def _felt_row(source: str, codes: list[str], level_mg: float, **row: Any) -> dict[str, Any]:
     limits = {"engine": (12.0, 2.0)}.get(source, (25.0, None))
     return {
         "finding_id": "F001",
         "source": source,
         "order_codes": codes,
-        "level_mg": 0.267 * peak_mg,
-        "peak_mg": peak_mg,
-        "share": 1.0 if peak_mg else None,
+        "level_mg": level_mg,
+        "share": 1.0 if level_mg else None,
         "speed_min_kmh": 80.0,
         "speed_max_kmh": 120.0,
-        "severity": "workshop" if peak_mg >= limits[0] else ("below_workshop" if peak_mg else None),
+        "severity": "workshop"
+        if level_mg >= limits[0]
+        else ("below_workshop" if level_mg else None),
         "workshop_mg": limits[0],
         "normal_mg": limits[1],
         **row,
@@ -326,14 +327,14 @@ def test_clear_wheel_fault_names_corner_order_level_and_next_steps() -> None:
     )
     assert owner.fallback_step is not None
     assert owner.fallback_step.startswith("If that doesn't fix it: ask the tire shop to road-force")
-    assert owner.verify is not None and "T1 60 mg today" in owner.verify
+    assert owner.verify is not None and "T1 224 mg today" in owner.verify
     assert owner.diagram.zone == "front_left_wheel"
     assert owner.diagram.markers[0].strongest
 
     assert mechanic.worksheet[0].order == "T1 - once per wheel turn"
     assert mechanic.worksheet[0].diagnosed
     assert mechanic.amplitudes[0].location == "front-left wheel"
-    assert mechanic.amplitudes[0].amplitude.startswith("60 mg (")
+    assert mechanic.amplitudes[0].amplitude.startswith("224 mg (")
     assert mechanic.amplitudes[0].ratio == "1.0x"
     assert mechanic.amplitude_title == "Amplitude at T1 per location"
     assert mechanic.shop[0].startswith("Balance all four wheels to under 5 g")
@@ -355,6 +356,19 @@ def test_a_sensor_the_order_does_not_reach_reads_not_detected_not_zero_mg() -> N
     for amplitude in view.mechanic.amplitudes[1:]:
         assert (amplitude.amplitude, amplitude.ratio) == ("not detected", "-")
     assert view.mechanic.amplitudes[0].ratio == "1.0x"
+
+
+def test_a_near_tie_highlights_the_diagnosed_location_listed_first() -> None:
+    # The diagnosis lists its location first within location scoring's near tie,
+    # so it may read a little under the strongest.
+    rows = deepcopy(_wheel_summary()["diagnosis"]["location_amplitudes"])
+    rows[0].update(amplitude_mg=171.0, ratio_to_strongest=171.0 / 172.0)
+    rows[1].update(amplitude_mg=172.0, ratio_to_strongest=1.0)
+    view = report_view_for(_variant(location_amplitudes=rows))
+
+    assert [row.strongest for row in view.mechanic.amplitudes[:2]] == [True, False]
+    assert [marker.strongest for marker in view.owner.diagram.markers[:2]] == [True, False]
+    assert "about as strong at the front-left wheel as at the" in view.owner.description
 
 
 def test_a_fault_strongest_at_a_loose_sensor_says_so_on_the_owner_page() -> None:
