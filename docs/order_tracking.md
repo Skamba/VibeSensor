@@ -490,7 +490,9 @@ first) for every order finding; in the persisted analysis, each order
 finding's `sensor_levels[]` (`findings[]`, `top_causes[]`; g); and for the
 diagnosed order, `diagnosis.location_amplitudes[].amplitude_mg` and
 `db_above_floor` (see "Diagnosis amplitude (mg)" in
-[metrics.md](metrics.md)). The diagnosis falls back to the median of the
+[metrics.md](metrics.md)); every top cause's level at the sensor nearest the
+occupants ranks the top causes and fills `diagnosis.felt` ("What the driver
+feels" in [metrics.md](metrics.md)). The diagnosis falls back to the median of the
 matched peaks when any sensor with matched peaks has no reads (its spectra
 were not rebuilt), or when no sensor's level stands out (a short stretch at
 the heard speeds on a rough road).

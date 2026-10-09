@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from math import sqrt
 
 import numpy as np
 import numpy.typing as npt
 
 from vibesensor.dsp.constants import PEAK_BANDWIDTH_HZ
 
-__all__ = ["LineRead", "WindowSpectrum"]
+__all__ = ["LineRead", "WindowSpectrum", "peak_band_bins", "tone_line_level_g"]
 
 # A Hann window spreads a steady tone over its main lobe, two bins either side
 # of the tone's nearest bin: 99.95 % of its power whatever its offset from the
@@ -19,6 +20,27 @@ _MAIN_LOBE_BINS = 2
 # past its band: the closer they sit, the less a broad resonance's curvature
 # under the line reads as the line's level.
 _FLANK_BINS = 3
+# A steady tone's power over a Hann window's bins is its peak amplitude squared
+# times the window's equivalent noise bandwidth, 1.5 bins (Harris, *Proc. IEEE*
+# 66(1), 1978).
+_HANN_ENBW_BINS = 1.5
+
+
+def peak_band_bins(bin_hz: float) -> int:
+    """The bins of a peak's band: its centre bin and ``PEAK_BANDWIDTH_HZ`` either side."""
+    return 2 * int(PEAK_BANDWIDTH_HZ / bin_hz + 1e-9) + 1
+
+
+def tone_line_level_g(peak_g: float, bin_hz: float, *, axes: int = 3) -> float:
+    """The level line reads give a steady tone of peak amplitude *peak_g* on one axis.
+
+    The combined spectrum is the RMS over *axes* axes, so the tone's power
+    there is ``peak_g² / axes`` times the window's 1.5 bins, and a read spreads
+    it over a peak band's bins (``LineRead.excess``): about 0.27 of the peak at
+    800 Hz and 2048 samples. A tone at the same peak on every axis reads
+    ``sqrt(axes)`` times more.
+    """
+    return peak_g * sqrt(_HANN_ENBW_BINS / (axes * peak_band_bins(bin_hz)))
 
 
 @dataclass(frozen=True, slots=True)
@@ -74,6 +96,5 @@ class WindowSpectrum:
             return None
         flanks = float(np.mean(np.square(np.concatenate((lower, upper)), dtype=np.float64)))
         band = np.square(self.amp_g[centre - half : centre + half + 1], dtype=np.float64)
-        peak_bins = 2 * int(PEAK_BANDWIDTH_HZ / bin_hz + 1e-9) + 1
-        excess = (float(np.sum(band)) - band.size * flanks) / peak_bins
+        excess = (float(np.sum(band)) - band.size * flanks) / peak_band_bins(bin_hz)
         return LineRead(excess=excess, flanks=flanks)

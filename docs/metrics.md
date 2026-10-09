@@ -128,6 +128,78 @@ otherwise every location does.
   (the source's evidence); the amplitudes, frequency, and speeds shown are
   those of the labelled order.
 
+## What the driver feels
+
+Nobody records a drive unless they feel a vibration, so the top causes are
+ranked by what each one shakes where the occupants sit, and each is judged
+against the levels workshops act on (`analysis/felt_ranking.py`, persisted as
+`diagnosis.felt`).
+
+**Felt reference.** The first of these sensor locations the run has order
+levels at: driver seat, front passenger seat, rear left/centre/right seat,
+trunk, propshaft tunnel. Workshops measure on the driver's seat track; the
+trunk and tunnel are on the body behind and under the occupants. Wheel,
+subframe, engine-bay and gearbox sensors sit on the source side of the
+bushings and mounts that keep a vibration out of the body, so they are never
+the reference. Without one (`fallback = "no_cabin_sensor"`), or without order
+levels (`"no_order_levels"`: no raw capture to read them from), the ranking by
+evidence stays.
+
+**A cause's level there.** Each order's own level at the reference
+(`Finding.sensor_levels[].level_g`, "Order-tracked reads" in
+`docs/order_tracking.md`), counted only where its line carries at least the
+power of the floor beside it (`level_g >= floor_g`, 3 dB); below, it is part
+of the road's rumble there, or a body mode the line sweeps over reads as it.
+On the benchmark an order injected at a cabin or trunk sensor reads 2.5-21x
+its floor there, and a seat mode or road hump under a line nothing injected
+there 0.5-0.6x. The reference cannot tell one wheel from another, so a source
+is one cause there: its orders (T1 and T2; a second corner's T1 is the same
+line) add in power, `sqrt(sum level^2)`, since different frequencies do not
+interfere over a window. Its best-ranked top cause stands for it.
+
+**Share.** A cause's power over the summed power of the distinct order lines
+of every measured cause heard at overlapping speeds (`heard_speed_range`). A
+cause heard at 100-120 km/h and one at 40-60 km/h each explain all of what is
+felt at their speeds.
+
+**Ranking.** With a reference, `TestRun.top_causes` are ordered by their
+source's level there, strongest first; causes the reference does not measure
+follow in their ranking by evidence; a Weak cause stays after every Strong or
+Moderate one. Detection is unchanged: the same findings with the same
+confidence levels. The diagnosed cause is the first actionable top cause, so
+a cause the occupants feel more is named over one with better evidence that
+they feel less.
+
+**Workshop scale.** Workshop limits are peak readings on one axis of a
+vibration analyser on the driver's seat track. A tone of peak `A` on one axis
+reads on the combined spectrum (the three axes' amplitudes averaged in power)
+at a level `A * sqrt(1.5 / (3 * 7))`, about `0.267 A`: the Hann window's
+equivalent noise bandwidth is 1.5 bins (Harris 1978) and the peak band 7 bins
+at 800 Hz / 2048 samples (`tone_line_level_g` in `dsp/window_spectrum.py`,
+checked against a synthesised tone in `tests/dsp/test_window_spectrum.py`).
+`peak_mg` (level / 0.267) is the vector sum of the three axes' peaks, the most
+any one axis can carry at that level: comparing it with a one-axis limit is an
+ISO 2631-1 style vector sum against that limit, and errs towards "workshop
+level" when the vibration is spread over the axes.
+
+**Workshop limits** (`WORKSHOP_LEVELS`; a starting point, to be calibrated on
+real drives):
+
+| Source | Workshop acts from | Normal up to | Basis |
+|---|---|---|---|
+| wheel/tire | 25 mg | - | GM bulletins 19-NA-240 and 20-NA-192 (NHTSA MC-10168200, MC-10181717): driver's seat track, 80-129 km/h after a 10 min warm-up; T1 on the Y axis consistently over 25 mg, service all wheel and tire assemblies (balance; road force under 30 lb front, 45 lb rear); under 25 mg, look elsewhere |
+| driveline, brakes | 25 mg | - | No published limit: the wheel limit, an assumption |
+| engine | 12 mg | 2 mg | GM rough-idle diagnosis: an engine order at the seat track of 12 mg or more points to the engine mounts, about 2 mg or less is normal; measured at idle, applied while driving as an assumption |
+
+`severity`: `workshop` from the limit up, `normal` up to the normal level,
+`below_workshop` in between; `null` where the reference does not measure the
+cause.
+
+To check on real drives: whether the GM limits are peak or RMS readings (the
+bulletins do not say; peak is assumed); how the trunk relates to the seat
+track (they are not the same point: a seat-mounted and a trunk sensor on the
+same drive give the ratio); the driveline, brake and driving-engine limits.
+
 ## Confidence levels
 
 Users see confidence only as one of three levels, defined by what to do

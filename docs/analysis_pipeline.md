@@ -113,7 +113,7 @@ run's persisted analysis.
 | 8 | Top-cause selection | `select_top_causes`, `group_findings_by_source` | top_cause_selection | Rank findings by phase-adjusted score, group by source, apply drop-off threshold |
 | 9 | Run suitability | `RunSuitability.evaluate` | `prepared_analysis_context.py`, `domain/run_suitability.py` | Check reference completeness plus data-quality and run-condition checks. The speed check passes only for a live speed that varied; a near-constant or typed-in speed warns. Post-analysis also warns frame integrity when the raw-capture replay coverage was incomplete (`with_incomplete_raw_replay`) |
 | 10 | Location analysis | `LocationAnalysisResult` | location_analysis | Per-location vibration intensity and spatial analysis |
-| 11 | App-result construction | `build_analysis_result` | `_analysis_result_builder.py`, `_analysis_result.py` | Assemble `AnalysisResult`, `TestRun`, `DiagnosticCase`, diagnostics-local artifacts, and the rehydrated metadata payload needed for later boundary serialization |
+| 11 | App-result construction | `build_analysis_result`, `rank_by_felt` | `_analysis_result_builder.py`, `_analysis_result.py`, `felt_ranking.py` | Assemble `AnalysisResult`, `TestRun`, `DiagnosticCase`, diagnostics-local artifacts, and the rehydrated metadata payload needed for later boundary serialization; rank the top causes by what the driver feels where a cabin or trunk sensor measured ("What the driver feels" in `docs/metrics.md`) |
 | 12 | Peak table | `top_peaks_table_rows`, `annotate_peak_rows_with_order_labels` | `peaks/table.py` | Rank persistent spectral peaks and label them with matched order findings; persisted as `plots.peaks_table` for the PDF report |
 | 13 | Boundary serialization | `analysis_result_to_summary` | `analysis/summary_payload.py` | Convert the app-level `AnalysisResult` into the persisted `AnalysisSummary` payload only at explicit edges |
 
@@ -344,6 +344,14 @@ the PDF both show:
   still felt a vibration in the elevated strength band (see `docs/metrics.md`).
   The report and the UI then say a vibration was found that no checked cause
   explains, not that none was found.
+- `felt`: the causes by their level at the sensor nearest the occupants (the
+  felt `reference`: a seat, the trunk or the propshaft tunnel), each with its
+  orders, level (`level_mg`, and `peak_mg` on the scale of workshop limits),
+  `share` of what the causes heard at the same speeds shake there, speed range
+  and `severity` against the workshop limit of its source (`workshop_mg`,
+  `normal_mg`). Without such a sensor, or without order levels, `reference`
+  is `null` and `fallback` says why. A `no_fault` run lists no cause. See
+  "What the driver feels" in `docs/metrics.md`.
 - `location_amplitudes` (mg + dB above floor + ratio to the strongest),
   `amplitude_vs_speed` (5 km/h bins), a recurring-peak `spectrum` at the
   strongest location with order markers, `source_checks`, and the reference

@@ -7,6 +7,7 @@ from vibesensor.analysis._analysis_models import (
     PreparedAnalysisContext,
 )
 from vibesensor.analysis._analysis_result import AnalysisResult
+from vibesensor.analysis.felt_ranking import rank_by_felt
 from vibesensor.analysis.metadata_projection import metadata_analysis_settings_items
 from vibesensor.analysis.peaks.table import (
     annotate_peak_rows_with_order_labels,
@@ -84,9 +85,10 @@ def build_analysis_result(
         ),
         driving_segments=build_domain_driving_segments(context.prepared.phase_segments),
         findings=findings_bundle.domain_findings,
-        top_causes=_final_top_causes(
+        # Ranked by what the driver feels where a cabin or trunk sensor measured.
+        top_causes=rank_by_felt(
+            _final_top_causes(findings_bundle.domain_findings, findings_bundle.domain_top_causes),
             findings_bundle.domain_findings,
-            findings_bundle.domain_top_causes,
         ),
         speed_profile=context.prepared.speed_profile if context.prepared.speed_values else None,
         suitability=context.run_suitability,
