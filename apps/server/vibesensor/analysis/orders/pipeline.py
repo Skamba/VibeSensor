@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import os
 from collections.abc import Collection, Sequence
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, replace
 
 from vibesensor.analysis._reference_resolution import (
@@ -141,6 +143,11 @@ def _rides_on_another_order(
     if hypothesis.suspected_source is VibrationSource.ENGINE and _measured_rpm(match):
         return _rides_on(match, road_orders)
     return False
+
+
+def _experiment_threads() -> int:
+    """EXPERIMENT: threads for order matching (VS_EXP_THREADS, default 1)."""
+    return int(os.environ.get("VS_EXP_THREADS", "1"))
 
 
 @dataclass(frozen=True, slots=True)
@@ -287,11 +294,21 @@ class OrderAnalysisSession:
         if self._raw_sample_rate_hz is None or self._raw_sample_rate_hz <= 0:
             return []
 
-        matches = [
-            (hypothesis, self._match_hypothesis(hypothesis))
+        tested = [
+            hypothesis
             for hypothesis in _order_hypotheses(self._context.engine_profile)
             if self._should_test(hypothesis)
         ]
+        threads = _experiment_threads()
+        if threads > 1:
+            # EXPERIMENT (free-threaded CPython): match the hypotheses on threads.
+            for base in dict.fromkeys(h.order_label_base for h in tested):
+                self._reference_hz(base)
+            with ThreadPoolExecutor(max_workers=threads) as pool:
+                matched = list(pool.map(self._match_hypothesis, tested))
+        else:
+            matched = [self._match_hypothesis(hypothesis) for hypothesis in tested]
+        matches = list(zip(tested, matched, strict=True))
         wheel_peaks = frozenset().union(
             *(
                 match.matched_peaks
@@ -309,20 +326,35 @@ class OrderAnalysisSession:
         evaluated = []
         wheel_locked_engine_keys: set[str] = set()
         comb_driveline_keys: set[str] = set()
-        for hypothesis, match in matches:
-            measured_engine = (
-                hypothesis.suspected_source is VibrationSource.ENGINE and _measured_rpm(match)
-            )
-            wheel_shared_fraction = (
+        shared_fractions = [
+            (
                 _shared_fraction(
-                    match.matched_peaks, wheel_peaks if measured_engine else comb_peaks
+                    match.matched_peaks,
+                    wheel_peaks
+                    if hypothesis.suspected_source is VibrationSource.ENGINE
+                    and _measured_rpm(match)
+                    else comb_peaks,
                 )
                 if hypothesis.suspected_source is not VibrationSource.WHEEL_TIRE
                 else 0.0
             )
-            result = self._evaluate_hypothesis(
-                hypothesis, match, wheel_shared_fraction=wheel_shared_fraction
+            for hypothesis, match in matches
+        ]
+
+        def _evaluate(i: int) -> tuple[float, DomainFinding] | None:
+            hypothesis, match = matches[i]
+            return self._evaluate_hypothesis(
+                hypothesis, match, wheel_shared_fraction=shared_fractions[i]
             )
+
+        if threads > 1:
+            with ThreadPoolExecutor(max_workers=threads) as pool:
+                results = list(pool.map(_evaluate, range(len(matches))))
+        else:
+            results = [_evaluate(i) for i in range(len(matches))]
+        for (hypothesis, match), wheel_shared_fraction, result in zip(
+            matches, shared_fractions, results, strict=True
+        ):
             if result is None:
                 continue
             evaluated.append((hypothesis, match, result))

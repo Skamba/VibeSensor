@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from collections.abc import Sequence
 from dataclasses import dataclass
 from functools import cache
@@ -250,6 +251,10 @@ def line_reads(
         half = np.rint(half_width_hz[positions] / bin_hz).astype(np.intp) + _MAIN_LOBE_BINS
         inside = (centre - half - _FLANK_BINS >= 0) & (centre + half + _FLANK_BINS < size)
         alone[positions[~inside]] = True
+        if _USE_NUMBA:
+            _jit_stacked_reads(rows, row, centre, half, positions, inside, bin_hz, excess, flanks)
+            taken[positions[inside]] = True
+            continue
         for band_half in np.unique(half[inside]).tolist():
             selected = np.flatnonzero(inside & (half == band_half))
             offsets = np.arange(-band_half - _FLANK_BINS, band_half + _FLANK_BINS + 1)
@@ -268,6 +273,52 @@ def line_reads(
         (excess, flanks, taken),
     )
     return excess, flanks, taken
+
+
+# EXPERIMENT: VS_EXP_NUMBA=1 reads the stacked line reads with a numba kernel.
+_USE_NUMBA = os.environ.get("VS_EXP_NUMBA") == "1"
+_JIT_TABLES: dict[int, tuple[np.ndarray, np.ndarray, np.ndarray]] = {}
+
+
+def _jit_stacked_reads(
+    rows: npt.NDArray[np.float32],
+    row: npt.NDArray[np.intp],
+    centre: npt.NDArray[np.intp],
+    half: npt.NDArray[np.intp],
+    positions: npt.NDArray[np.intp],
+    inside: npt.NDArray[np.bool_],
+    bin_hz: float,
+    excess: npt.NDArray[np.float64],
+    flanks: npt.NDArray[np.float64],
+) -> None:
+    from vibesensor.dsp._line_reads_jit import stacked_reads
+
+    chosen = np.flatnonzero(inside)
+    if chosen.size == 0:
+        return
+    sel_half = half[chosen]
+    max_half = int(sel_half.max())
+    tables = _JIT_TABLES.get(max_half)
+    if tables is None:
+        mean_distance = np.zeros(max_half + 1)
+        spread = np.zeros((max_half + 1, _FLANK_BINS))
+        spread_squares = np.ones(max_half + 1)
+        for h in range(max_half + 1):
+            _distance, mean_distance[h], spread_h, spread_squares[h] = _flank_distances(h)
+            spread[h] = spread_h
+        tables = _JIT_TABLES[max_half] = (mean_distance, spread, spread_squares)
+    stacked_reads(
+        rows,
+        row[chosen],
+        centre[chosen],
+        sel_half,
+        positions[chosen],
+        _FLANK_BINS,
+        float(peak_band_bins(bin_hz)),
+        *tables,
+        excess,
+        flanks,
+    )
 
 
 def _loose_line_reads(

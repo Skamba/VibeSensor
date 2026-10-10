@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from collections import defaultdict, deque
 from collections.abc import Sequence
 from concurrent.futures import Future, ThreadPoolExecutor
@@ -71,8 +72,11 @@ _WINDOWS_PER_FFT = 64
 _MAX_GATHER_VIEW_BYTES = 1 << 30
 # Threads computing the spectra, and chunks queued for them: enough to keep
 # them busy.
-_FFT_WORKERS = 1
-_FFT_CHUNKS_AHEAD = 2
+# EXPERIMENT (free-threaded CPython): VS_EXP_THREADS threads compute spectra and
+# strengths when above 1.
+_EXP_THREADS = int(os.environ.get("VS_EXP_THREADS", "1"))
+_FFT_WORKERS = max(1, _EXP_THREADS)
+_FFT_CHUNKS_AHEAD = 2 * _FFT_WORKERS
 
 
 @dataclass(frozen=True, slots=True)
@@ -738,12 +742,25 @@ def _rebuilt_samples(
     pending: dict[int, list[tuple[int, _PendingWindow]]] = defaultdict(list)
     in_flight: deque[tuple[list[tuple[int, _RawWindow]], Future[_WindowSpectra]]] = deque()
 
-    def finish(windows: list[tuple[int, _PendingWindow]], sample_rate_hz: int) -> None:
+    finishing: list[Future[None]] = []
+    finish_pool = (
+        ThreadPoolExecutor(max_workers=_EXP_THREADS, thread_name_prefix="raw-replay-strength")
+        if _EXP_THREADS > 1
+        else None
+    )
+
+    def finish_now(windows: list[tuple[int, _PendingWindow]], sample_rate_hz: int) -> None:
         strength_metrics = context.fft_computer.combined_strength_metrics(
             [window.spectrum for _index, window in windows], sample_rate_hz
         )
         for (index, window), window_metrics in zip(windows, strength_metrics, strict=True):
             frames[index], coverages[index] = _finish_window(window, window_metrics)
+
+    def finish(windows: list[tuple[int, _PendingWindow]], sample_rate_hz: int) -> None:
+        if finish_pool is None:
+            finish_now(windows, sample_rate_hz)
+        else:
+            finishing.append(finish_pool.submit(finish_now, list(windows), sample_rate_hz))
         windows.clear()
 
     def take_oldest() -> None:
@@ -857,6 +874,10 @@ def _rebuilt_samples(
     for sample_rate_hz, windows in pending.items():
         if windows:
             finish(windows, sample_rate_hz)
+    for done in finishing:
+        done.result()
+    if finish_pool is not None:
+        finish_pool.shutdown()
     # Every sample has its coverage by now.
     return frames, cast("list[RawReplayWindowCoverage]", coverages)
 
