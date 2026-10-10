@@ -27,6 +27,7 @@ def summarize_order_match_locations(
     relevant_speed_bins: Collection[str] | None = None,
     connected_locations: Set[str] | None = None,
     suspected_source: str | None = None,
+    quiet_locations: Set[str] = frozenset(),
 ) -> tuple[object, LocationAnalysisResult | None]:
     """Return strongest location summary, optionally restricted to specific speed bins."""
     del lang  # localization happens through i18n keys, not by branching here
@@ -46,6 +47,7 @@ def summarize_order_match_locations(
                 corroboration_amp_multiplier=corroboration_amp_multiplier,
                 connected_locations=connected_locations,
                 suspected_source=suspected_source,
+                quiet_locations=quiet_locations,
             )
         )
         is not None

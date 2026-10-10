@@ -84,24 +84,36 @@ def _normalized_domain_hotspot(
     )
 
 
-def _at_tracked_levels(match: OrderMatchAccumulator) -> list[OrderMatchObservation]:
-    """The matched points, each at its sensor's tracked level of the order.
+def _at_tracked_levels(
+    match: OrderMatchAccumulator,
+) -> tuple[list[OrderMatchObservation], frozenset[str]]:
+    """The matched points, each at its sensor's tracked level of the order, and the quiet sensors.
 
     A window's ranked peak is the order plus whatever else sits in its band
     (the road's wheel-hop hump under a wheel order in town); the tracked level
     is the order's own (``TrackedCells.sensor_levels``), so it places the
-    order between sensors. A sensor that does not hear the order is placed by
-    its read all the same (``SensorOrderLevel.read_g``). The peaks' own
-    amplitudes where no sensor hears the order, or a matched sensor has no
-    level.
+    order between sensors. A sensor that hears the order (``heard_locations``)
+    but whose reads do not stand out of their scatter (a line under the
+    wheel-hop hump) is placed by its read all the same
+    (``SensorOrderLevel.read_g``). A sensor that does not hear it is quiet:
+    its read is the floor's scatter, and it ranks below every sensor that
+    hears the order. The peaks' own amplitudes, and no quiet sensor, where
+    no sensor's level stands out, or a matched sensor has no level.
     """
-    levels = {level.location: level.level_g or level.read_g for level in match.sensor_levels}
+    levels = {
+        level.location: level.level_g
+        or (level.read_g if level.location in match.heard_locations else 0.0)
+        for level in match.sensor_levels
+    }
     points = match.matched_points
     if not any(level.level_g for level in match.sensor_levels) or not {
         point.location for point in points
     } <= set(levels):
-        return points
-    return [replace(point, amp=levels[point.location]) for point in points]
+        return points, frozenset()
+    return (
+        [replace(point, amp=levels[point.location]) for point in points],
+        frozenset(location for location, level in levels.items() if level <= 0),
+    )
 
 
 def score_order_finding(
@@ -123,12 +135,14 @@ def score_order_finding(
     )
 
     relevant_speed_bins = [context.focused_speed_band] if context.focused_speed_band else None
+    points, quiet_locations = _at_tracked_levels(match)
     location_line, loc_result = summarize_order_match_locations(
-        _at_tracked_levels(match),
+        points,
         lang=context.lang,
         relevant_speed_bins=relevant_speed_bins,
         connected_locations=context.connected_locations,
         suspected_source=hypothesis.suspected_source,
+        quiet_locations=quiet_locations,
     )
     domain_hotspot = _normalized_domain_hotspot(loc_result)
     weak_separation_edge = loc_result.weak_spatial_threshold if loc_result is not None else None

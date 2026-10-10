@@ -12,7 +12,12 @@ import pytest
 
 from vibesensor.analysis.orders.tracking import TrackedCells, line_half_width_hz
 from vibesensor.dsp.fft_analysis import SpectralAnalysisComputer
-from vibesensor.dsp.window_spectrum import LineRead, WindowSpectrum, tone_line_level_g
+from vibesensor.dsp.window_spectrum import (
+    LineRead,
+    WindowSpectrum,
+    peak_scale_g,
+    tone_line_level_g,
+)
 
 _FS = 800
 _N = 2048
@@ -50,6 +55,32 @@ def test_a_tone_on_one_axis_reads_the_level_its_peak_amplitude_gives(hz: float) 
 
     assert read is not None
     assert np.sqrt(read.excess) == pytest.approx(tone_line_level_g(0.03, _FS / _N), rel=0.05)
+
+
+def test_a_faint_tone_on_the_peak_scale_stands_over_the_floor_as_its_peak_does() -> None:
+    # A tone near the 8 dB negligible edge, over 80 windows: its level alone
+    # reads about 1 dB under its ranked peak, which holds the floor under it
+    # too; on the peak's scale it reads as the peak does.
+    rng = np.random.default_rng(7)
+    levels, peaks, floors = [], [], []
+    for index in range(80):
+        hz = 31.3 + 0.013 * index
+        metrics, spectrum = _spectrum(0.0009 * np.sin(2 * np.pi * hz * _T + index), rng)
+        read = spectrum.line_read(hz, 0.0)
+        assert read is not None
+        levels.append(read.excess)
+        peaks.append(next(p["amp"] for p in metrics["top_peaks"] if abs(p["hz"] - hz) < 0.5))
+        floors.append(metrics["noise_floor_amp_g"])
+    floor = float(np.median(floors))
+    level = float(np.sqrt(np.median(levels)))
+
+    def over_floor_db(amp: float) -> float:
+        return float(20 * np.log10(amp / floor))
+
+    peak_db = over_floor_db(float(np.mean(peaks)))
+    assert 7.5 < peak_db < 8.5
+    assert over_floor_db(level) < peak_db - 0.6
+    assert over_floor_db(peak_scale_g(level, floor)) == pytest.approx(peak_db, abs=0.3)
 
 
 def test_broadband_noise_alone_reads_no_level_on_average() -> None:

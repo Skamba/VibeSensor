@@ -14,6 +14,7 @@ from vibesensor.domain.locations import has_any_wheel_location, is_wheel_locatio
 from vibesensor.domain.order_match import OrderMatchObservation
 
 NEAR_TIE_DOMINANCE_THRESHOLD = 1.15
+QUIET_SECOND_DOMINANCE = 10.0
 
 
 @dataclass(frozen=True, slots=True)
@@ -53,8 +54,13 @@ def score_locations_in_bin(
     corroboration_amp_multiplier: float,
     connected_locations: Set[str] | None,
     suspected_source: str | None,
+    quiet_locations: Set[str] = frozenset(),
 ) -> LocationAnalysisResult | None:
-    """Score and rank sensor locations within a single speed bin."""
+    """Score and rank sensor locations within a single speed bin.
+
+    *quiet_locations* are the sensors read at the order's line that do not
+    hear it: they rank below every sensor that does, with no amplitude.
+    """
     per_loc_scores: dict[str, list[float]] = defaultdict(list)
     per_loc_sample_counts: dict[str, int] = defaultdict(int)
     per_loc_corroborated_counts: dict[str, list[int]] = defaultdict(list)
@@ -100,6 +106,7 @@ def score_locations_in_bin(
     )
     if not ranked:
         return None
+    ranked += [(loc, 0.0) for loc in sorted(quiet_locations - per_loc_scores.keys())]
 
     eligible_ranked = (
         [item for item in ranked if item[0] in connected_locations]
@@ -111,7 +118,8 @@ def score_locations_in_bin(
     prefer_wheel = (suspected_source or "").strip().lower() == VibrationSource.WHEEL_TIRE
     if prefer_wheel:
         wheel_ranked = [item for item in ranked_for_winner if is_wheel_location(item[0])]
-        if wheel_ranked:
+        # Only where a wheel sensor places the order: quiet wheels alone do not.
+        if any(amp > 0 for _location, amp in wheel_ranked):
             # A lone wheel sensor is still compared with the strongest other sensor.
             others = [item for item in ranked_for_winner if not is_wheel_location(item[0])]
             ranked_for_winner = wheel_ranked + (others[:1] if len(wheel_ranked) == 1 else [])
@@ -123,21 +131,35 @@ def score_locations_in_bin(
         int(per_loc_sample_counts.get(second_loc, 0)) if len(ranked_for_winner) > 1 else top_count
     )
     second_amp = ranked_for_winner[1][1] if len(ranked_for_winner) > 1 else top_amp
-    dominance = (top_amp / second_amp) if second_amp > 0 else 1.0
+    dominance = (
+        (top_amp / second_amp)
+        if second_amp > 0
+        else QUIET_SECOND_DOMINANCE
+        if top_amp > 0 and len(ranked_for_winner) > 1
+        else 1.0
+    )
     total_samples = sum(per_loc_sample_counts.values())
     ambiguous = len(ranked_for_winner) > 1 and dominance < NEAR_TIE_DOMINANCE_THRESHOLD
     partial_coverage = bool(connected_locations is not None and top_loc not in connected_locations)
     top_corroborated_by_n_sensors = max(per_loc_corroborated_counts.get(top_loc, [1]))
     no_wheel_sensors = prefer_wheel and not has_any_wheel_location(
-        loc for loc, _ in ranked_for_winner
+        loc for loc, amp in ranked_for_winner if amp > 0
+    )
+    # The sensors compared: those the order matched in this bin, quiet or not.
+    # A quiet sensor with no match here is only the quieter second, not one
+    # more sensor the order could be spread over.
+    matched_locations = {match.location.strip() for match in matches}
+    location_count = max(
+        sum(1 for loc, _amp in ranked_for_winner if loc in matched_locations),
+        min(2, len(ranked_for_winner)),
     )
     raw_loc_conf = LocationHotspot.compute_confidence(
         dominance_ratio=dominance,
-        location_count=len(ranked_for_winner),
+        location_count=location_count,
         total_samples=total_samples,
     )
     loc_conf = min(raw_loc_conf, 0.30) if no_wheel_sensors else raw_loc_conf
-    weak_spatial_threshold = LocationHotspot.weak_spatial_threshold(len(ranked_for_winner))
+    weak_spatial_threshold = LocationHotspot.weak_spatial_threshold(location_count)
     raw_weak_spatial = dominance < weak_spatial_threshold
     domain_hotspot = LocationHotspot.from_analysis_inputs(
         strongest_location=top_loc,
