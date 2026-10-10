@@ -6,6 +6,9 @@ from collections.abc import Sequence
 from math import isfinite
 from typing import Final
 
+import numpy as np
+import numpy.typing as npt
+
 from vibesensor.common.units import SECONDS_PER_MINUTE
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.engine_profile import UNKNOWN_ENGINE_ORDERS, EngineOrder
@@ -42,6 +45,7 @@ RIGID_ORDER_PATH_COMPLIANCE: Final[float] = 1.0
 __all__ = [
     "build_order_bands",
     "order_peak_tolerance_hz",
+    "order_peak_tolerances_hz",
     "vehicle_orders_hz",
 ]
 
@@ -61,6 +65,17 @@ def order_peak_tolerance_hz(*, predicted_hz: float, path_compliance: float) -> f
             predicted_hz * ORDER_TOLERANCE_REL * compliance_scale,
         )
     )
+
+
+def order_peak_tolerances_hz(
+    predicted_hz: npt.NDArray[np.float64], *, path_compliance: float
+) -> npt.NDArray[np.float64]:
+    """``order_peak_tolerance_hz`` of each predicted frequency, the same to the bit."""
+    compliance_scale = path_compliance**0.5
+    tolerance_hz: npt.NDArray[np.float64] = np.maximum(
+        ORDER_TOLERANCE_MIN_HZ, predicted_hz * ORDER_TOLERANCE_REL * compliance_scale
+    )
+    return tolerance_hz
 
 
 def _relative_tolerance(center_hz: float, path_compliance: float) -> float:

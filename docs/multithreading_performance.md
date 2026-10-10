@@ -47,6 +47,27 @@ path caps the loop's duty cycle at 50%. Even at a 5–10× slower Raspberry Pi
   window's FFT (3 × 2048 points) is too small for FFT workers. Worker
   processes would each hold a copy of the run's samples and spectra, which the
   Pi 3 A+ (424 MB) cannot spare while the live server runs.
+- Order matching tests each hypothesis (about ten) against every window. What
+  every hypothesis reads of a window the same way (its sensor, speed bin,
+  driving phase, floor and cell) is worked out once per drive
+  (`sample_facts`); each hypothesis then finds every window's nearest ranked
+  peak in one array operation (`PeakTable`), plans its line reads as arrays
+  and files them by cell (`_line_reads`), and judges each sensor's reads once
+  (`TrackedCells` keeps its judges until a new read comes in). Measured on a
+  30-minute, 4-sensor drive on the Pi: the analyze step went from 60 s to
+  45 s, the whole post-analysis from 112 s to 99 s, peak RSS +3 MB; the
+  analysis JSON is byte-identical on that drive, the CI-seed accuracy
+  benchmark and the diagnostic matrix.
+- Tried and not kept for order matching: a pool of 3 forked processes, one
+  hypothesis each, saved 21 s on the Pi but each child dirtied 30-45 MB of
+  the parent's pages through reference counts (86-135 MB in all), leaving 54-100
+  MB available while the live server runs, and forking a threaded server is
+  fragile; a thread pool gains nothing, as the matching is Python bound under
+  the GIL. More than one FFT thread in the replay gains nothing on the Pi.
+  Algorithmic cuts to the replay's FFT (decimation, a zoom FFT or Goertzel at
+  the order lines) are capped by the FFT's small share once it is batched
+  (about 3-4 s of the Pi's total), well under the 15 % a change to the
+  analysis must earn.
 - The UDP ingest path is single-threaded: it is I/O-bound, very fast (buffer
   append under a brief lock), and the bounded async queue provides backpressure
   with explicit drop logging.
@@ -56,7 +77,7 @@ path caps the loop's duty cycle at 50%. Even at a 5–10× slower Raspberry Pi
 | Host | CPU time | Peak RSS |
 |------|----------|----------|
 | x86 dev host | ~7.5 s | ~227 MB |
-| Raspberry Pi 3 A+ (`nice -n 10`) | ~110 s | ~150 MB |
+| Raspberry Pi 3 A+ (`nice -n 10`) | ~99 s | ~152 MB |
 
 ## Benchmarks
 

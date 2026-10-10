@@ -6,6 +6,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from functools import cache
 from math import hypot, sqrt
+from typing import cast
 
 import numpy as np
 import numpy.typing as npt
@@ -56,8 +57,11 @@ def line_half_width_hz(
     return predicted_hz * abs(rate_kmh_per_s) * window_s / (2.0 * speed_kmh)
 
 
-def line_reach_hz(half_width_hz: float, bin_hz: float) -> float:
-    """How far either side of a line's centre its read takes in: the band and the flanks past it."""
+def line_reach_hz[Hz: (float, npt.NDArray[np.float64])](half_width_hz: Hz, bin_hz: float) -> Hz:
+    """How far either side of a line's centre its read takes in: the band and the flanks past it.
+
+    Of one line, or of each of an array of lines.
+    """
     return half_width_hz + (_MAIN_LOBE_BINS + _FLANK_BINS) * bin_hz
 
 
@@ -117,6 +121,11 @@ class WindowSpectrum:
 
     freq_hz: npt.NDArray[np.float32]
     amp_g: npt.NDArray[np.float32]
+    # Where the post-stop replay keeps a sample rate's spectra together:
+    # ``amp_g`` is row ``row`` of ``rows``, so ``line_reads`` gathers many
+    # windows' bands in one step. ``None`` for a spectrum on its own.
+    rows: npt.NDArray[np.float32] | None = None
+    row: int = 0
 
     @property
     def bin_hz(self) -> float:
@@ -167,28 +176,108 @@ class WindowSpectrum:
         return LineRead(excess=excess, flanks=flanks)
 
 
-# Reads stacked at once in ``line_reads``: a few MB of float64 at most.
+# Reads gathered at once in ``line_reads``: a few MB of float64 at most.
 _READS_PER_STACK = 4096
 
 
 def line_reads(
-    reads: Sequence[tuple[WindowSpectrum, float, float]],
-) -> list[LineRead | None]:
-    """``spectrum.line_read(hz, half_width_hz)`` for each ``(spectrum, hz, half_width_hz)``.
+    spectra: Sequence[WindowSpectrum],
+    spectrum_index: npt.NDArray[np.intp],
+    hz: npt.NDArray[np.float64],
+    half_width_hz: npt.NDArray[np.float64],
+) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.bool_]]:
+    """Each read ``spectra[spectrum_index[i]].line_read(hz[i], half_width_hz[i])``.
 
-    The same reads, bit for bit, at a fraction of the cost: the reads with a
-    full band and both flanks inside their spectrum are stacked by band width
-    and computed as arrays in the same floating-point order as one read
-    (``_python_sum``). The rest, at a spectrum's edge, are read one by one.
+    Returned as each read's excess, flanks and whether it has a read (NaN
+    where not). The same reads, bit for bit, at a fraction of the cost: the
+    reads of spectra kept together (``WindowSpectrum.rows``) are located as
+    arrays, and those with a full band and both flanks inside their spectrum
+    are gathered by band width and computed as arrays in the same
+    floating-point order as one read (``_python_sum``). The rest are located
+    one by one (``_loose_line_reads``).
     """
-    results: list[LineRead | None] = [None] * len(reads)
+    count = hz.size
+    excess = np.full(count, np.nan)
+    flanks = np.full(count, np.nan)
+    taken = np.zeros(count, dtype=np.bool_)
+    # Each spectrum's group (the array its row is kept in; -1 on its own) and row.
+    groups: dict[tuple[int, int], int] = {}
+    firsts: list[WindowSpectrum] = []
+    group_of = np.full(len(spectra), -1, dtype=np.intp)
+    row_of = np.zeros(len(spectra), dtype=np.intp)
+    for index, spectrum in enumerate(spectra):
+        if spectrum.rows is None or spectrum.freq_hz.size < 2:
+            continue
+        key = (id(spectrum.rows), id(spectrum.freq_hz))
+        group = groups.get(key)
+        if group is None:
+            group = groups[key] = len(firsts)
+            firsts.append(spectrum)
+        group_of[index] = group
+        row_of[index] = spectrum.row
+    read_group = group_of[spectrum_index]
+    alone = read_group < 0
+    for group, first in enumerate(firsts):
+        rows = cast("npt.NDArray[np.float32]", first.rows)
+        start, bin_hz, size = float(first.freq_hz[0]), first.bin_hz, first.freq_hz.size
+        positions = np.flatnonzero(read_group == group)
+        row = row_of[spectrum_index[positions]]
+        # As ``line_read``: Python's ``round`` and ``np.rint`` both round half to even.
+        centre = np.rint((hz[positions] - start) / bin_hz).astype(np.intp)
+        half = np.rint(half_width_hz[positions] / bin_hz).astype(np.intp) + _MAIN_LOBE_BINS
+        inside = (centre - half - _FLANK_BINS >= 0) & (centre + half + _FLANK_BINS < size)
+        alone[positions[~inside]] = True
+        for band_half in np.unique(half[inside]).tolist():
+            selected = np.flatnonzero(inside & (half == band_half))
+            offsets = np.arange(-band_half - _FLANK_BINS, band_half + _FLANK_BINS + 1)
+            for chunk_start in range(0, selected.size, _READS_PER_STACK):
+                chosen = selected[chunk_start : chunk_start + _READS_PER_STACK]
+                segments = rows[row[chosen, None], centre[chosen, None] + offsets]
+                target = positions[chosen]
+                excess[target], flanks[target] = _stacked_line_reads(segments, band_half, bin_hz)
+                taken[target] = True
+    _loose_line_reads(
+        spectra,
+        spectrum_index,
+        hz,
+        half_width_hz,
+        np.flatnonzero(alone),
+        (excess, flanks, taken),
+    )
+    return excess, flanks, taken
+
+
+def _loose_line_reads(
+    spectra: Sequence[WindowSpectrum],
+    spectrum_index: npt.NDArray[np.intp],
+    hz: npt.NDArray[np.float64],
+    half_width_hz: npt.NDArray[np.float64],
+    positions: npt.NDArray[np.intp],
+    into: tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.bool_]],
+) -> None:
+    """``line_reads`` of the reads at *positions*, located one by one.
+
+    The reads of a spectrum on its own, and those at a spectrum's edge. Those
+    with a full band and both flanks inside their spectrum are still stacked
+    by band width and computed as arrays; the rest are read one by one.
+    """
+    excess, flanks, taken = into
     # Each spectrum's first bin and bin width, once per frequency axis: a
     # drive's spectra share one or a few.
     bins_of: dict[int, tuple[float, float]] = {}
-    for chunk_start in range(0, len(reads), _READS_PER_STACK):
+    chosen = positions.tolist()
+    reads_hz = hz[positions].tolist()
+    reads_half_width_hz = half_width_hz[positions].tolist()
+    reads_spectrum = spectrum_index[positions].tolist()
+    for chunk_start in range(0, len(chosen), _READS_PER_STACK):
         by_half: dict[tuple[int, float], tuple[list[int], list[npt.NDArray[np.float32]]]] = {}
-        for position in range(chunk_start, min(len(reads), chunk_start + _READS_PER_STACK)):
-            spectrum, hz, half_width_hz = reads[position]
+        for at in range(chunk_start, min(len(chosen), chunk_start + _READS_PER_STACK)):
+            position, read_hz, read_half_width_hz = (
+                chosen[at],
+                reads_hz[at],
+                reads_half_width_hz[at],
+            )
+            spectrum = spectra[reads_spectrum[at]]
             freq = spectrum.freq_hz
             size = freq.size
             if size < 2:
@@ -197,26 +286,29 @@ def line_reads(
             if bins is None:
                 bins = bins_of[id(freq)] = (float(freq[0]), spectrum.bin_hz)
             start, bin_hz = bins
-            centre = int(round((hz - start) / bin_hz))
-            half = int(round(half_width_hz / bin_hz)) + _MAIN_LOBE_BINS
+            centre = int(round((read_hz - start) / bin_hz))
+            half = int(round(read_half_width_hz / bin_hz)) + _MAIN_LOBE_BINS
             if centre - half - _FLANK_BINS < 0 or centre + half + _FLANK_BINS >= size:
-                results[position] = spectrum.line_read(hz, half_width_hz)
+                read = spectrum.line_read(read_hz, read_half_width_hz)
+                if read is not None:
+                    excess[position], flanks[position] = read.excess, read.flanks
+                    taken[position] = True
                 continue
-            positions, segments = by_half.setdefault((half, bin_hz), ([], []))
-            positions.append(position)
+            stacked_at, segments = by_half.setdefault((half, bin_hz), ([], []))
+            stacked_at.append(position)
             segments.append(
                 spectrum.amp_g[centre - half - _FLANK_BINS : centre + half + 1 + _FLANK_BINS]
             )
-        for (half, bin_hz), (positions, segments) in by_half.items():
-            stacked = _stacked_line_reads(np.stack(segments), half, bin_hz)
-            for position, excess, flanks in zip(positions, *stacked, strict=True):
-                results[position] = LineRead(excess=excess, flanks=flanks)
-    return results
+        for (half, bin_hz), (stacked_at, segments) in by_half.items():
+            excess[stacked_at], flanks[stacked_at] = _stacked_line_reads(
+                np.stack(segments), half, bin_hz
+            )
+            taken[stacked_at] = True
 
 
 def _stacked_line_reads(
     segments: npt.NDArray[np.float32], half: int, bin_hz: float
-) -> tuple[list[float], list[float]]:
+) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
     """``line_read``'s excess and flanks for rows of a band ``2 half + 1`` wide and its flanks."""
     power = np.square(segments, dtype=np.float64)
     lower = [power[:, offset] for offset in range(_FLANK_BINS)]
@@ -236,7 +328,7 @@ def _stacked_line_reads(
     level = mean_paired - bend * mean_distance
     under = bins * level + bend * half * (half + 1) * (2 * half + 1) / 3.0
     excess = (band - under) / peak_band_bins(bin_hz)
-    return excess.tolist(), flanks.tolist()
+    return excess, flanks
 
 
 def _python_sum(columns: Sequence[npt.NDArray[np.float64]]) -> npt.NDArray[np.float64]:

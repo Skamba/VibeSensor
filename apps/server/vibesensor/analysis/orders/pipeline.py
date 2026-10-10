@@ -36,6 +36,8 @@ from vibesensor.analysis.orders.matching import (
     fft_bin_hz,
     is_harmonic_of,
     match_samples_for_hypothesis,
+    peak_table,
+    sample_facts,
 )
 from vibesensor.analysis.orders.physics import (
     WHEEL_HARMONIC_HYPOTHESES,
@@ -223,6 +225,7 @@ class OrderAnalysisSession:
         "_speed_rates",
         "_speed_following_tones",
         "_references",
+        "_facts",
     )
 
     def __init__(self, request: OrderAnalysisRequest) -> None:
@@ -245,6 +248,9 @@ class OrderAnalysisSession:
             if sample.t_s is not None and sample.speed_kmh is not None and sample.speed_kmh > 0
         )
         self._speed_rates = speed_rates_kmh_per_s(self._samples)
+        self._facts = sample_facts(
+            self._samples, request.context, request.per_sample_phases, request.lang
+        )
         self._references: dict[str, list[tuple[float | None, str]]] = {}
         self._cached_peaks: list[list[tuple[float, float]]] = [
             _sample_top_peaks(sample) for sample in self._samples
@@ -255,13 +261,15 @@ class OrderAnalysisSession:
         tones = fixed_tones(self._samples, self._cached_peaks)
         road_peaks = without_fixed_tones(self._cached_peaks, tones)
         self._speed_following_peaks = {
-            "road": road_peaks,
-            "engine": [
-                raw if _rpm_measured(sample) else road
-                for sample, raw, road in zip(
-                    self._samples, self._cached_peaks, road_peaks, strict=True
-                )
-            ],
+            "road": peak_table(road_peaks),
+            "engine": peak_table(
+                [
+                    raw if _rpm_measured(sample) else road
+                    for sample, raw, road in zip(
+                        self._samples, self._cached_peaks, road_peaks, strict=True
+                    )
+                ]
+            ),
         }
         # The order-tracked reads skip only the tones that ring as a line.
         ringing = ringing_tones(self._samples, tones, window_duration_s(self._context))
@@ -416,8 +424,9 @@ class OrderAnalysisSession:
             hypothesis,
             self._context,
             self._reference_hz(hypothesis.order_label_base),
-            self._per_sample_phases,
-            self._lang,
+            self._facts,
+            self._per_sample_phases is not None
+            and len(self._per_sample_phases) == len(self._samples),
             self._speed_rates,
         )
 
