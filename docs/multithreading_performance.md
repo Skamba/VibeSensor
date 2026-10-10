@@ -92,10 +92,10 @@ path caps the loop's duty cycle at 50%. Even at a 5–10× slower Raspberry Pi
   the parent's pages through reference counts (86-135 MB in all), leaving 54-100
   MB available while the live server runs, and forking a threaded server is
   fragile; a thread pool gains nothing, as the matching is Python bound under
-  the GIL. Algorithmic cuts to the replay's FFT (decimation, a zoom FFT or Goertzel at
-  the order lines) are capped by the FFT's small share once it is batched
-  (about 3-4 s of the Pi's total), well under the 15 % a change to the
-  analysis must earn.
+  the GIL. Algorithmic cuts to the replay's FFT (decimation, a zoom FFT or
+  Goertzel at the order lines) are capped by the FFT's small share once it
+  is batched (about 3-4 s of the Pi's total), well under the 15 % a change
+  to the analysis must earn.
 - Loading the run and storing its analysis are I/O and decode work, cut
   without changing a byte of the stored analysis: sample rows are decoded a
   column per batch, with msgspec decoding each row's peaks JSON straight into
