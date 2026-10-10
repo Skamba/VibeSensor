@@ -50,7 +50,9 @@ summary row's FFT peaks and strength metrics from the raw window the row was
 analysed over, so the summary analysis reasons over unfiltered diagnostic
 evidence. Each window is laid out as the live tick's FFT block (three axes,
 each contiguous), so the FFT's per-axis passes read contiguous memory and the
-replay computes a block as the live tick does. The replay also keeps each
+replay computes a block as the live tick does. The windows' strength metrics
+are taken 16 at a time (`compute_vibration_strength_rows()`), each the one the
+live tick computes for that block on its own. The replay also keeps each
 window's combined spectrum in memory (never persisted), so order tracking can
 read each order's level at its line at every sensor ("Order-tracked reads" in
 `docs/order_tracking.md`).

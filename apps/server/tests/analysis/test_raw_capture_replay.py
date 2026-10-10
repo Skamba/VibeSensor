@@ -138,7 +138,7 @@ def test_build_post_analysis_input_uses_corrected_observed_sample_rate(
         stride=1,
     )
     calls: list[int] = []
-    original_compute = raw_capture_replay.SpectralAnalysisComputer.compute_combined_strength_metrics
+    original_compute = raw_capture_replay.SpectralAnalysisComputer.combined_spectrum
 
     def _counting_compute(self, fft_block, sample_rate_hz, **kwargs):
         calls.append(sample_rate_hz)
@@ -146,7 +146,7 @@ def test_build_post_analysis_input_uses_corrected_observed_sample_rate(
 
     monkeypatch.setattr(
         raw_capture_replay.SpectralAnalysisComputer,
-        "compute_combined_strength_metrics",
+        "combined_spectrum",
         _counting_compute,
     )
 

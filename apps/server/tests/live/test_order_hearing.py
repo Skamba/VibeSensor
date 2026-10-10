@@ -36,9 +36,9 @@ def _spectrum(
     block = rng.normal(0.0, 0.002, size=(3, _N))
     if signal is not None:
         block[2] += signal
-    computed = _COMPUTER.compute_combined_strength_metrics(block.astype(np.float32), _FS)
-    assert computed is not None
-    return LiveSpectrum(generation=generation, spectrum=computed[1], window_s=_WINDOW_S)
+    spectrum = _COMPUTER.combined_spectrum(block.astype(np.float32), _FS)
+    assert spectrum is not None
+    return LiveSpectrum(generation=generation, spectrum=spectrum, window_s=_WINDOW_S)
 
 
 def _tone(hz: float, amp_g: float = 0.01) -> np.ndarray:

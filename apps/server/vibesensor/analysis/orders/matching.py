@@ -47,7 +47,13 @@ from vibesensor.domain.order_match import OrderMatchObservation, SensorOrderLeve
 from vibesensor.dsp.constants import FFT_N, SAMPLE_RATE_HZ
 from vibesensor.dsp.line_significance import CONTROL_REACHES
 from vibesensor.dsp.order_bands import order_peak_tolerance_hz
-from vibesensor.dsp.window_spectrum import line_half_width_hz, line_reach_hz, peak_scale_g
+from vibesensor.dsp.window_spectrum import (
+    WindowSpectrum,
+    line_half_width_hz,
+    line_reach_hz,
+    line_reads,
+    peak_scale_g,
+)
 from vibesensor.recording.run_schema import RunMetadata
 
 BRAKING_PHASE = DrivingPhase.BRAKING.value
@@ -421,7 +427,7 @@ def match_samples_for_hypothesis(
     tones: Sequence[Sequence[RingingTone]],
     hypothesis: OrderHypothesis,
     context: RunMetadata,
-    tire_circumference_m: float | None,
+    references: Sequence[tuple[float | None, str]],
     per_sample_phases: PhaseLabels | None,
     lang: str,
     speed_rates: Sequence[float],
@@ -447,7 +453,7 @@ def match_samples_for_hypothesis(
         peaks = cached_peaks[sample_idx]
         if not peaks and sample.spectrum is None:
             continue
-        predicted_hz, ref_source = hypothesis.predicted_hz(sample, context, tire_circumference_m)
+        predicted_hz, ref_source = hypothesis.order_hz(references[sample_idx])
         # Peaks under the analysis floor are dropped (``_sample_top_peaks``), so a
         # window whose order lies there could never show it: it is not a chance
         # to hear the order (a wheel order at town speeds, the end of a stop).
@@ -457,32 +463,37 @@ def match_samples_for_hypothesis(
 
         sample_location = _location_label(sample, lang=lang)
         sample_speed = sample.speed_kmh
-        window = _Window(
-            sample_idx=sample_idx,
-            location=sample_location,
-            predicted_hz=predicted_hz,
-            speed_bin=(
-                speed_bin_label(sample_speed, bin_width=SPEED_BIN_WIDTH_KMH)
-                if sample_speed is not None and sample_speed > 0
-                else None
-            ),
-            phase_key=_phase_to_str(per_sample_phases[sample_idx])
+        speed_bin = (
+            speed_bin_label(sample_speed, bin_width=SPEED_BIN_WIDTH_KMH)
+            if sample_speed is not None and sample_speed > 0
+            else None
+        )
+        phase_key = (
+            _phase_to_str(per_sample_phases[sample_idx])
             if has_phases and per_sample_phases is not None
-            else None,
+            else None
         )
         floor_amp = _estimate_strength_floor_amp_g(sample)
-        window = replace(window, floor=max(0.0, floor_amp if floor_amp is not None else 0.0))
+        floor = max(0.0, floor_amp if floor_amp is not None else 0.0)
         peak_match = best_order_peak_match(
             peaks,
             predicted_hz=predicted_hz,
             path_compliance=compliance,
         )
         if peak_match is None:
-            windows.append(window)
+            windows.append(
+                _Window(
+                    sample_idx, sample_location, predicted_hz, speed_bin, phase_key, floor=floor
+                )
+            )
             continue
         windows.append(
-            replace(
-                window,
+            _Window(
+                sample_idx,
+                sample_location,
+                predicted_hz,
+                speed_bin,
+                phase_key,
                 match=OrderMatchObservation(
                     t_s=sample.t_s,
                     speed_kmh=sample.speed_kmh,
@@ -491,11 +502,12 @@ def match_samples_for_hypothesis(
                     rel_error=peak_match.relative_error,
                     amp=peak_match.amplitude_g,
                     location=sample_location,
-                    phase=window.phase_key,
+                    phase=phase_key,
                 ),
                 clear=bool(sample_location)
                 and peak_match.amplitude_g
-                >= ORDER_CONFIDENCE_SETTINGS.heard_peak_over_floor * window.floor,
+                >= ORDER_CONFIDENCE_SETTINGS.heard_peak_over_floor * floor,
+                floor=floor,
             )
         )
 
@@ -643,6 +655,16 @@ class _Line:
     half_width_hz: float
 
 
+@dataclass(frozen=True, slots=True)
+class _PlannedRead:
+    """A window to be read at the order's line, and how many control reads follow its read."""
+
+    index: int
+    line: _Line
+    t_s: float | None
+    controls: int
+
+
 @dataclass(slots=True)
 class _LineReads:
     """Every window's read at the order's line, and the windows whose line could not be read."""
@@ -699,6 +721,10 @@ def _line_reads(
         for step in read.context.guided_phases
         if step.phase == "coast_down"
     ]
+    # Every read is planned first and taken at once (``line_reads``), then
+    # filed in window order.
+    planned: list[_PlannedRead] = []
+    requests: list[tuple[WindowSpectrum, float, float]] = []
     for index, window in enumerate(windows):
         sample = samples[window.sample_idx]
         spectrum = sample.spectrum
@@ -713,20 +739,40 @@ def _line_reads(
         if any(tone.takes_in(line_hz, reach_hz) for tone in tones):
             reads.on_tone.add(index)
             continue
-        line = spectrum.line_read(line_hz, half_width_hz)
-        if line is None:
-            reads.off_edge.add(index)
-            continue
-        cell = (window.location, window.speed_bin or "", _cell_phase(window, sample, coasts))
-        reads.cells.add(cell, line, sample.t_s)
-        reads.lines[index] = _Line(cell, line_hz, half_width_hz)
         offset = CONTROL_REACHES * reach_hz
-        for control_hz in (line_hz - offset, line_hz + offset):
-            if control_hz < MIN_ANALYSIS_FREQ_HZ or any(
-                tone.takes_in(control_hz, reach_hz) for tone in tones
-            ):
-                continue
-            control = spectrum.line_read(control_hz, half_width_hz)
+        controls = [
+            control_hz
+            for control_hz in (line_hz - offset, line_hz + offset)
+            if not (
+                control_hz < MIN_ANALYSIS_FREQ_HZ
+                or any(tone.takes_in(control_hz, reach_hz) for tone in tones)
+            )
+        ]
+        planned.append(
+            _PlannedRead(
+                index,
+                _Line(
+                    (window.location, window.speed_bin or "", _cell_phase(window, sample, coasts)),
+                    line_hz,
+                    half_width_hz,
+                ),
+                sample.t_s,
+                len(controls),
+            )
+        )
+        requests.append((spectrum, line_hz, half_width_hz))
+        requests.extend((spectrum, control_hz, half_width_hz) for control_hz in controls)
+    taken = iter(line_reads(requests))
+    for plan in planned:
+        line = next(taken)
+        control_reads = [next(taken) for _ in range(plan.controls)]
+        if line is None:
+            reads.off_edge.add(plan.index)
+            continue
+        cell = plan.line.cell
+        reads.cells.add(cell, line, plan.t_s)
+        reads.lines[plan.index] = plan.line
+        for control in control_reads:
             if control is not None:
                 reads.cells.add_control(cell, control)
     return reads

@@ -9,7 +9,7 @@ from typing import cast
 
 from vibesensor.common.json_types import JsonArray, JsonObject, JsonValue, is_json_array
 from vibesensor.common.json_utils import safe_json_dumps, safe_json_loads
-from vibesensor.common.scalars import optional_float, optional_int
+from vibesensor.common.scalars import float_or, optional_float, optional_int
 from vibesensor.domain.strength_metrics import StrengthPeak
 from vibesensor.recording.sensor_frame import SensorFrame
 from vibesensor.recording.sensor_frame_values import (
@@ -24,12 +24,15 @@ from vibesensor.recording.strength_metrics_codec import (
 
 __all__ = [
     "SENSOR_FRAME_FIELD_NAMES",
-    "sensor_frame_top_peaks_from_row_value",
+    "sensor_frame_top_peak_amp_from_row_value",
     "sensor_frame_from_mapping_payload",
     "sensor_frame_from_row_payload",
     "sensor_frame_to_mapping_payload",
     "sensor_frame_to_row_payload",
 ]
+
+# A row keeps at most this many of its stored peaks.
+_MAX_TOP_PEAKS = 10
 
 _VIBRATION_STRENGTH_DB_KEY = "vibration_strength_db"
 _STRENGTH_BUCKET_KEY = "strength_bucket"
@@ -312,17 +315,29 @@ def sensor_frame_to_row_payload(frame: SensorFrame) -> tuple[object, ...]:
     )
 
 
-def sensor_frame_top_peaks_from_row_value(
+def sensor_frame_top_peak_amp_from_row_value(
     value: object,
     *,
     source: str = "sample row",
-) -> tuple[StrengthPeak, ...]:
-    """Decode a stored ``top_peaks`` column exactly as a full row decode would."""
-    return _strength_peaks(_top_peaks_from_row_value(value, source=source))
+) -> float | None:
+    """The largest amplitude of the peaks a full row decode keeps from a ``top_peaks`` column.
+
+    The same peaks as ``_strength_peaks`` keeps (the first ``_MAX_TOP_PEAKS``
+    objects, valid ones only), without building them: a long drive's rows are
+    all read this way to pick the ones analysed.
+    """
+    largest: float | None = None
+    for item in _top_peaks_from_row_value(value, source=source)[:_MAX_TOP_PEAKS]:
+        if not isinstance(item, Mapping):
+            continue
+        amp = float_or(item.get("amp"))
+        if float_or(item.get("hz")) > 0.0 and amp > 0.0 and (largest is None or amp > largest):
+            largest = amp
+    return largest
 
 
 def _strength_peaks(top_peaks: object) -> tuple[StrengthPeak, ...]:
-    return strength_peaks_from_sequence(top_peaks, max_items=10)
+    return strength_peaks_from_sequence(top_peaks, max_items=_MAX_TOP_PEAKS)
 
 
 def _build_sensor_frame(values: SensorFrameScalarValues, *, top_peaks: object) -> SensorFrame:

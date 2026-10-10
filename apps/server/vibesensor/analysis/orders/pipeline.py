@@ -41,6 +41,7 @@ from vibesensor.analysis.orders.physics import (
     WHEEL_HARMONIC_HYPOTHESES,
     OrderHypothesis,
     _order_hypotheses,
+    reference_hz,
 )
 from vibesensor.analysis.orders.scoring import (
     OrderFindingBuildContext,
@@ -221,6 +222,7 @@ class OrderAnalysisSession:
         "_speed_moves",
         "_speed_rates",
         "_speed_following_tones",
+        "_references",
     )
 
     def __init__(self, request: OrderAnalysisRequest) -> None:
@@ -243,6 +245,7 @@ class OrderAnalysisSession:
             if sample.t_s is not None and sample.speed_kmh is not None and sample.speed_kmh > 0
         )
         self._speed_rates = speed_rates_kmh_per_s(self._samples)
+        self._references: dict[str, list[tuple[float | None, str]]] = {}
         self._cached_peaks: list[list[tuple[float, float]]] = [
             _sample_top_peaks(sample) for sample in self._samples
         ]
@@ -412,11 +415,22 @@ class OrderAnalysisSession:
             self._speed_following_tones["engine" if engine else "road"],
             hypothesis,
             self._context,
-            self._tire_circumference_m,
+            self._reference_hz(hypothesis.order_label_base),
             self._per_sample_phases,
             self._lang,
             self._speed_rates,
         )
+
+    def _reference_hz(self, order_label_base: str) -> list[tuple[float | None, str]]:
+        """Each sample's ``reference_hz`` for the orders of one rotation, worked out once."""
+        references = self._references.get(order_label_base)
+        if references is None:
+            references = [
+                reference_hz(order_label_base, sample, self._context, self._tire_circumference_m)
+                for sample in self._samples
+            ]
+            self._references[order_label_base] = references
+        return references
 
     def _evaluate_hypothesis(
         self,

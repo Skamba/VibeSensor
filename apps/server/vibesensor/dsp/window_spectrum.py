@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
+from functools import cache
 from math import hypot, sqrt
 
 import numpy as np
@@ -15,6 +17,7 @@ __all__ = [
     "WindowSpectrum",
     "line_half_width_hz",
     "line_reach_hz",
+    "line_reads",
     "peak_band_bins",
     "peak_scale_g",
     "tone_line_level_g",
@@ -162,3 +165,101 @@ class WindowSpectrum:
             under = bins * level + bend * half * (half + 1) * (2 * half + 1) / 3.0
         excess = (band - under) / peak_band_bins(bin_hz)
         return LineRead(excess=excess, flanks=flanks)
+
+
+# Reads stacked at once in ``line_reads``: a few MB of float64 at most.
+_READS_PER_STACK = 4096
+
+
+def line_reads(
+    reads: Sequence[tuple[WindowSpectrum, float, float]],
+) -> list[LineRead | None]:
+    """``spectrum.line_read(hz, half_width_hz)`` for each ``(spectrum, hz, half_width_hz)``.
+
+    The same reads, bit for bit, at a fraction of the cost: the reads with a
+    full band and both flanks inside their spectrum are stacked by band width
+    and computed as arrays in the same floating-point order as one read
+    (``_python_sum``). The rest, at a spectrum's edge, are read one by one.
+    """
+    results: list[LineRead | None] = [None] * len(reads)
+    # Each spectrum's first bin and bin width, once per frequency axis: a
+    # drive's spectra share one or a few.
+    bins_of: dict[int, tuple[float, float]] = {}
+    for chunk_start in range(0, len(reads), _READS_PER_STACK):
+        by_half: dict[tuple[int, float], tuple[list[int], list[npt.NDArray[np.float32]]]] = {}
+        for position in range(chunk_start, min(len(reads), chunk_start + _READS_PER_STACK)):
+            spectrum, hz, half_width_hz = reads[position]
+            freq = spectrum.freq_hz
+            size = freq.size
+            if size < 2:
+                continue
+            bins = bins_of.get(id(freq))
+            if bins is None:
+                bins = bins_of[id(freq)] = (float(freq[0]), spectrum.bin_hz)
+            start, bin_hz = bins
+            centre = int(round((hz - start) / bin_hz))
+            half = int(round(half_width_hz / bin_hz)) + _MAIN_LOBE_BINS
+            if centre - half - _FLANK_BINS < 0 or centre + half + _FLANK_BINS >= size:
+                results[position] = spectrum.line_read(hz, half_width_hz)
+                continue
+            positions, segments = by_half.setdefault((half, bin_hz), ([], []))
+            positions.append(position)
+            segments.append(
+                spectrum.amp_g[centre - half - _FLANK_BINS : centre + half + 1 + _FLANK_BINS]
+            )
+        for (half, bin_hz), (positions, segments) in by_half.items():
+            stacked = _stacked_line_reads(np.stack(segments), half, bin_hz)
+            for position, excess, flanks in zip(positions, *stacked, strict=True):
+                results[position] = LineRead(excess=excess, flanks=flanks)
+    return results
+
+
+def _stacked_line_reads(
+    segments: npt.NDArray[np.float32], half: int, bin_hz: float
+) -> tuple[list[float], list[float]]:
+    """``line_read``'s excess and flanks for rows of a band ``2 half + 1`` wide and its flanks."""
+    power = np.square(segments, dtype=np.float64)
+    lower = [power[:, offset] for offset in range(_FLANK_BINS)]
+    upper = [power[:, -_FLANK_BINS + offset] for offset in range(_FLANK_BINS)]
+    flanks = _python_sum(lower + upper) / (2 * _FLANK_BINS)
+    band = _python_sum([power[:, _FLANK_BINS + offset] for offset in range(2 * half + 1)])
+    bins = 2 * half + 1
+    _distance, mean_distance, spread, spread_squares = _flank_distances(half)
+    paired = [0.5 * (low + up) for low, up in zip(reversed(lower), upper, strict=True)]
+    mean_paired = _python_sum(paired) / _FLANK_BINS
+    bend = (
+        _python_sum(
+            [step * (value - mean_paired) for step, value in zip(spread, paired, strict=True)]
+        )
+        / spread_squares
+    )
+    level = mean_paired - bend * mean_distance
+    under = bins * level + bend * half * (half + 1) * (2 * half + 1) / 3.0
+    excess = (band - under) / peak_band_bins(bin_hz)
+    return excess.tolist(), flanks.tolist()
+
+
+def _python_sum(columns: Sequence[npt.NDArray[np.float64]]) -> npt.NDArray[np.float64]:
+    """Python's ``sum`` of each row's values (one column per term), as arrays.
+
+    ``sum`` of floats compensates its rounding (Neumaier, *ZAMM* 54, 1974;
+    CPython 3.12+): the same steps here give the same bits.
+    """
+    total = 0.0 + columns[0]
+    compensation = np.zeros_like(total)
+    for column in columns[1:]:
+        step = total + column
+        compensation += np.where(
+            np.abs(total) >= np.abs(column), (total - step) + column, (column - step) + total
+        )
+        total = step
+    return np.where((compensation != 0) & np.isfinite(compensation), total + compensation, total)
+
+
+@cache
+def _flank_distances(half: int) -> tuple[list[float], float, list[float], float]:
+    """The flank bins' squared distances from a band's centre: their mean, spread, its squares."""
+    distance = [float(half + 1 + offset) ** 2 for offset in range(_FLANK_BINS)]
+    mean_distance = sum(distance) / _FLANK_BINS
+    spread = [value - mean_distance for value in distance]
+    return distance, mean_distance, spread, sum(step * step for step in spread)

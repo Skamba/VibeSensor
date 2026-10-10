@@ -21,7 +21,9 @@ combined_spectrum_amp_g
 from __future__ import annotations
 
 from collections.abc import Sequence
+from itertools import groupby, pairwise
 from math import isfinite, log10
+from operator import itemgetter
 from statistics import median as _stdlib_median
 from typing import Final, NotRequired, TypedDict, cast
 
@@ -46,6 +48,7 @@ __all__ = [
     "STRENGTH_EPSILON_MIN_G",
     "combined_spectrum_amp_g",
     "compute_vibration_strength_db",
+    "compute_vibration_strength_rows",
     "median",
     "noise_floor_amp_p20_g",
     "peak_band_rms_amp_g",
@@ -121,30 +124,34 @@ def _aligned_float_arrays(
 
 
 def _quantile_or_zero(values: npt.NDArray[np.float64], q: float) -> float:
-    if values.size == 0:
-        return 0.0
+    return float(_row_quantiles(values[None, :], q)[0])
+
+
+def _row_quantiles(rows: npt.NDArray[np.float64], q: float) -> npt.NDArray[np.float64]:
+    """Each row's linear-interpolation quantile *q*; 0.0 for empty rows."""
+    if rows.shape[1] == 0:
+        return np.zeros(rows.shape[0], dtype=np.float64)
     q_value = float(q)
     if not 0.0 <= q_value <= 1.0:
-        return float(np.quantile(values, q_value))
-    if values.size == 1:
-        return float(values[0])
+        return np.asarray(np.quantile(rows, q_value, axis=1), dtype=np.float64)
+    if rows.shape[1] == 1:
+        return rows[:, 0].copy()
     if q_value == 0.0:
-        return float(np.min(values))
+        return np.min(rows, axis=1)
     if q_value == 1.0:
-        return float(np.max(values))
+        return np.max(rows, axis=1)
 
     # The linear-interpolation quantile only needs the two bracketing order
     # statistics, so use partition instead of the heavier generic quantile path.
-    position = q_value * float(values.size - 1)
+    position = q_value * float(rows.shape[1] - 1)
     lower_idx = int(position)
     upper_idx = int(np.ceil(position))
     if lower_idx == upper_idx:
-        partitioned = np.partition(values, lower_idx)
-        return float(partitioned[lower_idx])
+        return np.partition(rows, lower_idx, axis=1)[:, lower_idx]
 
-    partitioned = np.partition(values, (lower_idx, upper_idx))
-    lower_value = float(partitioned[lower_idx])
-    upper_value = float(partitioned[upper_idx])
+    partitioned = np.partition(rows, (lower_idx, upper_idx), axis=1)
+    lower_value = partitioned[:, lower_idx]
+    upper_value = partitioned[:, upper_idx]
     return lower_value + (upper_value - lower_value) * (position - lower_idx)
 
 
@@ -360,47 +367,43 @@ def _floor_bins_mask_aligned(
 
 def _window_medians(
     values: npt.NDArray[np.float64],
-    index: npt.NDArray[np.intp],
     counted: npt.NDArray[np.bool_],
 ) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.intp]]:
-    """Per row, the median of ``values[index]`` over the *counted* entries, and their count."""
-    ordered = np.sort(np.where(counted, values[index], np.inf), axis=1)
+    """Per row, the median of *values* over the *counted* entries, and their count."""
+    ordered = np.sort(np.where(counted, values, np.inf), axis=1)
     counts = counted.sum(axis=1)
-    rows = np.arange(index.shape[0])
+    rows = np.arange(values.shape[0])
     lower = ordered[rows, np.maximum(counts - 1, 0) // 2]
-    upper = ordered[rows, np.minimum(counts // 2, index.shape[1] - 1)]
+    upper = ordered[rows, np.minimum(counts // 2, values.shape[1] - 1)]
     return 0.5 * (lower + upper), counts
 
 
 def _peak_local_floors(
     *,
     freq_hz: npt.NDArray[np.float64],
-    combined_spectrum_amp_g: npt.NDArray[np.float64],
+    spectra: npt.NDArray[np.float64],
     floor_bins: npt.NDArray[np.bool_],
-    center_indexes: list[int],
+    rows: npt.NDArray[np.intp],
+    center_indexes: npt.NDArray[np.intp],
 ) -> npt.NDArray[np.float64]:
-    """What each peak stands out from where it sits: its local floor.
+    """What each peak (of ``spectra[rows]``) stands out from where it sits: its local floor.
 
     The median of the floor bins within ``LOCAL_FLOOR_HALF_WIDTH_HZ`` of the
     peak. Where peaks crowd that whole neighbourhood (no floor bin left), the
     median of every bin there: a peak among many is as strong as its crowd.
     """
-    if not center_indexes:
+    if not center_indexes.size:
         return np.empty(0, dtype=np.float64)
     bin_hz = float(freq_hz[1] - freq_hz[0]) if freq_hz.size > 1 else 0.0
     half_bins = int(round(LOCAL_FLOOR_HALF_WIDTH_HZ / bin_hz)) if bin_hz > 0 else 0
-    centres = np.asarray(center_indexes, dtype=np.intp)
-    index = centres[:, None] + np.arange(-half_bins, half_bins + 1, dtype=np.intp)[None, :]
+    index = center_indexes[:, None] + np.arange(-half_bins, half_bins + 1, dtype=np.intp)[None, :]
     inside = (index >= 0) & (index < freq_hz.size)
     index = np.clip(index, 0, freq_hz.size - 1)
-    floors, floor_counts = _window_medians(
-        combined_spectrum_amp_g, index, inside & floor_bins[index]
-    )
+    values = spectra[rows[:, None], index]
+    floors, floor_counts = _window_medians(values, inside & floor_bins[rows[:, None], index])
     crowded = floor_counts == 0
     if crowded.any():
-        crowd_medians, _counts = _window_medians(
-            combined_spectrum_amp_g, index[crowded], inside[crowded]
-        )
+        crowd_medians, _counts = _window_medians(values[crowded], inside[crowded])
         floors[crowded] = crowd_medians
     return floors
 
@@ -509,28 +512,6 @@ def _peak_band_index_ranges_aligned(
     return left_bounds, right_bounds
 
 
-def _peak_band_rms_amp_g_from_ranges(
-    *,
-    combined_spectrum_amp_g: npt.NDArray[np.float64],
-    left_bounds: npt.NDArray[np.intp],
-    right_bounds: npt.NDArray[np.intp],
-) -> npt.NDArray[np.float64]:
-    if left_bounds.size == 0:
-        return np.empty(0, dtype=np.float64)
-    squared = np.square(combined_spectrum_amp_g, dtype=np.float64)
-    prefix_sum = np.empty(squared.size + 1, dtype=np.float64)
-    prefix_sum[0] = 0.0
-    np.cumsum(squared, out=prefix_sum[1:])
-
-    counts = right_bounds - left_bounds
-    result = np.zeros(left_bounds.shape, dtype=np.float64)
-    valid = counts > 0
-    if np.any(valid):
-        sums = prefix_sum[right_bounds[valid]] - prefix_sum[left_bounds[valid]]
-        result[valid] = np.sqrt(sums / counts[valid])
-    return result
-
-
 def _local_maxima(values: npt.NDArray[np.float64]) -> npt.NDArray[np.intp]:
     """Indexes of interior local maxima, ascending (``scipy.signal.find_peaks`` rules).
 
@@ -556,25 +537,73 @@ def _local_maxima(values: npt.NDArray[np.float64]) -> npt.NDArray[np.intp]:
 
 
 def _candidate_peak_indexes(
-    values: npt.NDArray[np.float64], threshold: float, limit: int
-) -> list[int]:
-    """The *limit* highest local maxima at or above *threshold*, highest first."""
-    peak_indexes = _local_maxima(values)
-    peak_indexes = peak_indexes[values[peak_indexes] >= threshold]
-    if values.size > 1:
-        last_idx = values.size - 1
-        last_val = float(values[last_idx])
-        if last_val >= threshold and last_val > float(values[last_idx - 1]):
-            peak_indexes = np.append(peak_indexes, last_idx)
-    if peak_indexes.size == 0:
-        return []
-    order = np.argsort(values[peak_indexes])[::-1]
-    return cast(list[int], peak_indexes[order[:limit]].tolist())
+    spectra: npt.NDArray[np.float64], thresholds: npt.NDArray[np.float64], limit: int
+) -> list[npt.NDArray[np.intp]]:
+    """Per spectrum, its *limit* highest local maxima at or above its threshold, highest first.
+
+    The last bin also counts where it rises above its neighbour.
+    """
+    size = spectra.shape[1]
+    is_peak = np.zeros(spectra.shape, dtype=np.bool_)
+    if size >= 3:
+        left, right = spectra[:, :-1], spectra[:, 1:]
+        is_peak[:, 1:-1] = (right[:, :-1] > left[:, :-1]) & (left[:, 1:] > right[:, 1:])
+        for row in np.flatnonzero((left == right).any(axis=1)).tolist():
+            # A flat top counts once, at its middle (``_local_maxima``).
+            is_peak[row] = False
+            is_peak[row, _local_maxima(spectra[row])] = True
+    if size > 1:
+        is_peak[:, -1] = spectra[:, -1] > spectra[:, -2]
+    is_peak &= spectra >= thresholds[:, None]
+    peak_rows, peak_indexes = np.nonzero(is_peak)
+    peak_values = spectra[peak_rows, peak_indexes]
+    bounds = np.searchsorted(peak_rows, np.arange(spectra.shape[0] + 1)).tolist()
+    return [
+        peak_indexes[start:stop][np.argsort(peak_values[start:stop])[::-1][:limit]]
+        for start, stop in pairwise(bounds)
+    ]
+
+
+def _floor_bins(
+    *,
+    freq_hz: npt.NDArray[np.float64],
+    base_mask: npt.NDArray[np.bool_],
+    peak_indexes: list[npt.NDArray[np.intp]],
+    exclusion_hz: float,
+) -> npt.NDArray[np.bool_]:
+    """Per spectrum, the in-range bins outside *exclusion_hz* of each of its peaks."""
+    if np.any(freq_hz[1:] < freq_hz[:-1]):
+        return np.array(
+            [
+                _floor_bins_mask_aligned(
+                    freq_hz=freq_hz,
+                    base_mask=base_mask,
+                    peak_indexes=indexes.tolist(),
+                    exclusion_hz=exclusion_hz,
+                )
+                for indexes in peak_indexes
+            ],
+            dtype=np.bool_,
+        ).reshape(len(peak_indexes), freq_hz.size)
+    rows = np.repeat(np.arange(len(peak_indexes)), [indexes.size for indexes in peak_indexes])
+    centre_hz = freq_hz[np.concatenate(peak_indexes)]
+    # Each peak's excluded bins [left, right), counted per bin: excluded where any peak's are.
+    width = freq_hz.size + 1
+    starts = rows * width + np.searchsorted(freq_hz, centre_hz - exclusion_hz, side="left")
+    stops = rows * width + np.searchsorted(freq_hz, centre_hz + exclusion_hz, side="right")
+    size = len(peak_indexes) * width
+    edges = np.bincount(starts, minlength=size) - np.bincount(stops, minlength=size)
+    edges = edges.reshape(len(peak_indexes), width)
+    floor_bins: npt.NDArray[np.bool_] = base_mask & (np.cumsum(edges[:, :-1], axis=1) == 0)
+    return floor_bins
 
 
 def _interpolated_peak_hz(
-    freq_hz: npt.NDArray[np.float64], values: npt.NDArray[np.float64], indexes: list[int]
-) -> list[float]:
+    freq_hz: npt.NDArray[np.float64],
+    spectra: npt.NDArray[np.float64],
+    rows: npt.NDArray[np.intp],
+    indexes: npt.NDArray[np.intp],
+) -> npt.NDArray[np.float64]:
     """Each peak's frequency between bins, from a parabola through its bins' log amplitudes.
 
     The parabola runs through the peak bin and its two neighbours. A tone's
@@ -583,19 +612,57 @@ def _interpolated_peak_hz(
     peak bin alone is up to half a bin off. A peak on the spectrum's edge or
     beside a zero keeps its bin's frequency.
     """
-    idx = np.asarray(indexes, dtype=np.intp)
-    hz = freq_hz[idx]
-    inner = idx[(idx > 0) & (idx < values.size - 1)]
-    left, centre, right = values[inner - 1], values[inner], values[inner + 1]
+    hz = freq_hz[indexes]
+    inner = (indexes > 0) & (indexes < spectra.shape[1] - 1)
+    row, idx = rows[inner], indexes[inner]
+    left, centre, right = spectra[row, idx - 1], spectra[row, idx], spectra[row, idx + 1]
     with np.errstate(divide="ignore", invalid="ignore"):
         log_l, log_c, log_r = np.log(left), np.log(centre), np.log(right)
         offset = 0.5 * (log_l - log_r) / (log_l - 2.0 * log_c + log_r)
-    bin_hz = freq_hz[inner + 1] - freq_hz[inner]
-    shifted = np.where(
-        np.isfinite(offset), freq_hz[inner] + np.clip(offset, -0.5, 0.5) * bin_hz, freq_hz[inner]
+    bin_hz = freq_hz[idx + 1] - freq_hz[idx]
+    hz[inner] = np.where(
+        np.isfinite(offset), freq_hz[idx] + np.clip(offset, -0.5, 0.5) * bin_hz, freq_hz[idx]
     )
-    by_index = dict(zip(inner.tolist(), shifted.tolist(), strict=True))
-    return [by_index.get(int(i), float(f)) for i, f in zip(idx, hz, strict=True)]
+    return hz
+
+
+def _peak_band_rms_amp_g(
+    *,
+    freq_hz: npt.NDArray[np.float64],
+    spectra: npt.NDArray[np.float64],
+    rows: npt.NDArray[np.intp],
+    center_indexes: npt.NDArray[np.intp],
+    bandwidth_hz: float,
+) -> npt.NDArray[np.float64]:
+    """Each peak's RMS amplitude (g) over the bins of its spectrum within *bandwidth_hz*."""
+    if np.any(freq_hz[1:] < freq_hz[:-1]):
+        return np.array(
+            [
+                _peak_band_rms_amp_g_aligned(
+                    freq_hz=freq_hz,
+                    combined_spectrum_amp_g=spectra[row],
+                    center_idx=index,
+                    bandwidth_hz=bandwidth_hz,
+                )
+                for row, index in zip(rows.tolist(), center_indexes.tolist(), strict=True)
+            ],
+            dtype=np.float64,
+        )
+    center_hz = freq_hz[center_indexes]
+    left_bounds = np.searchsorted(freq_hz, center_hz - bandwidth_hz, side="left")
+    right_bounds = np.searchsorted(freq_hz, center_hz + bandwidth_hz, side="right")
+    prefix_sum = np.zeros((spectra.shape[0], spectra.shape[1] + 1), dtype=np.float64)
+    np.cumsum(np.square(spectra, dtype=np.float64), axis=1, out=prefix_sum[:, 1:])
+    counts = right_bounds - left_bounds
+    result = np.zeros(center_indexes.shape, dtype=np.float64)
+    valid = counts > 0
+    if np.any(valid):
+        sums = (
+            prefix_sum[rows[valid], right_bounds[valid]]
+            - prefix_sum[rows[valid], left_bounds[valid]]
+        )
+        result[valid] = np.sqrt(sums / counts[valid])
+    return result
 
 
 def vibration_strength_db_scalar(
@@ -620,27 +687,6 @@ def vibration_strength_db_scalar(
         else max(STRENGTH_EPSILON_MIN_G, float(epsilon_g))
     )
     return 20.0 * log10((band + eps) / (floor + eps))
-
-
-def _batch_vibration_strength_db_aligned(
-    *,
-    peak_band_rms_amp_g_values: npt.NDArray[np.float64],
-    floor_amp_g: float,
-    epsilon_g: float | None = None,
-) -> npt.NDArray[np.float64]:
-    floor_raw = float(floor_amp_g)
-    floor = max(0.0, floor_raw) if isfinite(floor_raw) else 0.0
-    eps = (
-        max(STRENGTH_EPSILON_MIN_G, floor * STRENGTH_EPSILON_FLOOR_RATIO)
-        if epsilon_g is None
-        else max(STRENGTH_EPSILON_MIN_G, float(epsilon_g))
-    )
-    band = np.where(
-        np.isfinite(peak_band_rms_amp_g_values),
-        np.maximum(peak_band_rms_amp_g_values, 0.0),
-        0.0,
-    )
-    return 20.0 * np.log10((band + eps) / (floor + eps))
 
 
 def compute_vibration_strength_db(
@@ -669,113 +715,139 @@ def compute_vibration_strength_db(
     n = min(freq_arr.size, combined_arr.size)
     if n <= 0:
         return empty_vibration_strength_metrics()
+    return compute_vibration_strength_rows(
+        freq_hz=freq_arr[:n],
+        spectra=combined_arr[None, :n],
+        peak_bandwidth_hz=peak_bandwidth_hz,
+        peak_separation_hz=peak_separation_hz,
+        top_n=top_n,
+        strength_range_mask=strength_range_mask,
+    )[0]
 
-    freq = freq_arr[:n]
-    combined = np.where(np.isfinite(combined_arr[:n]), np.maximum(combined_arr[:n], 0.0), 0.0)
-    floor_p20 = _noise_floor_amp_p20_g_aligned(
-        combined_spectrum_amp_g=combined,
-        freq_hz=freq,
+
+def compute_vibration_strength_rows(
+    *,
+    freq_hz: npt.NDArray[np.floating],
+    spectra: npt.NDArray[np.floating],
+    peak_bandwidth_hz: float = PEAK_BANDWIDTH_HZ,
+    peak_separation_hz: float = PEAK_SEPARATION_HZ,
+    top_n: int = 5,
+    strength_range_mask: npt.NDArray[np.bool_] | None = None,
+) -> list[VibrationStrengthMetrics]:
+    """``compute_vibration_strength_db`` of each row of *spectra*, all on the bins *freq_hz*.
+
+    Many spectra at once take a fraction of the time of one call each (the
+    post-stop raw replay); each row's result is the one it has on its own.
+    """
+    if freq_hz.size == 0:
+        return [empty_vibration_strength_metrics() for _row in range(spectra.shape[0])]
+    freq = np.asarray(freq_hz, dtype=np.float64)
+    raw = np.asarray(spectra, dtype=np.float64)
+    combined = np.where(np.isfinite(raw), np.maximum(raw, 0.0), 0.0)
+    noise_bins = combined[:, 1:] if _spectrum_includes_dc_bin_aligned(freq_hz=freq) else combined
+    floor_p20 = _row_quantiles(noise_bins, 0.20)
+    thresholds = np.array(
+        [
+            max(floor * PEAK_THRESHOLD_FLOOR_RATIO, floor + STRENGTH_EPSILON_MIN_G)
+            for floor in floor_p20.tolist()
+        ],
+        dtype=np.float64,
     )
-    threshold = max(
-        floor_p20 * PEAK_THRESHOLD_FLOOR_RATIO,
-        floor_p20 + STRENGTH_EPSILON_MIN_G,
-    )
 
-    floor_peak_limit = max(1, top_n)
-    scored_candidate_limit = max(1, top_n * 2)
-    scored_candidate_indexes = _candidate_peak_indexes(combined, threshold, scored_candidate_limit)
-    floor_peak_indexes = scored_candidate_indexes[:floor_peak_limit]
-
+    scored_candidates = _candidate_peak_indexes(combined, thresholds, max(1, top_n * 2))
     base_mask = _range_mask_aligned(freq, strength_range_mask)
-    floor_bins = _floor_bins_mask_aligned(
+    floor_bins = _floor_bins(
         freq_hz=freq,
         base_mask=base_mask,
-        peak_indexes=floor_peak_indexes,
+        peak_indexes=[indexes[: max(1, top_n)] for indexes in scored_candidates],
         exclusion_hz=peak_separation_hz,
     )
-    floor_strength = _floor_from_bins_aligned(
-        amps=combined, base_mask=base_mask, floor_bins=floor_bins
-    )
-    peak_band_ranges = _peak_band_index_ranges_aligned(
+    floor_strengths, floor_counts = _window_medians(combined, floor_bins)
+    for row in np.flatnonzero(floor_counts == 0).tolist():
+        # All bins were within peak exclusion zones: P20 of the in-range bins
+        # (not ``noise_floor_amp_p20_g``, which assumes a DC bin to skip).
+        floor_strengths[row] = _quantile_or_zero(combined[row][base_mask], 0.20)
+
+    rows = np.repeat(np.arange(combined.shape[0]), [indexes.size for indexes in scored_candidates])
+    indexes = np.concatenate(scored_candidates)
+    candidate_hz = _interpolated_peak_hz(freq, combined, rows, indexes)
+    band_rms_values = _peak_band_rms_amp_g(
         freq_hz=freq,
-        center_indexes=scored_candidate_indexes,
+        spectra=combined,
+        rows=rows,
+        center_indexes=indexes,
         bandwidth_hz=peak_bandwidth_hz,
     )
-
-    candidate_hz = _interpolated_peak_hz(freq, combined, scored_candidate_indexes)
-    if peak_band_ranges is None:
-        band_rms_values = np.array(
-            [
-                _peak_band_rms_amp_g_aligned(
-                    freq_hz=freq,
-                    combined_spectrum_amp_g=combined,
-                    center_idx=idx,
-                    bandwidth_hz=peak_bandwidth_hz,
-                )
-                for idx in scored_candidate_indexes
-            ],
-            dtype=np.float64,
-        )
-    else:
-        left_bounds, right_bounds = peak_band_ranges
-        band_rms_values = _peak_band_rms_amp_g_from_ranges(
-            combined_spectrum_amp_g=combined,
-            left_bounds=left_bounds,
-            right_bounds=right_bounds,
-        )
-    candidate_db = _batch_vibration_strength_db_aligned(
-        peak_band_rms_amp_g_values=band_rms_values,
-        floor_amp_g=floor_strength,
-    )
+    floors = np.where(np.isfinite(floor_strengths), np.maximum(floor_strengths, 0.0), 0.0)
+    epsilons = np.maximum(STRENGTH_EPSILON_MIN_G, floors * STRENGTH_EPSILON_FLOOR_RATIO)
+    band = np.where(np.isfinite(band_rms_values), np.maximum(band_rms_values, 0.0), 0.0)
+    candidate_db = 20.0 * np.log10((band + epsilons[rows]) / (floors[rows] + epsilons[rows]))
     candidate_buckets = _buckets_for_strength_db_aligned(candidate_db)
-    candidates: list[tuple[int, StrengthPeak]] = [
-        (
-            idx,
-            {
-                "hz": hz,
-                "amp": band_rms,
-                "vibration_strength_db": db,
-                "strength_bucket": strength_bucket,
-            },
-        )
-        for idx, hz, band_rms, db, strength_bucket in zip(
-            scored_candidate_indexes,
-            candidate_hz,
-            band_rms_values.tolist(),
-            candidate_db.tolist(),
-            candidate_buckets,
-            strict=True,
-        )
-        if isfinite(db)
-    ]
-    candidates.sort(
-        key=lambda item: item[1]["vibration_strength_db"],
-        reverse=True,
-    )
 
-    chosen: list[StrengthPeak] = []
+    chosen_by_row: list[list[StrengthPeak]] = []
+    chosen_rows: list[int] = []
     chosen_indexes: list[int] = []
-    chosen_hz: list[float] = []
-    for idx, candidate in candidates:
-        if len(chosen) >= top_n:
-            break
-        hz = candidate["hz"]
-        for existing_hz in chosen_hz:
-            if abs(existing_hz - hz) < peak_separation_hz:
+    candidates = zip(
+        rows.tolist(),
+        indexes.tolist(),
+        candidate_hz.tolist(),
+        band_rms_values.tolist(),
+        candidate_db.tolist(),
+        candidate_buckets,
+        strict=True,
+    )
+    for row, row_candidates in groupby(candidates, key=itemgetter(0)):
+        ranked: list[tuple[int, StrengthPeak]] = [
+            (
+                idx,
+                {
+                    "hz": hz,
+                    "amp": band_rms,
+                    "vibration_strength_db": db,
+                    "strength_bucket": strength_bucket,
+                },
+            )
+            for _row, idx, hz, band_rms, db, strength_bucket in row_candidates
+            if isfinite(db)
+        ]
+        ranked.sort(key=lambda item: item[1]["vibration_strength_db"], reverse=True)
+        chosen_by_row.extend([] for _row in range(len(chosen_by_row), row))
+        chosen: list[StrengthPeak] = []
+        chosen_hz: list[float] = []
+        for idx, candidate in ranked:
+            if len(chosen) >= top_n:
                 break
-        else:
-            chosen.append(candidate)
-            chosen_indexes.append(idx)
-            chosen_hz.append(hz)
+            hz = candidate["hz"]
+            for existing_hz in chosen_hz:
+                if abs(existing_hz - hz) < peak_separation_hz:
+                    break
+            else:
+                chosen.append(candidate)
+                chosen_rows.append(row)
+                chosen_indexes.append(idx)
+                chosen_hz.append(hz)
+        chosen_by_row.append(chosen)
+    chosen_by_row.extend([] for _row in range(len(chosen_by_row), combined.shape[0]))
+
     local_floors = _peak_local_floors(
         freq_hz=freq,
-        combined_spectrum_amp_g=combined,
+        spectra=combined,
         floor_bins=floor_bins,
-        center_indexes=chosen_indexes,
+        rows=np.asarray(chosen_rows, dtype=np.intp),
+        center_indexes=np.asarray(chosen_indexes, dtype=np.intp),
     )
-    for peak, local_floor in zip(chosen, local_floors.tolist(), strict=True):
+    peaks = (peak for chosen in chosen_by_row for peak in chosen)
+    for peak, local_floor in zip(peaks, local_floors.tolist(), strict=True):
         peak["local_floor_amp_g"] = local_floor
+    return [
+        _strength_metrics(chosen, floor_strength)
+        for chosen, floor_strength in zip(chosen_by_row, floor_strengths.tolist(), strict=True)
+    ]
 
+
+def _strength_metrics(
+    chosen: list[StrengthPeak], floor_strength: float
+) -> VibrationStrengthMetrics:
     top_peak = chosen[0] if chosen else None
     if top_peak is not None:
         _db_val = top_peak.get("vibration_strength_db")

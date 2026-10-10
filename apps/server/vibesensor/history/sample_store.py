@@ -22,7 +22,7 @@ from vibesensor.recording.sensor_frame_fields import (
     SENSOR_FRAME_FIELD_NAMES,
     sensor_frame_from_row_payload,
     sensor_frame_to_row_payload,
-    sensor_frame_top_peaks_from_row_value,
+    sensor_frame_top_peak_amp_from_row_value,
 )
 from vibesensor.recording.sensor_frame_values import strict_optional_float
 
@@ -138,13 +138,13 @@ def selection_row_values(row: Sequence[object]) -> tuple[int, float, float, floa
     t_s = strict_optional_float(row[1], field="t_s", source=source)
     strength_db = strict_optional_float(row[2], field="vibration_strength_db", source=source)
     peak_amp_g = strict_optional_float(row[3], field="strength_peak_amp_g", source=source)
-    peaks = sensor_frame_top_peaks_from_row_value(row[4], source=source)
+    top_peak_amp_g = sensor_frame_top_peak_amp_from_row_value(row[4], source=source)
     return (
         row_id,
         _nan_if_none(t_s),
         _nan_if_none(strength_db),
         _nan_if_none(peak_amp_g),
-        max((peak.amp for peak in peaks), default=math.nan),
+        _nan_if_none(top_peak_amp_g),
     )
 
 

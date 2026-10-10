@@ -37,9 +37,26 @@ path caps the loop's duty cycle at 50%. Even at a 5–10× slower Raspberry Pi
 - `PostAnalysisWorker` in `apps/server/vibesensor/analysis/post_analysis.py`
   owns a single daemon thread for completed-run post-analysis. Report requests
   read persisted analysis and render on demand.
+- Post-analysis stays on that one thread. Its cost is many small steps per
+  window (the raw replay's strength pipeline, order matching, line reads), so
+  it is cut by taking windows together as arrays (the replay's strengths 16
+  windows at a time, an order's line reads all at once), each result bit for
+  bit the one-at-a-time result. A thread pool over the replay's batches made
+  post-analysis slower, not faster (GIL contention: the build step went from
+  1.9 s to 3.7 s on x86 with 1 or 3 workers; no gain on the Pi), and each
+  window's FFT (3 × 2048 points) is too small for FFT workers. Worker
+  processes would each hold a copy of the run's samples and spectra, which the
+  Pi 3 A+ (424 MB) cannot spare while the live server runs.
 - The UDP ingest path is single-threaded: it is I/O-bound, very fast (buffer
   append under a brief lock), and the bounded async queue provides backpressure
   with explicit drop logging.
+
+### Post-analysis cost (30-minute drive, 4 sensors, `FFT_N=2048`)
+
+| Host | CPU time | Peak RSS |
+|------|----------|----------|
+| x86 dev host | ~7.5 s | ~227 MB |
+| Raspberry Pi 3 A+ (`nice -n 10`) | ~110 s | ~150 MB |
 
 ## Benchmarks
 

@@ -266,11 +266,9 @@ def test_a_band_names_the_sensors_whose_recent_spectra_hear_its_order(
     for generation in range(10):
         block = rng.normal(0.0, 0.002, size=(3, 2048))
         block[2] += 0.02 * np.sin(2 * np.pi * wheel["center_hz"] * t)
-        computed = computer.compute_combined_strength_metrics(block.astype(np.float32), 800)
-        assert computed is not None
-        processor.latest = {
-            "aaaaaaaaaaaa": LiveSpectrum(generation, computed[1], window_s=2048 / 800)
-        }
+        spectrum = computer.combined_spectrum(block.astype(np.float32), 800)
+        assert spectrum is not None
+        processor.latest = {"aaaaaaaaaaaa": LiveSpectrum(generation, spectrum, window_s=2048 / 800)}
         bands = projector.build_shared_payload(include_heavy=False)["rotational_speeds"][
             "order_bands"
         ]

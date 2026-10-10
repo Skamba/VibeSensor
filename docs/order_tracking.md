@@ -484,6 +484,9 @@ as floor):
 - The line's place (`_tracked_line_scale()`) is judged from the windows whose
   line held still within a peak's width: on a sweep a window's peak lands
   anywhere on the stretch its line swept.
+- An order's reads and control reads over the whole drive are taken together
+  (`line_reads()`): the windows' bands of one width are stacked and read at
+  once, each read bit for bit the one `line_read()` takes on its own.
 
 **Whether a sensor hears the order** (`TrackedCells`). The reads are grouped
 per sensor, 10 km/h speed bin and driving phase (the rest of the drive,
