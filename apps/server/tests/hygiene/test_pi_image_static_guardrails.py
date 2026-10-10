@@ -504,3 +504,114 @@ def test_image_validation_rejects_root_running_code_the_service_user_can_change(
 
     assert result.returncode == (0 if breakage is None else 1), result.stdout + result.stderr
     assert message in result.stdout
+
+
+_HEADLESS_BOOT_STEP = (
+    REPO_ROOT / "infra/pi-image/pi-gen/templates/stage-vibesensor/01-headless-boot/00-run.sh"
+)
+# Raspberry Pi OS's stock config.txt (pi-gen stage1), trimmed to the lines that matter.
+_STOCK_CONFIG_TXT = """\
+camera_auto_detect=1
+display_auto_detect=1
+dtoverlay=vc4-kms-v3d
+max_framebuffers=2
+disable_fw_kms_setup=1
+{arm_64bit}
+[cm4]
+otg_mode=1
+
+[all]
+"""
+
+
+def _headless_boot_partition(tmp_path: Path, *, arm_64bit: bool) -> Path:
+    """Run the image's headless-boot stage step on a stock config.txt; return the bootfs."""
+
+    rootfs = tmp_path / "rootfs"
+    boot = rootfs / "boot/firmware"
+    boot.mkdir(parents=True)
+    (boot / "config.txt").write_text(
+        _STOCK_CONFIG_TXT.format(arm_64bit="arm_64bit=1" if arm_64bit else ""), encoding="utf-8"
+    )
+    for firmware in ("start_cd.elf", "fixup_cd.dat"):
+        (boot / firmware).touch()
+    subprocess.run(
+        ["bash", str(_HEADLESS_BOOT_STEP)],
+        env={**os.environ, "ROOTFS_DIR": str(rootfs)},
+        check=True,
+    )
+    return boot
+
+
+def _gpu_mem_only_for_pi4(boot: Path) -> None:
+    config = boot / "config.txt"
+    config.write_text(config.read_text().replace("[all]\n# VibeSensor", "[pi4]\n# VibeSensor"))
+
+
+def _kms_driver_enabled(boot: Path) -> None:
+    config = boot / "config.txt"
+    config.write_text(config.read_text().replace("#dtoverlay=vc4-kms-v3d", "dtoverlay=vc4-kms-v3d"))
+
+
+def _camera_auto_detect(boot: Path) -> None:
+    config = boot / "config.txt"
+    config.write_text(config.read_text().replace("camera_auto_detect=0", "camera_auto_detect=1"))
+
+
+def _no_cut_down_gpu_firmware(boot: Path) -> None:
+    (boot / "start_cd.elf").unlink()
+
+
+@pytest.mark.smoke
+@pytest.mark.parametrize(
+    ("breakage", "message"),
+    [
+        (None, ""),
+        (_gpu_mem_only_for_pi4, "gpu_mem=16 for all boards"),
+        (_kms_driver_enabled, "KMS display driver"),
+        (_camera_auto_detect, "camera_auto_detect=1"),
+        (_no_cut_down_gpu_firmware, "start_cd.elf"),
+    ],
+)
+def test_image_is_headless_with_the_minimum_gpu_split(
+    tmp_path: Path, breakage: Callable[[Path], None] | None, message: str
+) -> None:
+    boot = _headless_boot_partition(tmp_path, arm_64bit=False)
+    if breakage is not None:
+        breakage(boot)
+
+    result = _run_image_validation_script(f'assert_headless_boot_config "{boot}"', check=False)
+
+    assert result.returncode == (0 if breakage is None else 1), result.stdout
+    assert message in result.stdout
+
+
+@pytest.mark.smoke
+@pytest.mark.parametrize(
+    ("libc_arch", "arm_64bit", "expected_arch", "message"),
+    [
+        ("armhf", False, "armhf", ""),
+        ("arm64", True, "arm64", ""),
+        ("armhf", False, "arm64", "userland is 'armhf' (libc6), expected 'arm64'"),
+        ("arm64", False, "arm64", "arm_64bit=1"),
+        ("armhf", True, "armhf", "must not set arm_64bit=1"),
+    ],
+)
+def test_image_validation_checks_the_target_architecture(
+    tmp_path: Path, libc_arch: str, arm_64bit: bool, expected_arch: str, message: str
+) -> None:
+    boot = _headless_boot_partition(tmp_path, arm_64bit=arm_64bit)
+    rootfs = tmp_path / "rootfs"
+    (rootfs / "var/lib/dpkg").mkdir(parents=True)
+    (rootfs / "var/lib/dpkg/status").write_text(
+        "Package: libc-bin\nArchitecture: all\n\n"
+        f"Package: libc6\nStatus: install ok installed\nArchitecture: {libc_arch}\n\n",
+        encoding="utf-8",
+    )
+
+    result = _run_image_validation_script(
+        f'assert_image_architecture "{rootfs}" "{boot}" {expected_arch}', check=False
+    )
+
+    assert result.returncode == (0 if not message else 1), result.stdout
+    assert message in result.stdout

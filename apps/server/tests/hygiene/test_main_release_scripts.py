@@ -148,7 +148,7 @@ def test_build_wheelhouse_downloads_pi_binaries_and_proves_an_offline_install(
         commands.append(command_list)
         if command_list[3] == "download":
             dest = Path(command_list[command_list.index("--dest") + 1])
-            dest.mkdir(parents=True)
+            dest.mkdir(parents=True, exist_ok=True)
             for name in (wheel_path.name, "numpy-2.5.3-cp313-cp313-linux_armv7l.whl"):
                 (dest / name).write_text(name, encoding="utf-8")
         return subprocess.CompletedProcess(command_list, 0, stdout="", stderr="")

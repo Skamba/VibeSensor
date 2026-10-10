@@ -235,9 +235,7 @@ def _requires_dist(wheel_path: Path, name: str) -> str:
     """Return *wheel_path*'s requirement on *name* (``esptool<6,>=5.2.0``), marker dropped."""
     with zipfile.ZipFile(wheel_path) as wheel:
         metadata_name = next(
-            entry
-            for entry in wheel.namelist()
-            if entry.endswith(".dist-info/METADATA")
+            entry for entry in wheel.namelist() if entry.endswith(".dist-info/METADATA")
         )
         metadata = wheel.read(metadata_name).decode("utf-8")
     for line in metadata.splitlines():
@@ -628,9 +626,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "build-wheelhouse":
         output = Path(args.output_dir) / wheelhouse_name(args.version, args.machine)
-        print(
-            build_wheelhouse(Path(args.wheel_path), output, args.machine), flush=True
-        )
+        print(build_wheelhouse(Path(args.wheel_path), output, args.machine), flush=True)
         return 0
 
     if args.command == "generate-firmware-manifest":
