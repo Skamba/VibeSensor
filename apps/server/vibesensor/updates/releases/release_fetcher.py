@@ -16,6 +16,7 @@ from vibesensor.updates.releases.github_api import (
 from vibesensor.updates.releases.models import ReleaseFetcherConfig, ReleaseInfo
 from vibesensor.updates.releases.release_discovery import (
     decode_server_releases,
+    device_wheelhouse_platform,
     find_latest_server_release,
 )
 
@@ -77,6 +78,7 @@ class ServerReleaseFetcher:
                 )
             ),
             server_repo=self._config.server_repo,
+            wheelhouse_platform=device_wheelhouse_platform(),
         )
 
     def download_asset(self, name: str, url: str, dest_dir: str | Path | None = None) -> Path:

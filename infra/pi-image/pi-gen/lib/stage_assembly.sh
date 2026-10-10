@@ -43,7 +43,7 @@ render_stage_templates() {
   render_template_file \
     "${TEMPLATE_ROOT}/stage-vibesensor/prerun.sh.template" \
     "${STAGE_DIR}/prerun.sh" \
-    "__RASPBIAN_MIRROR__" "${RASPBIAN_MIRROR}"
+    "__RASPBIAN_MIRROR__" "${RASPBIAN_MIRROR:-http://raspbian.raspberrypi.com/raspbian/}"
   chmod +x "${STAGE_DIR}/prerun.sh"
 
   render_template_file \
@@ -56,6 +56,11 @@ render_stage_templates() {
   install -m 0644 \
     "${TEMPLATE_ROOT}/stage-vibesensor/00-vibesensor/00-packages" \
     "${STAGE_STEP_DIR}/00-packages"
+
+  install -d "${STAGE_DIR}/01-headless-boot"
+  install -m 0755 \
+    "${TEMPLATE_ROOT}/stage-vibesensor/01-headless-boot/00-run.sh" \
+    "${STAGE_DIR}/01-headless-boot/00-run.sh"
 
   touch "${STAGE_DIR}/EXPORT_IMAGE"
   touch "${PI_GEN_DIR}/stage2/SKIP_IMAGES"

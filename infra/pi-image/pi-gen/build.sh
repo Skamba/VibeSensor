@@ -32,8 +32,12 @@ fi
 if builds_image_artifacts; then
   require_image_prereqs
   ensure_docker_available
-  RASPBIAN_MIRROR="$(select_raspbian_mirror)"
-  echo "Using Raspbian mirror: ${RASPBIAN_MIRROR}"
+  if [ "${VS_PI_ARCH}" = "armhf" ]; then
+    # Only armhf installs from Raspbian; arm64 uses Debian's own mirrors.
+    RASPBIAN_MIRROR="$(select_raspbian_mirror)"
+    echo "Using Raspbian mirror: ${RASPBIAN_MIRROR}"
+  fi
+  echo "Building the ${VS_PI_ARCH} image"
 fi
 
 if builds_app_artifacts; then

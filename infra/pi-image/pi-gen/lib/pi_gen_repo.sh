@@ -121,22 +121,27 @@ prepare_pi_gen_repo() {
   git -C "${PI_GEN_DIR}" fetch --depth 1 origin "${PI_GEN_REF}"
   git -C "${PI_GEN_DIR}" checkout -q --force --detach FETCH_HEAD
 
-  rewrite_pi_gen_mirror_sources
   patch_export_image_boot_size
-  patch_build_docker_base_image
-  refresh_stage0_bootstrap_keyring
+  if [ "${VS_PI_ARCH}" = "armhf" ]; then
+    # The arm64 branch bootstraps from Debian (deb.debian.org, Debian keyring)
+    # and already builds in the native debian:trixie container, so these
+    # Raspbian-only fixes apply to armhf alone.
+    rewrite_pi_gen_mirror_sources
+    patch_build_docker_base_image
+    refresh_stage0_bootstrap_keyring
+  fi
 }
 
 configure_incremental_build() {
   local prev_work_exists=0
-  if docker ps -a --format '{{.Names}}' | grep -Fxq pigen_work; then
+  if docker ps -a --format '{{.Names}}' | grep -Fxq "${PI_GEN_CONTAINER_NAME}"; then
     prev_work_exists=1
   fi
 
   if [ "${CLEAN}" = "1" ] || [ "${prev_work_exists}" = "0" ]; then
     if [ "${prev_work_exists}" = "1" ]; then
-      echo "CLEAN=1: removing previous pigen_work container"
-      docker rm -v pigen_work >/dev/null
+      echo "CLEAN=1: removing previous ${PI_GEN_CONTAINER_NAME} container"
+      docker rm -v "${PI_GEN_CONTAINER_NAME}" >/dev/null
     fi
     set_base_stage_skip_files absent
     echo "Full build: rebuilding all stages"
@@ -149,7 +154,7 @@ configure_incremental_build() {
 run_pi_gen_build() {
   (
     cd "${PI_GEN_DIR}" || exit
-    CONTINUE=1 PRESERVE_CONTAINER=1 ./build-docker.sh
+    CONTAINER_NAME="${PI_GEN_CONTAINER_NAME}" CONTINUE=1 PRESERVE_CONTAINER=1 ./build-docker.sh
   )
 }
 

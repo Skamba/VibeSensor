@@ -6,15 +6,22 @@ on:
   workflow_dispatch:
     inputs:
       publish:
-        description: Replace the weekly-pi-image GitHub Release (main only). Off = workflow artifact only.
+        description: Replace the weekly-pi-image GitHub Release (main + armhf only). Off = workflow artifact only.
         type: boolean
         default: false
+      arch:
+        description: Image userland. armhf = the published 32-bit image; arm64 = 64-bit Raspberry Pi OS (artifact only).
+        type: choice
+        options:
+          - armhf
+          - arm64
+        default: armhf
 
 permissions:
   contents: write
 
 concurrency:
-  group: weekly-pi-image
+  group: weekly-pi-image-${{ inputs.arch || 'armhf' }}
   cancel-in-progress: false
 
 jobs:
@@ -23,12 +30,20 @@ jobs:
     timeout-minutes: 180
     env:
       PUBLISH: ${{ github.event_name == 'schedule' || inputs.publish }}
+      # Scheduled runs have no inputs and build the published armhf image.
+      VS_PI_ARCH: ${{ inputs.arch || 'armhf' }}
 
     steps:
       - name: Require main for published releases
         if: ${{ env.PUBLISH == 'true' && github.ref != 'refs/heads/main' }}
         run: |
           echo "Publishing Pi image releases requires the main branch; got ${GITHUB_REF}." >&2
+          exit 1
+
+      - name: Require armhf for published releases
+        if: ${{ env.PUBLISH == 'true' && env.VS_PI_ARCH != 'armhf' }}
+        run: |
+          echo "The weekly Pi image release is the armhf image; ${VS_PI_ARCH} builds are workflow artifacts only." >&2
           exit 1
 
       - uses: actions/checkout@v7
@@ -60,11 +75,21 @@ jobs:
           set -euo pipefail
           out_dir="infra/pi-image/pi-gen/out"
           label="$(date -u +%y-%m-%d)"
-          name="VibeSensor-${label}.img.zip"
+          case "${VS_PI_ARCH}" in
+            armhf)
+              # Unchanged release asset name for the published 32-bit image.
+              name="VibeSensor-${label}.img.zip"
+              pattern="image_*-vibesensor-lite*.zip"
+              ;;
+            arm64)
+              name="VibeSensor-${label}-arm64.img.zip"
+              pattern="image_*-vibesensor-arm64-lite*.zip"
+              ;;
+          esac
           release_dir="${RUNNER_TEMP}/pi-image"
           mkdir -p "${release_dir}"
 
-          artifact="$(find "${out_dir}" -maxdepth 1 -type f -name "image_*-vibesensor-lite*.zip" | sort | tail -n 1)"
+          artifact="$(find "${out_dir}" -maxdepth 1 -type f -name "${pattern}" | sort | tail -n 1)"
           if [ -z "${artifact}" ]; then
             echo "No Pi image artifact found in ${out_dir}" >&2
             exit 1
@@ -80,6 +105,7 @@ jobs:
           fi
           echo "source_artifact=$(basename "${artifact}")" >> "${version_info}"
           echo "run_id=${GITHUB_RUN_ID}" >> "${version_info}"
+          echo "arch=${VS_PI_ARCH}" >> "${version_info}"
 
           {
             echo "label=${label}"
@@ -89,7 +115,7 @@ jobs:
 
       - uses: actions/upload-artifact@v7
         with:
-          name: pi-image-${{ steps.assets.outputs.label }}
+          name: pi-image-${{ steps.assets.outputs.label }}-${{ env.VS_PI_ARCH }}
           path: ${{ steps.assets.outputs.dir }}/*
           if-no-files-found: error
           retention-days: 21
