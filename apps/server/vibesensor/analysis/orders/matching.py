@@ -6,6 +6,10 @@ from collections import defaultdict
 from collections.abc import Collection, Sequence
 from dataclasses import dataclass, field, replace
 from statistics import median
+from typing import NamedTuple, cast
+
+import numpy as np
+import numpy.typing as npt
 
 from vibesensor.analysis._sample_metrics import (
     _estimate_strength_floor_amp_g,
@@ -46,10 +50,9 @@ from vibesensor.domain.finding import speed_bin_label
 from vibesensor.domain.order_match import OrderMatchObservation, SensorOrderLevel
 from vibesensor.dsp.constants import FFT_N, SAMPLE_RATE_HZ
 from vibesensor.dsp.line_significance import CONTROL_REACHES
-from vibesensor.dsp.order_bands import order_peak_tolerance_hz
+from vibesensor.dsp.order_bands import order_peak_tolerance_hz, order_peak_tolerances_hz
 from vibesensor.dsp.window_spectrum import (
     WindowSpectrum,
-    line_half_width_hz,
     line_reach_hz,
     line_reads,
     peak_scale_g,
@@ -216,42 +219,54 @@ class OrderMatchAccumulator:
         )
 
 
-@dataclass(frozen=True)
-class OrderPeakMatch:
-    """Best matching spectral peak for one predicted order frequency."""
+@dataclass(frozen=True, slots=True)
+class PeakTable:
+    """A drive's ranked peaks by sample, as rows padded with infinite frequencies.
 
-    peak_index: int
-    matched_hz: float
-    amplitude_g: float
-    relative_error: float
+    Built once per drive, so each hypothesis finds every sample's nearest
+    peak in one array operation rather than one sample at a time.
+    """
+
+    peaks: Sequence[Sequence[tuple[float, float]]]
+    hz: npt.NDArray[np.float64]
+    amp: npt.NDArray[np.float64]
 
 
-def best_order_peak_match(
-    peaks: Sequence[tuple[float, float]],
-    *,
-    predicted_hz: float,
-    path_compliance: float,
-) -> OrderPeakMatch | None:
-    """Return the closest peak within the hypothesis tolerance window."""
+def peak_table(peaks: Sequence[Sequence[tuple[float, float]]]) -> PeakTable:
+    """The rows of *peaks*, one per sample, padded to the longest with infinite frequencies."""
+    width = max(1, max((len(sample_peaks) for sample_peaks in peaks), default=0))
+    hz = np.full((len(peaks), width), np.inf)
+    amp = np.zeros((len(peaks), width))
+    for row, sample_peaks in enumerate(peaks):
+        if sample_peaks:
+            hz[row, : len(sample_peaks)], amp[row, : len(sample_peaks)] = zip(
+                *sample_peaks, strict=True
+            )
+    return PeakTable(peaks, hz, amp)
 
-    if predicted_hz <= 0 or not peaks:
-        return None
-    tolerance_hz = order_peak_tolerance_hz(
-        predicted_hz=predicted_hz,
-        path_compliance=path_compliance,
-    )
-    peak_index, (best_hz, best_amp) = min(
-        enumerate(peaks),
-        key=lambda item: abs(item[1][0] - predicted_hz),
-    )
-    delta_hz = abs(best_hz - predicted_hz)
-    if delta_hz > tolerance_hz:
-        return None
-    return OrderPeakMatch(
-        peak_index=peak_index,
-        matched_hz=best_hz,
-        amplitude_g=best_amp,
-        relative_error=delta_hz / max(1e-9, predicted_hz),
+
+def _nearest_peaks(
+    table: PeakTable,
+    rows: npt.NDArray[np.intp],
+    predicted_hz: npt.NDArray[np.float64],
+    compliance: float,
+) -> tuple[list[bool], list[float], list[float], list[float]]:
+    """Each sample's peak closest to its predicted frequency, within the order's tolerance.
+
+    Whether the sample has one, its frequency, amplitude and error relative
+    to the prediction, for the samples *rows* at *predicted_hz*: the first
+    closest where two are as close. A sample without peaks has none.
+    """
+    distances = np.abs(table.hz[rows] - predicted_hz[:, None])
+    nearest = distances.argmin(axis=1)
+    picked = np.arange(rows.size), nearest
+    delta_hz = distances[picked]
+    within = ~(delta_hz > order_peak_tolerances_hz(predicted_hz, path_compliance=compliance))
+    return (
+        within.tolist(),
+        table.hz[rows, nearest].tolist(),
+        table.amp[rows, nearest].tolist(),
+        (delta_hz / np.maximum(1e-9, predicted_hz)).tolist(),
     )
 
 
@@ -408,8 +423,64 @@ def _masked(windows: Sequence[_Window], bin_hz: float, compliance: float) -> set
 
 
 @dataclass(frozen=True, slots=True)
-class _Window:
-    """One spectrum the order could be looked for in, and its match if any."""
+class SampleFacts:
+    """What every hypothesis reads of one sample the same way, worked out once per drive."""
+
+    location: str
+    speed_bin: str | None
+    phase_key: str | None
+    floor: float
+    # The cell its line read is filed in: its sensor, speed bin and the
+    # driving phase it is grouped by (``_cell_phase``).
+    cell: tuple[str, str, str]
+
+
+def sample_facts(
+    samples: Sequence[Sample],
+    context: RunMetadata,
+    per_sample_phases: PhaseLabels | None,
+    lang: str,
+) -> list[SampleFacts]:
+    """Each sample's ``SampleFacts``."""
+    has_phases = per_sample_phases is not None and len(per_sample_phases) == len(samples)
+    coasts = [
+        (step.start_t_s, step.end_t_s if step.end_t_s is not None else float("inf"))
+        for step in context.guided_phases
+        if step.phase == "coast_down"
+    ]
+    facts = []
+    for sample_idx, sample in enumerate(samples):
+        sample_speed = sample.speed_kmh
+        phase_key = (
+            _phase_to_str(per_sample_phases[sample_idx])
+            if has_phases and per_sample_phases is not None
+            else None
+        )
+        floor_amp = _estimate_strength_floor_amp_g(sample)
+        location = _location_label(sample, lang=lang)
+        speed_bin = (
+            speed_bin_label(sample_speed, bin_width=SPEED_BIN_WIDTH_KMH)
+            if sample_speed is not None and sample_speed > 0
+            else None
+        )
+        facts.append(
+            SampleFacts(
+                location=location,
+                speed_bin=speed_bin,
+                phase_key=phase_key,
+                floor=max(0.0, floor_amp if floor_amp is not None else 0.0),
+                cell=(location, speed_bin or "", _cell_phase(phase_key, sample, coasts)),
+            )
+        )
+    return facts
+
+
+class _Window(NamedTuple):
+    """One spectrum the order could be looked for in, and its match if any.
+
+    A named tuple, not a frozen dataclass: each hypothesis makes one per
+    window, and a tuple is several times quicker to make.
+    """
 
     sample_idx: int
     location: str
@@ -423,13 +494,13 @@ class _Window:
 
 def match_samples_for_hypothesis(
     samples: Sequence[Sample],
-    cached_peaks: list[list[tuple[float, float]]],
+    peaks: PeakTable,
     tones: Sequence[Sequence[RingingTone]],
     hypothesis: OrderHypothesis,
     context: RunMetadata,
     references: Sequence[tuple[float | None, str]],
-    per_sample_phases: PhaseLabels | None,
-    lang: str,
+    facts: Sequence[SampleFacts],
+    has_phases: bool,
     speed_rates: Sequence[float],
 ) -> OrderMatchAccumulator:
     """Match one hypothesis against all samples, then classify each match as heard or not.
@@ -446,12 +517,12 @@ def match_samples_for_hypothesis(
     """
     windows: list[_Window] = []
     ref_sources: set[str] = set()
-    has_phases = per_sample_phases is not None and len(per_sample_phases) == len(samples)
     compliance = getattr(hypothesis, "path_compliance", 1.0)
 
+    eligible: list[int] = []
+    predicted: list[float] = []
     for sample_idx, sample in enumerate(samples):
-        peaks = cached_peaks[sample_idx]
-        if not peaks and sample.spectrum is None:
+        if not peaks.peaks[sample_idx] and sample.spectrum is None:
             continue
         predicted_hz, ref_source = hypothesis.order_hz(references[sample_idx])
         # Peaks under the analysis floor are dropped (``_sample_top_peaks``), so a
@@ -460,33 +531,34 @@ def match_samples_for_hypothesis(
         if predicted_hz is None or predicted_hz < MIN_ANALYSIS_FREQ_HZ:
             continue
         ref_sources.add(ref_source)
+        eligible.append(sample_idx)
+        predicted.append(predicted_hz)
 
-        sample_location = _location_label(sample, lang=lang)
-        sample_speed = sample.speed_kmh
-        speed_bin = (
-            speed_bin_label(sample_speed, bin_width=SPEED_BIN_WIDTH_KMH)
-            if sample_speed is not None and sample_speed > 0
-            else None
-        )
-        phase_key = (
-            _phase_to_str(per_sample_phases[sample_idx])
-            if has_phases and per_sample_phases is not None
-            else None
-        )
-        floor_amp = _estimate_strength_floor_amp_g(sample)
-        floor = max(0.0, floor_amp if floor_amp is not None else 0.0)
-        peak_match = best_order_peak_match(
+    heard_over_floor = ORDER_CONFIDENCE_SETTINGS.heard_peak_over_floor
+    for sample_idx, predicted_hz, within, matched_hz, amplitude_g, relative_error in zip(
+        eligible,
+        predicted,
+        *_nearest_peaks(
             peaks,
-            predicted_hz=predicted_hz,
-            path_compliance=compliance,
-        )
-        if peak_match is None:
+            np.array(eligible, dtype=np.intp),
+            np.array(predicted, dtype=np.float64),
+            compliance,
+        ),
+        strict=True,
+    ):
+        sample_facts = facts[sample_idx]
+        sample_location = sample_facts.location
+        speed_bin = sample_facts.speed_bin
+        phase_key = sample_facts.phase_key
+        floor = sample_facts.floor
+        if not within:
             windows.append(
                 _Window(
                     sample_idx, sample_location, predicted_hz, speed_bin, phase_key, floor=floor
                 )
             )
             continue
+        sample = samples[sample_idx]
         windows.append(
             _Window(
                 sample_idx,
@@ -498,15 +570,13 @@ def match_samples_for_hypothesis(
                     t_s=sample.t_s,
                     speed_kmh=sample.speed_kmh,
                     predicted_hz=predicted_hz,
-                    matched_hz=peak_match.matched_hz,
-                    rel_error=peak_match.relative_error,
-                    amp=peak_match.amplitude_g,
+                    matched_hz=matched_hz,
+                    rel_error=relative_error,
+                    amp=amplitude_g,
                     location=sample_location,
                     phase=phase_key,
                 ),
-                clear=bool(sample_location)
-                and peak_match.amplitude_g
-                >= ORDER_CONFIDENCE_SETTINGS.heard_peak_over_floor * floor,
+                clear=bool(sample_location) and amplitude_g >= heard_over_floor * floor,
                 floor=floor,
             )
         )
@@ -519,6 +589,7 @@ def match_samples_for_hypothesis(
         masked,
         _LineReadContext(
             context,
+            facts,
             tones,
             speed_rates,
             bin_hz,
@@ -635,6 +706,7 @@ def _phase_heard_rate(
 @dataclass(frozen=True, slots=True)
 class _LineReadContext:
     context: RunMetadata
+    facts: Sequence[SampleFacts]
     tones: Sequence[Sequence[RingingTone]]
     speed_rates: Sequence[float]
     bin_hz: float
@@ -646,23 +718,12 @@ class _LineReadContext:
 type _CellKey = tuple[str, str, str]
 
 
-@dataclass(frozen=True, slots=True)
-class _Line:
+class _Line(NamedTuple):
     """Where one window was read: its cell, the order's line and how far it swept."""
 
     cell: _CellKey
     hz: float
     half_width_hz: float
-
-
-@dataclass(frozen=True, slots=True)
-class _PlannedRead:
-    """A window to be read at the order's line, and how many control reads follow its read."""
-
-    index: int
-    line: _Line
-    t_s: float | None
-    controls: int
 
 
 @dataclass(slots=True)
@@ -697,88 +758,137 @@ def _line_reads(
     control reads ``CONTROL_REACHES`` of its reach either side of the line,
     where the order is not, which place the floor's scatter
     (``TrackedCells``). See "Order-tracked reads" in docs/order_tracking.md.
+
+    The windows' lines are placed as arrays and every read is taken at once
+    (``line_reads``), then filed in window order: the same values as one
+    window at a time, at a fraction of the cost.
     """
     window_s = window_duration_s(read.context)
     reads = _LineReads(TrackedCells(window_s=window_s, braking_alone=read.braking_alone))
-    if not any(samples[window.sample_idx].spectrum is not None for window in windows):
-        return reads
-    # A window's peak lands anywhere on the stretch its line swept, so only the
-    # windows whose line held still within a peak's width place the line.
-    swept = {
+    spectral = [
         index
         for index, window in enumerate(windows)
-        if line_half_width_hz(
-            window.predicted_hz,
-            samples[window.sample_idx].speed_kmh,
-            read.speed_rates[window.sample_idx],
-            window_s,
-        )
-        > _line_half_width_hz(window.predicted_hz, read.bin_hz)
-    }
-    scale = _tracked_line_scale(windows, masked | swept, read.bin_hz, read.compliance)
-    coasts = [
-        (step.start_t_s, step.end_t_s if step.end_t_s is not None else float("inf"))
-        for step in read.context.guided_phases
-        if step.phase == "coast_down"
+        if samples[window.sample_idx].spectrum is not None
     ]
-    # Every read is planned first and taken at once (``line_reads``), then
-    # filed in window order.
-    planned: list[_PlannedRead] = []
-    requests: list[tuple[WindowSpectrum, float, float]] = []
-    for index, window in enumerate(windows):
-        sample = samples[window.sample_idx]
-        spectrum = sample.spectrum
-        if spectrum is None:
+    if not spectral:
+        return reads
+    predicted_hz = np.array([window.predicted_hz for window in windows], dtype=np.float64)
+    speed_kmh = np.array(
+        [samples[window.sample_idx].speed_kmh or 0.0 for window in windows], dtype=np.float64
+    )
+    rate = np.array([read.speed_rates[window.sample_idx] for window in windows], dtype=np.float64)
+    # A window's peak lands anywhere on the stretch its line swept, so only the
+    # windows whose line held still within a peak's width place the line.
+    held_width_hz = np.maximum(
+        ORDER_LINE_WIDTH_REL * predicted_hz, ORDER_LINE_WIDTH_MIN_BINS * read.bin_hz
+    )
+    swept_by = _swept_half_widths(predicted_hz, speed_kmh, rate, window_s)
+    swept = set(np.flatnonzero(swept_by > held_width_hz).tolist())
+    scale = _tracked_line_scale(windows, masked | swept, read.bin_hz, read.compliance)
+    chosen = np.array(spectral, dtype=np.intp)
+    line_hz = scale * predicted_hz[chosen]
+    half_width_hz = _swept_half_widths(line_hz, speed_kmh[chosen], rate[chosen], window_s)
+    reach_hz = line_reach_hz(half_width_hz, read.bin_hz)
+    offset_hz = CONTROL_REACHES * reach_hz
+    # Every read is planned as arrays and taken at once (``line_reads``), then
+    # filed by cell in window order.
+    lower_hz = line_hz - offset_hz
+    upper_hz = line_hz + offset_hz
+    sample_of = [windows[index].sample_idx for index in spectral]
+    planned = np.ones(len(spectral), dtype=np.bool_)
+    with_controls = np.stack(
+        (planned, ~(lower_hz < MIN_ANALYSIS_FREQ_HZ), ~(upper_hz < MIN_ANALYSIS_FREQ_HZ)), axis=1
+    )
+    for position, sample_idx in enumerate(sample_of):
+        tones = read.tones[sample_idx]
+        if not tones:
             continue
-        line_hz = scale * window.predicted_hz
-        half_width_hz = line_half_width_hz(
-            line_hz, sample.speed_kmh, read.speed_rates[window.sample_idx], window_s
+        reach = float(reach_hz[position])
+        if any(tone.takes_in(float(line_hz[position]), reach) for tone in tones):
+            reads.on_tone.add(spectral[position])
+            planned[position] = False
+            continue
+        for column, control_hz in ((1, lower_hz[position]), (2, upper_hz[position])):
+            if any(tone.takes_in(float(control_hz), reach) for tone in tones):
+                with_controls[position, column] = False
+    entries = np.flatnonzero(planned)
+    if not entries.size:
+        return reads
+    included = with_controls[entries]
+    owner = np.broadcast_to(np.arange(entries.size)[:, None], included.shape)[included]
+    column = np.broadcast_to(np.arange(3), included.shape)[included]
+    entry_samples = [sample_of[position] for position in entries.tolist()]
+    excess, flanks, taken = line_reads(
+        [cast("WindowSpectrum", samples[sample_idx].spectrum) for sample_idx in entry_samples],
+        owner,
+        np.stack((line_hz, lower_hz, upper_hz), axis=1)[entries][included],
+        half_width_hz[entries][owner],
+    )
+    # A window whose line could not be read is off the edge, with its controls.
+    main = column == 0
+    entry_taken = taken[main]
+    window_of = [spectral[position] for position in entries.tolist()]
+    reads.off_edge.update(window_of[entry] for entry in np.flatnonzero(~entry_taken).tolist())
+    kept = np.flatnonzero(entry_taken)
+    cell_ids: dict[tuple[str, str, str], int] = {}
+    entry_cell = np.full(entries.size, -1, dtype=np.intp)
+    entry_cell[kept] = [
+        cell_ids.setdefault(read.facts[entry_samples[entry]].cell, len(cell_ids))
+        for entry in kept.tolist()
+    ]
+    control = ~main & taken & entry_taken[owner]
+    control_cell = entry_cell[owner[control]]
+    by_cell = _cell_slices(entry_cell[kept], len(cell_ids))
+    controls_by_cell = _cell_slices(control_cell, len(cell_ids))
+    main_excess, main_flanks = excess[main][kept], flanks[main][kept]
+    control_excess, control_flanks = excess[control], flanks[control]
+    kept_t_s = [samples[entry_samples[entry]].t_s for entry in kept.tolist()]
+    for key, (reads_at, controls_at) in zip(
+        cell_ids, zip(by_cell, controls_by_cell, strict=True), strict=True
+    ):
+        reads.cells.add_reads(
+            key,
+            main_excess[reads_at].tolist(),
+            main_flanks[reads_at].tolist(),
+            [kept_t_s[read_at] for read_at in reads_at.tolist()],
+            control_excess[controls_at].tolist(),
+            control_flanks[controls_at].tolist(),
         )
-        reach_hz = line_reach_hz(half_width_hz, read.bin_hz)
-        tones = read.tones[window.sample_idx]
-        if any(tone.takes_in(line_hz, reach_hz) for tone in tones):
-            reads.on_tone.add(index)
-            continue
-        offset = CONTROL_REACHES * reach_hz
-        controls = [
-            control_hz
-            for control_hz in (line_hz - offset, line_hz + offset)
-            if not (
-                control_hz < MIN_ANALYSIS_FREQ_HZ
-                or any(tone.takes_in(control_hz, reach_hz) for tone in tones)
-            )
-        ]
-        planned.append(
-            _PlannedRead(
-                index,
-                _Line(
-                    (window.location, window.speed_bin or "", _cell_phase(window, sample, coasts)),
-                    line_hz,
-                    half_width_hz,
-                ),
-                sample.t_s,
-                len(controls),
-            )
+    positions = entries[kept].tolist()
+    reads.lines.update(
+        (spectral[position], _Line(read.facts[sample_of[position]].cell, hz, half_width))
+        for position, hz, half_width in zip(
+            positions, line_hz[positions].tolist(), half_width_hz[positions].tolist(), strict=True
         )
-        requests.append((spectrum, line_hz, half_width_hz))
-        requests.extend((spectrum, control_hz, half_width_hz) for control_hz in controls)
-    taken = iter(line_reads(requests))
-    for plan in planned:
-        line = next(taken)
-        control_reads = [next(taken) for _ in range(plan.controls)]
-        if line is None:
-            reads.off_edge.add(plan.index)
-            continue
-        cell = plan.line.cell
-        reads.cells.add(cell, line, plan.t_s)
-        reads.lines[plan.index] = plan.line
-        for control in control_reads:
-            if control is not None:
-                reads.cells.add_control(cell, control)
+    )
     return reads
 
 
-def _cell_phase(window: _Window, sample: Sample, coasts: Sequence[tuple[float, float]]) -> str:
+def _cell_slices(cell_of: npt.NDArray[np.intp], cells: int) -> list[npt.NDArray[np.intp]]:
+    """The positions in *cell_of* of each cell's entries, cell by cell, each in their order."""
+    order = np.argsort(cell_of, kind="stable")
+    bounds = np.searchsorted(cell_of[order], np.arange(cells + 1))
+    return [order[start:stop] for start, stop in zip(bounds[:-1], bounds[1:], strict=True)]
+
+
+def _swept_half_widths(
+    hz: npt.NDArray[np.float64],
+    speed_kmh: npt.NDArray[np.float64],
+    rate_kmh_per_s: npt.NDArray[np.float64],
+    window_s: float,
+) -> npt.NDArray[np.float64]:
+    """``line_half_width_hz`` of each line (0 where the speed is unknown or 0)."""
+    half_width_hz = np.zeros_like(hz)
+    moving = ~(speed_kmh <= 0)
+    half_width_hz[moving] = (
+        hz[moving] * np.abs(rate_kmh_per_s[moving]) * window_s / (2.0 * speed_kmh[moving])
+    )
+    return half_width_hz
+
+
+def _cell_phase(
+    phase_key: str | None, sample: Sample, coasts: Sequence[tuple[float, float]]
+) -> str:
     """The driving phase a window's read is grouped by.
 
     The guided test's coast-down in neutral is its own: the engine drops to
@@ -788,7 +898,7 @@ def _cell_phase(window: _Window, sample: Sample, coasts: Sequence[tuple[float, f
     t_s = sample.t_s
     if t_s is not None and any(start <= t_s < end for start, end in coasts):
         return GUIDED_COAST_PHASE
-    return _drive_phase(window.phase_key)
+    return _drive_phase(phase_key)
 
 
 def _tracked(
@@ -837,7 +947,16 @@ def _tracked(
                 else index in reads.off_edge and window.location not in hearing_locations
             )
             if unheard:
-                tracked.append(replace(window, match=None, clear=False))
+                tracked.append(
+                    _Window(
+                        window.sample_idx,
+                        window.location,
+                        window.predicted_hz,
+                        window.speed_bin,
+                        window.phase_key,
+                        floor=window.floor,
+                    )
+                )
             elif index not in masked:
                 tracked.append(window)
             continue
@@ -851,9 +970,13 @@ def _tracked(
         )
         sample = samples[window.sample_idx]
         tracked.append(
-            replace(
-                window,
-                match=OrderMatchObservation(
+            _Window(
+                window.sample_idx,
+                window.location,
+                window.predicted_hz,
+                window.speed_bin,
+                window.phase_key,
+                OrderMatchObservation(
                     t_s=sample.t_s,
                     speed_kmh=sample.speed_kmh,
                     predicted_hz=window.predicted_hz,
@@ -863,7 +986,8 @@ def _tracked(
                     location=window.location,
                     phase=window.phase_key,
                 ),
-                clear=bool(window.location),
+                bool(window.location),
+                window.floor,
             )
         )
     return tracked

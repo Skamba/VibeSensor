@@ -196,6 +196,13 @@ class TrackedCells:
     braking_alone: bool = False
     cells: dict[tuple[str, str, str], _Cell] = field(default_factory=dict)
     times: dict[str, list[float]] = field(default_factory=lambda: defaultdict(list))
+    # Each driving phase's judges (``_judges``) and the phases that hear the
+    # order (``heard_phases``), worked out once the reads are in: every
+    # verdict on the order asks for them again. A new read clears them.
+    _judged: dict[str | None, dict[str, _Judge]] = field(
+        default_factory=dict, repr=False, compare=False
+    )
+    _hearing: list[set[tuple[str, str]]] = field(default_factory=list, repr=False, compare=False)
 
     def _cell(self, key: tuple[str, str, str]) -> _Cell:
         cell = self.cells.get(key)
@@ -204,18 +211,54 @@ class TrackedCells:
         return cell
 
     def add(self, key: tuple[str, str, str], read: LineRead, t_s: float | None) -> None:
+        self.add_values(key, read.excess, read.flanks, t_s)
+
+    def add_values(
+        self, key: tuple[str, str, str], excess: float, flanks: float, t_s: float | None
+    ) -> None:
+        """``add`` of a read given as its excess and flanks."""
+        self._forget()
         cell = self._cell(key)
-        cell.excess.append(read.excess)
-        cell.flanks.append(read.flanks)
+        cell.excess.append(excess)
+        cell.flanks.append(flanks)
         cell.t.append(t_s if t_s is not None else float("nan"))
         if t_s is not None:
             self.times[key[0]].append(t_s)
 
     def add_control(self, key: tuple[str, str, str], read: LineRead) -> None:
         """A read beside the order's line in the same window, where the order is not."""
+        self.add_control_values(key, read.excess, read.flanks)
+
+    def add_control_values(self, key: tuple[str, str, str], excess: float, flanks: float) -> None:
+        """``add_control`` of a read given as its excess and flanks."""
+        self._forget()
         cell = self._cell(key)
-        cell.control_excess.append(read.excess)
-        cell.control_flanks.append(read.flanks)
+        cell.control_excess.append(excess)
+        cell.control_flanks.append(flanks)
+
+    def add_reads(
+        self,
+        key: tuple[str, str, str],
+        excess: Sequence[float],
+        flanks: Sequence[float],
+        t_s: Sequence[float | None],
+        control_excess: Sequence[float],
+        control_flanks: Sequence[float],
+    ) -> None:
+        """``add`` of a cell's reads in order, and ``add_control`` of its control reads."""
+        self._forget()
+        cell = self._cell(key)
+        cell.excess.extend(excess)
+        cell.flanks.extend(flanks)
+        cell.t.extend(t if t is not None else float("nan") for t in t_s)
+        self.times[key[0]].extend(t for t in t_s if t is not None)
+        cell.control_excess.extend(control_excess)
+        cell.control_flanks.extend(control_flanks)
+
+    def _forget(self) -> None:
+        if self._judged or self._hearing:
+            self._judged.clear()
+            self._hearing.clear()
 
     def _independent_share(self, location: str) -> float:
         """The share of a sensor's windows that count as independent reads."""
@@ -277,13 +320,17 @@ class TrackedCells:
         the guided coast-down in neutral the engine idles, and a body mode the
         swept line passes is no part of the engine's order.
         """
-        return {
-            (location, phase)
-            for phase in {phase for _location, _speed_bin, phase in self.cells}
-            for judges in (self._judges(phase),)
-            for location, cells in self._by_location(phases=(phase,)).items()
-            if judges[location].stands_out(cells, _PHASE_STANDARD_ERRORS)
-        }
+        if not self._hearing:
+            self._hearing.append(
+                {
+                    (location, phase)
+                    for phase in {phase for _location, _speed_bin, phase in self.cells}
+                    for judges in (self._judges(phase),)
+                    for location, cells in self._by_location(phases=(phase,)).items()
+                    if judges[location].stands_out(cells, _PHASE_STANDARD_ERRORS)
+                }
+            )
+        return set(self._hearing[0])
 
     def _by_location(
         self, speeds: Collection[str] = (), phases: Collection[str] = ()
@@ -310,7 +357,10 @@ class TrackedCells:
         it. Over the cells of driving phase *phase* when given: a stop's
         windows scatter more than a cruise's.
         """
-        judges = {}
+        judges = self._judged.get(phase)
+        if judges is not None:
+            return judges
+        judges = self._judged[phase] = {}
         for location, cells in self._by_location(phases=() if phase is None else (phase,)).items():
             distances = deviations(
                 [cell.control_normalized() for cell in cells], MIN_SCATTER_READS

@@ -90,6 +90,12 @@ RunRecorder.stop_recording()            # recording/recorder.py
                             ← persist the summary analysis via the injected HistoryDB
 ```
 
+On the Pi a 30-minute, 4-sensor drive takes about 99 s: loading 14 s, the
+raw replay 36 s, the analysis 45 s (order matching most of it) and storing
+4 s. Every speed-up keeps the analysis byte-identical; what was measured,
+kept and rejected (worker processes, thread pools, FFT shortcuts) is in
+`docs/multithreading_performance.md`.
+
 `PostAnalysisWorker` receives persistence access, the post-stop analysis
 runner, and write-error callbacks via constructor injection from
 `RunRecorder`. The worker now owns only queue/thread orchestration plus the

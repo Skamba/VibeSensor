@@ -102,12 +102,16 @@ def test_reads_taken_together_are_each_read_bit_for_bit() -> None:
     # over decades.
     rng = np.random.default_rng(11)
     freq = np.arange(5.0, 200.0, _FS / _N, dtype=np.float32)
+    # Two spectra kept together as rows (as the replay keeps them), two on their own.
+    rows = (10.0 ** rng.uniform(-5.0, -1.0, (2, freq.size))).astype(np.float32)
     spectra = [
+        WindowSpectrum(freq_hz=freq, amp_g=rows[row], rows=rows, row=row) for row in range(2)
+    ] + [
         WindowSpectrum(
             freq_hz=freq,
             amp_g=(10.0 ** rng.uniform(-5.0, -1.0, freq.size)).astype(np.float32),
         )
-        for _ in range(4)
+        for _ in range(2)
     ]
     reads = [
         (spectra[index % 4], float(hz), float(half_width))
@@ -116,7 +120,17 @@ def test_reads_taken_together_are_each_read_bit_for_bit() -> None:
         )
     ]
 
-    together = line_reads(reads)
+    spectra_of = {id(spectrum): index for index, spectrum in enumerate(spectra)}
+    excess, flanks, taken = line_reads(
+        spectra,
+        np.array([spectra_of[id(spectrum)] for spectrum, _hz, _half_width in reads]),
+        np.array([hz for _spectrum, hz, _half_width in reads]),
+        np.array([half_width for _spectrum, _hz, half_width in reads]),
+    )
+    together = [
+        LineRead(excess=read_excess, flanks=read_flanks) if read else None
+        for read_excess, read_flanks, read in zip(excess, flanks, taken, strict=True)
+    ]
 
     assert together == [spectrum.line_read(hz, half_width) for spectrum, hz, half_width in reads]
     assert sum(read is None for read in together) > 100
@@ -287,12 +301,17 @@ def test_an_order_is_judged_by_the_floor_scatter_beside_its_line() -> None:
     # A faint order whose reads beat widely with the floor under it (a
     # strong neighbouring line in the same band): judged by its own reads'
     # scatter it is lost, judged by the control reads beside the line, which
-    # scatter as the floor alone does, it stands out.
+    # scatter as the floor alone does, it stands out. The verdict is taken
+    # again once the control reads are in.
     cells = TrackedCells(window_s=2.56)
+    key = ("front_left", "80-90", "")
     for index in range(60):
-        key = ("front_left", "80-90", "")
         cells.add(key, LineRead(1.0 + 3.0 * (-1) ** index, 1.0), 2.56 * index)
-        cells.add_control(key, LineRead(0.3 * (-1) ** index, 1.0))
+
+    assert cells.heard_sensors() == set()
+
+    controls = [0.3 * (-1) ** index for index in range(60)]
+    cells.add_reads(key, [], [], [], controls, [1.0] * len(controls))
 
     assert cells.heard_sensors() == {"front_left"}
 
