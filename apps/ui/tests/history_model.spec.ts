@@ -479,15 +479,15 @@ test("draws the PDF's car diagram: the zone, its wheels and a sized marker per s
   expect(frontLeft.cy).toBeCloseTo(9 + 0.2 * 94);
   expect(frontLeft.r).toBeCloseTo(4);
   // A wheel's label sits level with it, just outboard of the body: no leader.
-  expect(frontLeft.text.x).toBeCloseTo(14.88 - 1.5);
-  expect(frontLeft.text.y).toBeCloseTo(frontLeft.cy + 3.7 * 0.35);
-  expect(frontLeft.text.anchor).toBe("end");
+  expect(frontLeft.text?.x).toBeCloseTo(14.88 - 1.5);
+  expect(frontLeft.text?.y).toBeCloseTo(frontLeft.cy + 3.7 * 0.35);
+  expect(frontLeft.text?.anchor).toBe("end");
   expect(frontLeft.leader).toBeNull();
   // A centre-line marker's label goes beside the car, on the emptier side,
   // with a leader to it.
   expect(trunk.r).toBeCloseTo(1.6 + 2.4 * 0.02);
-  expect(trunk.text.anchor).toBe("start");
-  expect(trunk.text.x).toBeCloseTo(14.88 + 32.24 + 1.5);
+  expect(trunk.text?.anchor).toBe("start");
+  expect(trunk.text?.x).toBeCloseTo(14.88 + 32.24 + 1.5);
   expect(trunk.leader).toMatchObject({ x1: trunk.cx, y1: trunk.cy });
 
   const axle = ownerDiagram({
@@ -509,6 +509,28 @@ test("draws the PDF's car diagram: the zone, its wheels and a sized marker per s
   ).toEqual(["rear_left_wheel", "rear_right_wheel"]);
   // A location the diagram has no place for is left out, as on the PDF.
   expect(axle.markers).toEqual([]);
+});
+
+test("a run that found no vibration shows where its sensors were, with no level", () => {
+  // The server sends no level then (report/view_model.py `_diagram`): a
+  // healthy wheel's road shake beside "No significant vibration" read as a fault.
+  const healthy = ownerDiagram({
+    zone: null,
+    front_label: "FRONT",
+    markers: ["front_left_wheel", "trunk"].map((code) => ({
+      code,
+      label: code,
+      value: "",
+      ratio: null,
+      strongest: false,
+    })),
+  });
+  expect(healthy.markers).toHaveLength(2);
+  for (const marker of healthy.markers) {
+    expect(marker.text).toBeNull();
+    expect(marker.leader).toBeNull();
+    expect(marker.r).toBeCloseTo(1.6);
+  }
 });
 
 const DIAGRAM_CODES = [
@@ -567,10 +589,10 @@ test("no two of the diagram's labels overlap, however the sensors crowd", () => 
     expect(markers).toHaveLength(codes.length);
     // A generous box: a full em tall, 0.6 em per character (digits are ~0.55).
     const boxes = markers.map((marker) => {
+      const text = marker.text as NonNullable<typeof marker.text>;
       const width = marker.value.length * 0.6 * 3.7;
-      const x0 =
-        marker.text.anchor === "end" ? marker.text.x - width : marker.text.x;
-      const middle = marker.text.y - 3.7 * 0.35;
+      const x0 = text.anchor === "end" ? text.x - width : text.x;
+      const middle = text.y - 3.7 * 0.35;
       return { code: marker.code, x0, x1: x0 + width, y0: middle - 1.85 };
     });
     const overlaps = boxes.flatMap((a, index) =>

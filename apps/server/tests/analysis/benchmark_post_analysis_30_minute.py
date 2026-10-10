@@ -42,6 +42,9 @@ _PHASES = tuple(
 )
 
 
+# Recording the drive plus traced post-analysis takes ~3 minutes on x86, past the
+# suite-wide 120 s timeout; this opt-in benchmark gets its own budget.
+@pytest.mark.timeout(600)
 @pytest.mark.benchmark(group="post-analysis-30-minute")
 def test_post_analysis_30_minute_benchmark(benchmark: Any, tmp_path: Path) -> None:
     result = benchmark.pedantic(

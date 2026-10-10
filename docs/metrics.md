@@ -92,16 +92,28 @@ the same scale so the peaks stand out of it as on the spectrum.
   (`OrderMatchObservation.amp`); `None` where the order was not matched.
 - `location_amplitudes[].db_above_floor`:
   `vibration_strength_db_scalar(peak_band_rms_amp_g=amplitude, floor_amp_g=floor)`,
-  the floor being the median power beside the order's line at that location
-  (`sensor_levels[].floor_g`) with reads, else the median floor of that
-  location's samples.
+  the floor being the median of that location's samples' floors
+  (`strength_floor_amp_g`), whatever the row's amplitude is. So the bracketed
+  dB has one meaning in every table, the same as `vibration_strength_db` and
+  the live view's dB. It was once the floor beside the order's line
+  (`sensor_levels[].floor_g`) for an order's rows: on a generated road a
+  front-left wheel imbalance read 1057 mg (6 dB) there, against 34 dB live
+  and 40 dB for a healthy run's wheel rows, so rows of different runs and the
+  live view could not be compared. Over the location's floor it reads 35 dB.
 - `location_amplitudes[].ratio_to_strongest`: amplitude / strongest amplitude.
 - Rows run strongest first, except that the diagnosis's `location` leads when
   the strongest is less than `NEAR_TIE_DOMINANCE_THRESHOLD` (1.15x) above it:
   location scoring calls that a tie and names its own winner, so the findings,
   the amplitude table and the car diagram name the same location.
 - With no diagnosed order (`amplitude_basis = "overall"`), each location reports
-  the p95 of its dominant-peak amplitude (`strength_peak_amp_g`).
+  the p95 of its dominant-peak amplitude (`strength_peak_amp_g`): the
+  strongest peak at any frequency, not an order. On a wheel sensor that is the
+  road's wheel hop, a broad hump around 8-15 Hz: about 2.2 g (40 dB) per wheel
+  and 0.15 g at the seat for a healthy car at 130 km/h on a generated road,
+  more than a front-left imbalance's T1 (about 1.1 g) on the same road. So the
+  report titles that table "Strongest peak, any frequency", a no-fault run
+  that felt no vibration notes that the levels are the road's, and its car
+  diagram shows no level (see the car diagram in `docs/report_pipeline.md`).
 - `unexplained_vibration`: a no-fault run with no candidate where, at some
   location, the p95 over its windows of the window's most prominent peak
   reaches the elevated strength band (L3, 26 dB). A peak's prominence is its
@@ -612,10 +624,11 @@ but over the last few seconds instead of the whole drive:
   (`code`: T1, T2, P1, E1, E1.5, or `P1/E1` for the merged band;
   `workshop_order_code` in `apps/server/vibesensor/domain/finding.py`), and the
   spectrum shows it first ("T1 · Wheel 1x").
-- **dB.** The live dB is the dominant peak over the band's overall P20 floor,
-  as the report's no-fault amplitude table gives it. A fault's table reads the
-  order's line over the floor beside it, so a wheel imbalance that reads
-  34 dB live can read 6 dB there; compare the mg, not the dB.
+- **dB.** The live dB is the dominant peak over the band's overall floor, the
+  floor every bracketed dB in the report stands over: a front-left wheel
+  imbalance on a generated road reads 34 dB live and 35 dB in its report's
+  amplitude table. The live dB is the strongest peak's, which a healthy
+  wheel's road hump also reaches; the report's order rows are the order's.
 
 What the live view cannot say: which order a peak belongs to. A healthy
 wheel's wheel-hop hump (about 12 Hz) is the strongest peak on a real road and

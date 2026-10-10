@@ -1247,6 +1247,33 @@ def _unexplained_summary() -> dict[str, Any]:
     return summary
 
 
+def test_a_run_that_found_nothing_draws_its_sensors_without_the_roads_level() -> None:
+    """A healthy run's strongest peaks are the road's (a wheel's wheel hop, about
+    2 g at motorway speed): beside "No significant vibration" the diagram shows
+    no level, and the workshop table says whose levels they are. A run that
+    found a vibration shows its level on both."""
+    healthy = report_view_for(_healthy_summary())
+    markers = healthy.owner.diagram.markers
+
+    assert markers and healthy.owner.headline == "No significant vibration found"
+    assert {(marker.value, marker.ratio, marker.strongest) for marker in markers} == {
+        ("", None, False)
+    }
+    assert healthy.mechanic.amplitudes and healthy.mechanic.amplitude_title == (
+        "Strongest peak, any frequency (95th percentile)"
+    )
+    assert healthy.mechanic.amplitude_note is not None
+    assert "road" in healthy.mechanic.amplitude_note
+    assert "weg" in (report_view_for(_healthy_summary(), lang="nl").mechanic.amplitude_note or "")
+
+    unexplained = report_view_for(_unexplained_summary())
+    (marker,) = unexplained.owner.diagram.markers
+    assert (marker.value, marker.strongest) == ("228\N{NO-BREAK SPACE}mg", True)
+    assert marker.value in unexplained.owner.description
+    assert unexplained.mechanic.amplitude_note is None
+    assert report_view_for(_wheel_summary()).mechanic.amplitude_note is None
+
+
 @pytest.mark.parametrize(
     ("summary", "en", "nl", "tone"),
     [

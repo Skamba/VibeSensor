@@ -70,7 +70,14 @@ file.pdf]` (`vibesensor.cli.report`) renders the same report from a stored run.
      corner or zone highlighted. Each dot's level sits in a column beside the
      car, never overlapping another (`_diagram_labels`; the app's
      `history_model.ts` places them the same way): a wheel's level beside its
-     wheel, any other with a leader line that avoids the other dots.
+     wheel, any other with a leader line that avoids the other dots. A
+     no-fault run that felt no vibration either (no `unexplained_vibration`)
+     draws only where its sensors were, as small equal dots with no level:
+     its per-location levels are each sensor's strongest peak at any
+     frequency, on a wheel sensor the road's wheel hop (about 2 g at
+     130 km/h on a generated road, on every healthy car), and beside "No
+     significant vibration" a level reads as a fault twice the size of a
+     real wheel imbalance's order level.
    - What to do next, by verdict:
      - Fault: the next step, a fallback step ("If that doesn't fix it: ..."),
        the cheap confirming check when the level is Moderate, and how to check
@@ -125,7 +132,12 @@ file.pdf]` (`vibesensor.cli.report`) renders the same report from a stored run.
      with plain text, Hz at the reference speed, km/h range, driving phases,
      presence, strongest location, and level.
    - Per-location amplitude at the diagnosed order in mg, with dB above that
-     location's floor in brackets and the ratio to the strongest location.
+     location's noise floor in brackets (the floor every bracketed dB in the
+     report and the live view's dB stand over) and the ratio to the strongest
+     location. Without a diagnosed order the table is each location's
+     strongest peak at any frequency ("Strongest peak, any frequency"), and a
+     no-fault run that felt no vibration adds a note under it that these are
+     the road's levels, which every car has, not a fault.
    - Ruled-out and not-testable sources, each with a plain reason (an EV's
      motor names its reduction ratio, not a final drive).
    - Recurring-peak spectrum at the strongest location, with T1/T2/P1/P2/E1/E2

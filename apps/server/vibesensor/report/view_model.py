@@ -286,7 +286,11 @@ class Fact:
 
 @dataclass(frozen=True, slots=True)
 class DiagramMarker:
-    """One sensor on the car diagram; ``ratio`` 1.0 is the strongest location."""
+    """One sensor on the car diagram; ``ratio`` 1.0 is the strongest location.
+
+    A run that found no vibration has no level to show: ``value`` is empty and
+    ``ratio`` ``None``, so the diagram shows where the sensors were.
+    """
 
     code: str
     label: str
@@ -437,6 +441,8 @@ class MechanicPage:
     amplitude_title: str
     amplitude_header: tuple[str, str, str]
     amplitudes: tuple[AmplitudeRow, ...]
+    # Under a no-fault run's table: its levels are the road's, not a vibration found.
+    amplitude_note: str | None
     spectrum: SpectrumChart | None
     speed_chart: SpeedChart | None
     ruled_out_title: str
@@ -1398,11 +1404,35 @@ def _never_analysed(ctx: _Ctx, diagnosis: DiagnosisPayload) -> list[str]:
     return items
 
 
+def _found_nothing(diagnosis: DiagnosisPayload) -> bool:
+    """A no-fault run that felt no vibration either: its levels are the road's."""
+    return diagnosis["verdict"] == "no_fault" and not diagnosis["unexplained_vibration"]
+
+
 def _diagram(ctx: _Ctx, diagnosis: DiagnosisPayload) -> CarDiagram:
+    """The sensors on the car, each with the level of the vibration the run found.
+
+    A run that found none shows only where its sensors were: each location's
+    strongest peak is then the road's broadband shake (at a wheel, mostly its
+    wheel hop, about 2 g at motorway speed on any car), which a level beside a
+    "No significant vibration" verdict would read as a fault.
+    """
+    found_nothing = _found_nothing(diagnosis)
     markers: list[DiagramMarker] = []
     for index, row in enumerate(diagnosis["location_amplitudes"]):
         code = location_code_for_label(row["location"])
         if code is None:
+            continue
+        if found_nothing:
+            markers.append(
+                DiagramMarker(
+                    code=code,
+                    label=ctx.location(row["location"]),
+                    value="",
+                    ratio=None,
+                    strongest=False,
+                )
+            )
             continue
         amplitude = _detected_mg(row)
         markers.append(
@@ -1467,6 +1497,11 @@ def _mechanic_page(
         amplitudes=tuple(
             _amplitude_row(ctx, row, first=index == 0)
             for index, row in enumerate(diagnosis["location_amplitudes"][:_MAX_AMPLITUDE_ROWS])
+        ),
+        amplitude_note=(
+            ctx.t("AMPLITUDE_NOTE_ROAD")
+            if _found_nothing(diagnosis) and diagnosis["location_amplitudes"]
+            else None
         ),
         spectrum=_spectrum(ctx, diagnosis),
         speed_chart=_speed_chart(ctx, diagnosis),

@@ -634,7 +634,8 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
   (`build_owner_page` in `report/view_model.py`, the `owner` field of
   `GET /api/history/{run_id}/insights`), so its wording, color (`tone`) and
   language are the PDF's: the likely-cause headline, the confidence level and
-  its hint, the explanation, the car diagram with mg per location, the cheap
+  its hint, the explanation, the car diagram with mg per location (only where
+  the sensors were when the run found no vibration), the cheap
   check first, next step, "If that doesn't fix it" and "Check the fix"; for a
   no-fault run "What this test covered / Not covered"; for a run that could
   not check a cause, the steps that make the next run count. A run that could
