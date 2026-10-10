@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal
+from typing import Literal, cast
 
 from vibesensor.common.json_types import JsonObject
 from vibesensor.domain.run_status import RunStatus
@@ -122,7 +122,7 @@ class StoredHistoryRun:
         if self.case_id is not None:
             payload["case_id"] = self.case_id
         if self.analysis is not None:
-            payload["analysis"] = self.analysis.to_json_object()
+            payload["analysis"] = cast(JsonObject, dict(self.analysis.payload))
         if self.raw_capture_manifest is not None:
             payload["raw_capture_manifest"] = self.raw_capture_manifest.to_json_object()
         if self.lifecycle is not None:

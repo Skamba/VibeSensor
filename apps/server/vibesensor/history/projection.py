@@ -86,8 +86,10 @@ def _project_summary_analysis(analysis: Mapping[str, object]) -> JsonObject:
 
 def _remove_history_metadata_only_fields(payload: JsonObject) -> None:
     metadata = payload.get("metadata")
-    if isinstance(metadata, dict):
-        metadata.pop("finalization_stages", None)
+    if isinstance(metadata, dict) and "finalization_stages" in metadata:
+        payload["metadata"] = {
+            key: value for key, value in metadata.items() if key != "finalization_stages"
+        }
 
 
 def _project_history_metadata(metadata: Mapping[str, object] | RunMetadata) -> JsonObject:
@@ -156,10 +158,12 @@ def _apply_projected_analysis_fallback_reasons(payload: JsonObject) -> None:
     reasons = derive_report_fallback_reasons(
         report_analysis_metadata_from_mapping(analysis_metadata)
     )
+    projected_metadata = dict(analysis_metadata)
     if reasons:
-        analysis_metadata[REPORT_FALLBACK_REASONS_METADATA_KEY] = list(reasons)
+        projected_metadata[REPORT_FALLBACK_REASONS_METADATA_KEY] = list(reasons)
     else:
-        analysis_metadata.pop(REPORT_FALLBACK_REASONS_METADATA_KEY, None)
+        projected_metadata.pop(REPORT_FALLBACK_REASONS_METADATA_KEY, None)
+    payload["analysis_metadata"] = projected_metadata
 
 
 def _history_run_fallback_reasons(run: StoredHistoryRun) -> tuple[str, ...]:
@@ -233,6 +237,5 @@ def project_persisted_analysis(
     analysis: PersistedAnalysis,
 ) -> tuple[JsonObject, TestRun]:
     """Reconstruct and re-serialize storage-owned persisted analysis."""
-    payload = analysis.to_json_object()
     test_run = test_run_from_persisted_analysis(analysis)
-    return _project_analysis_payload(payload, test_run=test_run), test_run
+    return _project_analysis_payload(analysis, test_run=test_run), test_run

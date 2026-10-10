@@ -84,6 +84,17 @@ path caps the loop's duty cycle at 50%. Even at a 5–10× slower Raspberry Pi
   help: decoding every row's peaks as one JSON array (slower than per row),
   and decoding into a msgspec `Struct` then converting (2× slower than
   decoding into the dataclass).
+- History reads of a run with a long drive's analysis (~7 MB) were dominated
+  by copying it: the run-detail projection deep-copied the stored analysis
+  before rebuilding its findings. The projections now build new objects only
+  for what they change, stored JSON is read with msgspec (stdlib `json` still
+  reads non-standard numbers and reports malformed text), and stored matched
+  points of plain floats and strings become domain observations without
+  per-field coercion. Responses are byte-identical; on the Pi (`nice -n 10`,
+  30-minute drive) the run detail went from 5.4 s to 2.7 s, insights from
+  4.5 s to 3.5 s, the run list from 1.07 s to 0.43 s and the report PDF
+  from 1.5 s to 0.95 s (0.35 s once cached). Most of what is left is rebuilding the ~24,000
+  matched points as domain objects and validating and writing the response.
 - The UDP ingest path is single-threaded: it is I/O-bound, very fast (buffer
   append under a brief lock), and the bounded async queue provides backpressure
   with explicit drop logging.

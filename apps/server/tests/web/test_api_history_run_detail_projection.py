@@ -244,7 +244,7 @@ def test_history_run_strips_internal_analysis_fields() -> None:
                 return None
             result = super().get_run(run_id)
             assert result is not None
-            analysis = dict(result.analysis.to_json_object() if result.analysis is not None else {})
+            analysis = dict(result.analysis.payload if result.analysis is not None else {})
             analysis["_internal_secret"] = "should-not-appear"
             analysis["_report_template_data"] = {"lang": "en"}
             return replace(result, analysis=make_persisted_analysis(analysis))

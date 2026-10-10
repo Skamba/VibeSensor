@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import copy
 import csv
 import io
 import json
@@ -127,14 +128,20 @@ def test_project_history_run_record_exposes_analysis_fallback_reasons() -> None:
                     "raw_capture_mode": "summary_only",
                     "raw_backed_sample_count": 0,
                 },
+                "metadata": {"finalization_stages": [], "language": "en"},
             },
         }
     )
+    assert run.analysis is not None
+    stored = copy.deepcopy(run.analysis.payload)
 
     payload = project_history_run_record(run)
 
     assert payload["fallback_reasons"] == ["legacy_summary_only"]
     assert payload["analysis"]["analysis_metadata"]["fallback_reasons"] == ["legacy_summary_only"]
+    assert payload["analysis"]["metadata"] == {"language": "en"}
+    # The projection reads the stored analysis without changing it.
+    assert run.analysis.payload == stored
 
 
 @pytest.mark.asyncio

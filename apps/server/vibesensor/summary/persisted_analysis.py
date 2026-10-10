@@ -7,7 +7,6 @@ from copy import deepcopy
 from dataclasses import dataclass
 from typing import cast
 
-from vibesensor.common.json_types import JsonObject
 from vibesensor.summary.contracts import AnalysisSummary
 
 __all__ = [
@@ -42,11 +41,6 @@ class PersistedAnalysis(Mapping[str, object]):
         return cls(
             payload=deepcopy(cast(AnalysisSummary, dict(payload))),
         )
-
-    def to_json_object(self) -> JsonObject:
-        """Return a deep-copied JSON payload for in-memory consumers."""
-
-        return cast(JsonObject, deepcopy(self.payload))
 
     @property
     def language(self) -> str:

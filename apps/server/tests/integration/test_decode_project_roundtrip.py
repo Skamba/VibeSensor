@@ -122,7 +122,7 @@ def test_persist_reload_project_preserves_domain_meaning(tmp_path: Path) -> None
 
     analysis_blob = run.analysis
     assert analysis_blob is not None
-    reconstructed = _reproject(analysis_blob.to_json_object())
+    reconstructed = _reproject(dict(analysis_blob.payload))
 
     direct_meaning = _extract_domain_meaning(direct_summary)
     reloaded_meaning = _extract_domain_meaning(reconstructed)
