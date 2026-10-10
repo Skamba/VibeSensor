@@ -324,35 +324,6 @@ assert_fast_boot_contract() {
   fi
 }
 
-# The image must carry the userland VS_PI_ARCH asked for (libc6's dpkg
-# architecture) and boot the matching kernel: arm_64bit=1 for arm64 only.
-assert_image_architecture() {
-  local root_mnt="$1"
-  local boot_mnt="$2"
-  local expected_arch="$3"
-  local actual_arch=""
-  local config_txt="${boot_mnt}/config.txt"
-
-  actual_arch="$(awk '
-    $0 == "Package: libc6" {in_pkg = 1; next}
-    /^Package: / && in_pkg {exit}
-    in_pkg && /^Architecture: / {print $2; exit}
-  ' "${root_mnt}/var/lib/dpkg/status" 2>/dev/null || true)"
-  if [ "${actual_arch}" != "${expected_arch}" ]; then
-    echo "Validation failed: image userland is '${actual_arch:-unknown}' (libc6), expected '${expected_arch}'"
-    exit 1
-  fi
-  if [ "${expected_arch}" = "arm64" ]; then
-    if ! grep -Eq '^arm_64bit=1[[:space:]]*$' "${config_txt}"; then
-      echo "Validation failed: arm64 image must boot the 64-bit kernel (arm_64bit=1 in config.txt)"
-      exit 1
-    fi
-  elif grep -Eq '^arm_64bit=1[[:space:]]*$' "${config_txt}"; then
-    echo "Validation failed: ${expected_arch} image must not set arm_64bit=1 in config.txt"
-    exit 1
-  fi
-}
-
 # VibeSensor is headless (no HDMI, no camera): the minimum GPU split and no KMS
 # display driver leave the most RAM to Linux on a 512 MB Pi 3 A+. gpu_mem=16
 # boots the cut-down GPU firmware, so it must be on the boot partition.
@@ -537,7 +508,6 @@ validate_image_artifact() {
   assert_root_executes_only_root_owned_code "${ROOT_MNT}"
   assert_root_side_stamp_matches_app "${ROOT_MNT}"
   assert_fast_boot_contract "${ROOT_MNT}"
-  assert_image_architecture "${ROOT_MNT}" "${BOOT_MNT}" "${VS_PI_ARCH}"
   assert_headless_boot_config "${BOOT_MNT}"
 
   if ! grep -Fq 'rfkill unblock wifi || rfkill unblock all || true' \
@@ -647,12 +617,8 @@ validate_image_artifact() {
   fi
 
   run_qemu_chroot() {
-    if [ -z "${QEMU_STATIC_BIN}" ]; then
-      sudo chroot "${ROOT_MNT}" "$@"
-      return
-    fi
-    sudo cp "/usr/bin/${QEMU_STATIC_BIN}" "${ROOT_MNT}/usr/bin/"
-    sudo chroot "${ROOT_MNT}" "/usr/bin/${QEMU_STATIC_BIN}" "$@"
+    sudo cp /usr/bin/qemu-arm-static "${ROOT_MNT}/usr/bin/"
+    sudo chroot "${ROOT_MNT}" /usr/bin/qemu-arm-static "$@"
   }
 
   PYTHON_RUNTIME_INFO_PATH="${ROOT_MNT}/opt/VibeSensor/apps/server/.venv/.vibesensor-python-runtime.env"
@@ -965,8 +931,8 @@ exit(crypt($plain, $shadow_hash) eq $shadow_hash ? 0 : 1);
     echo "OK: no apt-get found"
   fi
 
-  echo "=== Validation: ${VS_PI_ARCH} image, headless boot config ==="
-  grep -En '^#?(arm_64bit|gpu_mem|camera_auto_detect|dtoverlay=vc4|max_framebuffers)' "${BOOT_MNT}/config.txt" || true
+  echo "=== Validation: headless boot config ==="
+  grep -En '^#?(gpu_mem|camera_auto_detect|dtoverlay=vc4|max_framebuffers)' "${BOOT_MNT}/config.txt" || true
 
   echo "=== Validation: hotspot script references /var/log/wifi ==="
   grep -n "/var/log/wifi" "${ROOT_MNT}${ROOT_HELPER_DIR}/hotspot_nmcli.sh"

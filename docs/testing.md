@@ -201,7 +201,7 @@ Blocking jobs live in `.github/workflows/ci.yml`; each reuses the local make tar
 
 The `changes` job uses `dorny/paths-filter`: backend paths are `apps/server/`, `tools/`, `infra/pi-image/`, shell scripts/hooks, `docs/protocol.md`, and `.github/actions/`; frontend paths are `apps/ui/`, `tools/ui/`, `tools/config/`; firmware paths are `firmware/`, `tools/firmware/`, and the UDP protocol modules. Docs-only changes run only the secret scan; editing `ci.yml` runs everything.
 
-Other workflows: `codeql.yml` (Python + JS/TS analysis), `main-release.yml` (wheel, armv7l and aarch64 Pi dependency wheelhouses, and firmware release after green CI on `main`), and `weekly-pi-image.yml` (scheduled armhf Pi image release; manual runs build an artifact for the `arch` input, `armhf` or `arm64`, and publish only armhf when the `publish` input is set).
+Other workflows: `codeql.yml` (Python + JS/TS analysis), `main-release.yml` (wheel, Pi dependency wheelhouse, and firmware release after green CI on `main`), and `weekly-pi-image.yml` (scheduled Pi image release; manual runs build an artifact and publish only when the `publish` input is set).
 
 ## Coverage and characterization
 

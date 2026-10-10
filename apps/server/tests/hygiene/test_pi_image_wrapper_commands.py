@@ -40,7 +40,6 @@ COPY_ARTIFACT_DIR="${{COPY_ARTIFACT_DIR:-}}"
 VALIDATE="${{VALIDATE:-1}}"
 BUILD_MODE="${{BUILD_MODE:-all}}"
 IMG_SUFFIX="-vibesensor-lite"
-VS_PI_ARCH="${{VS_PI_ARCH:-armhf}}"
 
 init_pi_gen_env() {{ :; }}
 validate_build_mode() {{

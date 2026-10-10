@@ -5,39 +5,10 @@ init_pi_gen_env() {
   TEMPLATE_ROOT="${SCRIPT_DIR}/templates"
   CACHE_DIR="${SCRIPT_DIR}/.cache"
   PI_GEN_DIR="${CACHE_DIR}/pi-gen"
-  # Target userland: armhf (32-bit, the default and the published weekly image)
-  # or arm64 (64-bit). Upstream pi-gen builds 64-bit images from its `arm64`
-  # branch (ARCH=arm64, Debian arm64 + archive.raspberrypi.com), not from a
-  # config switch, so each arch pins its own upstream commit.
-  VS_PI_ARCH="${VS_PI_ARCH:-armhf}"
-  case "${VS_PI_ARCH}" in
-    armhf)
-      # Pinned upstream pi-gen commit (master on 2026-09-29). The build patches
-      # upstream files by exact text, so following master let an upstream change
-      # break unchanged main (weekly image, 2026-09-21). Bump deliberately: see README.
-      PI_GEN_REF="${PI_GEN_REF:-c4f875735c109c658cd5ee99eaaaf70886a853b5}"
-      IMG_SUFFIX_BASE="-vibesensor-lite"
-      PI_GEN_CONTAINER_NAME="pigen_work"
-      QEMU_STATIC_BIN="qemu-arm-static"
-      ;;
-    arm64)
-      # Upstream `arm64` branch merge of the armhf pin above (2026-09-29).
-      PI_GEN_REF="${PI_GEN_REF:-4d8ee447dd3d37e8b0ef8752e460d9082d9d435d}"
-      # Must not contain the armhf suffix, so artifact globs never mix arches.
-      IMG_SUFFIX_BASE="-vibesensor-arm64-lite"
-      # build-docker.sh finds containers by name substring: keep "pigen_work" out.
-      PI_GEN_CONTAINER_NAME="pigen_arm64_work"
-      QEMU_STATIC_BIN="qemu-aarch64-static"
-      if [ "$(uname -m)" = "aarch64" ]; then
-        # An arm64 host runs the arm64 rootfs natively.
-        QEMU_STATIC_BIN=""
-      fi
-      ;;
-    *)
-      echo "Invalid VS_PI_ARCH='${VS_PI_ARCH}'. Use one of: armhf, arm64."
-      exit 1
-      ;;
-  esac
+  # Pinned upstream pi-gen commit (master on 2026-09-29). The build patches
+  # upstream files by exact text, so following master let an upstream change
+  # break unchanged main (weekly image, 2026-09-21). Bump deliberately: see README.
+  PI_GEN_REF="${PI_GEN_REF:-c4f875735c109c658cd5ee99eaaaf70886a853b5}"
   PI_IMAGE_RELEASE="${PI_IMAGE_RELEASE:-trixie}"
   STAGE_DIR="${PI_GEN_DIR}/stage-vibesensor"
   STAGE_STEP_DIR="${STAGE_DIR}/00-vibesensor"
@@ -46,6 +17,7 @@ init_pi_gen_env() {
   APP_ARTIFACT_DIR="${OUT_DIR}/app-artifacts"
   APP_WHEEL_DIR="${APP_ARTIFACT_DIR}/wheels"
   APP_PUBLIC_DIR="${APP_ARTIFACT_DIR}/public"
+  IMG_SUFFIX_BASE="-vibesensor-lite"
   BUILD_MODE="${BUILD_MODE:-all}"
   VS_FIRST_USER_NAME="${VS_FIRST_USER_NAME:-pi}"
   VS_FIRST_USER_PASS="${VS_FIRST_USER_PASS:-vibesensor}"

@@ -349,17 +349,10 @@ sudo journalctl -u vibesensor.service -n 200 --no-pager
    record. The release smoke step fails if the wheel lacks the record.
 2. Before shipping a release, ensure the `release` job in the main release workflow builds the wheel and the Pi dependency wheelhouse, publishes the Wheel / ESP artifacts, and passes the smoke validation step.
 3. Treat the `release` job itself as the complete release gate: it must build the wheel, publish the wheel, wheelhouse, and ESP artifacts, and pass the smoke validation step before you treat the release as shipped.
-   There is one wheelhouse per Pi image userland, and the updater downloads the one
-   matching its Python: `vibesensor-wheelhouse-<version>-cp313-linux_armv7l.tar`
-   (armhf image) holds every runtime dependency as armv7l/CPython 3.13 wheels from
-   PyPI and piwheels; `vibesensor-arm64-wheelhouse-<version>-cp313-linux_aarch64.tar`
-   (arm64 image) holds PyPI's aarch64 wheels plus pure-Python wheels built on the CI
-   host for sdist-only dependencies (esptool). Its name must not start with
-   `vibesensor-wheelhouse-`: older updaters take the first asset with that prefix. If
+   The wheelhouse (`vibesensor-wheelhouse-<version>-cp313-linux_armv7l.tar`) holds
+   every runtime dependency as armv7l/CPython 3.13 wheels from PyPI and piwheels. If
    `build-wheelhouse` fails because a dependency has no binary Pi wheel yet, pin that
-   dependency to the last version piwheels (armv7l) or PyPI (aarch64) has, or wait for
-   the wheel. A release without a wheelhouse for the device's platform is refused before
-   anything is downloaded.
+   dependency to the last version piwheels has built, or wait for piwheels to build it.
 4. Updates never modify the running version. The release wheel and wheelhouse are
    downloaded and SHA-256-verified against the GitHub asset digests. Then the
    release is installed with its dependencies, offline (`pip install --no-index

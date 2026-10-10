@@ -15,7 +15,6 @@ from typing import TYPE_CHECKING
 from vibesensor.common.exceptions import UpdateCleanupError, UpdateReleaseError
 from vibesensor.updates.artifact_validation import sha256_file
 from vibesensor.updates.models import UpdatePhase
-from vibesensor.updates.releases.release_discovery import device_wheelhouse_platform
 
 if TYPE_CHECKING:
     from vibesensor.updates.releases.release_fetcher import (
@@ -77,8 +76,7 @@ class ServerReleaseStager:
         self._status.transition(UpdatePhase.downloading)
         if not release.wheelhouse_name:
             raise UpdateReleaseError(
-                f"Release {release.tag} has no dependency wheelhouse for this device "
-                f"({device_wheelhouse_platform()})",
+                f"Release {release.tag} has no dependency wheelhouse",
                 phase=_DOWNLOADING,
             )
         self._status.log(f"Downloading release {release.tag}...")

@@ -40,11 +40,8 @@ require_image_prereqs() {
   require_cmd mount
   require_cmd umount
   require_cmd awk
-  if [ "${VS_PI_ARCH}" = "armhf" ]; then
-    # Current upstream pi-gen master runs the armhf build through host qemu-arm.
-    require_cmd qemu-arm
-  fi
-  require_rootfs_runner
+  require_cmd qemu-arm
+  require_cmd qemu-arm-static
 }
 
 require_validation_prereqs() {
@@ -53,16 +50,8 @@ require_validation_prereqs() {
   require_cmd mount
   require_cmd umount
   require_cmd awk
-  require_rootfs_runner
+  require_cmd qemu-arm-static
   require_cmd "${VS_PYTHON_BIN}"
-}
-
-# The validator chroots into the target rootfs through QEMU unless the host
-# runs it natively (an arm64 image on an aarch64 host).
-require_rootfs_runner() {
-  if [ -n "${QEMU_STATIC_BIN}" ]; then
-    require_cmd "${QEMU_STATIC_BIN}"
-  fi
 }
 
 ensure_docker_available() {

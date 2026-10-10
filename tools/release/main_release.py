@@ -12,7 +12,6 @@ import subprocess
 import sys
 import tarfile
 import tempfile
-import zipfile
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -45,55 +44,19 @@ _FIRMWARE_VERSION_MARKER = b"VIBESENSOR_FIRMWARE_VERSION="
 _GITHUB_API_BASE = "https://api.github.com"
 GITHUB_API_TIMEOUT_S = 30
 
-# The Pi images run Raspberry Pi OS Lite Trixie (infra/pi-image/pi-gen): CPython
-# 3.13 and glibc 2.41 on either the 32-bit armhf userland (armv7l, the published
-# image) or the 64-bit arm64 one (aarch64). Each release ships one dependency
-# wheelhouse per userland; the updater picks the one its interpreter needs
-# (vibesensor.updates.releases.release_discovery.device_wheelhouse_platform).
+# The Pi image is Raspberry Pi OS Lite Trixie armhf (infra/pi-image/pi-gen):
+# CPython 3.13 on a Pi 3 (armv7l, glibc 2.41). PyPI has few armv7l wheels, so
+# piwheels (Raspberry Pi OS's own wheel index) fills in numpy, scipy, pyfftw, etc.
 PI_PYTHON_VERSION = "3.13"
-_MANYLINUX_GLIBC_MINORS = (17, 24, 26, 27, 28, 31, 34, 35, 36, 38, 39)
-
-
-@dataclass(frozen=True)
-class PiWheelTarget:
-    machine: str
-    asset_prefix: str
-    indexes: tuple[str, ...]
-    # Dependencies published only as a pure-Python sdist: built into a
-    # py3-none-any wheel on the CI host (pure Python, nothing compiles).
-    pure_sdist_dependencies: tuple[str, ...] = ()
-
-    @property
-    def platforms(self) -> tuple[str, ...]:
-        return (
-            f"linux_{self.machine}",
-            f"manylinux2014_{self.machine}",
-            *(
-                f"manylinux_2_{minor}_{self.machine}"
-                for minor in _MANYLINUX_GLIBC_MINORS
-            ),
-        )
-
-
-PI_WHEEL_TARGETS = {
-    # PyPI has few armv7l wheels, so piwheels (Raspberry Pi OS's own wheel
-    # index) fills in numpy, scipy, pyfftw, esptool, etc.
-    "armv7l": PiWheelTarget(
-        machine="armv7l",
-        asset_prefix="vibesensor-wheelhouse",
-        indexes=("https://pypi.org/simple", "https://www.piwheels.org/simple"),
+PI_PLATFORMS = (
+    "linux_armv7l",
+    "manylinux2014_armv7l",
+    *(
+        f"manylinux_2_{minor}_armv7l"
+        for minor in (17, 24, 26, 27, 28, 31, 34, 35, 36, 38, 39)
     ),
-    # PyPI has manylinux aarch64 wheels for every binary dependency; piwheels
-    # is armhf-only, so esptool (sdist-only on PyPI) is built here. Updaters
-    # before arm64 support take the first `vibesensor-wheelhouse-*.tar` asset,
-    # so this name must not start with that prefix.
-    "aarch64": PiWheelTarget(
-        machine="aarch64",
-        asset_prefix="vibesensor-arm64-wheelhouse",
-        indexes=("https://pypi.org/simple",),
-        pure_sdist_dependencies=("esptool",),
-    ),
-}
+)
+WHEELHOUSE_INDEXES = ("https://pypi.org/simple", "https://www.piwheels.org/simple")
 
 
 @dataclass(frozen=True)
@@ -206,7 +169,7 @@ def build_server_wheel(repo_root: Path, version: str) -> Path:
     return wheels[-1]
 
 
-def _pi_target_args(target: PiWheelTarget) -> list[str]:
+def _pi_target_args() -> list[str]:
     args = [
         "--only-binary=:all:",
         "--python-version",
@@ -220,76 +183,31 @@ def _pi_target_args(target: PiWheelTarget) -> list[str]:
         "--abi",
         "none",
     ]
-    for platform in target.platforms:
+    for platform in PI_PLATFORMS:
         args.extend(("--platform", platform))
     return args
 
 
-def wheelhouse_name(version: str, machine: str) -> str:
-    target = PI_WHEEL_TARGETS[machine]
+def wheelhouse_name(version: str) -> str:
     tag = "cp" + PI_PYTHON_VERSION.replace(".", "")
-    return f"{target.asset_prefix}-{version}-{tag}-linux_{target.machine}.tar"
+    return f"vibesensor-wheelhouse-{version}-{tag}-linux_armv7l.tar"
 
 
-def _requires_dist(wheel_path: Path, name: str) -> str:
-    """Return *wheel_path*'s requirement on *name* (``esptool<6,>=5.2.0``), marker dropped."""
-    with zipfile.ZipFile(wheel_path) as wheel:
-        metadata_name = next(
-            entry for entry in wheel.namelist() if entry.endswith(".dist-info/METADATA")
-        )
-        metadata = wheel.read(metadata_name).decode("utf-8")
-    for line in metadata.splitlines():
-        if not line.startswith("Requires-Dist:"):
-            continue
-        requirement = line.removeprefix("Requires-Dist:").split(";", 1)[0].strip()
-        project = re.split(r"[\s<>=!~\[(]", requirement, maxsplit=1)[0]
-        if project.lower().replace("_", "-") == name:
-            return requirement
-    raise SystemExit(f"{wheel_path.name} does not require {name}.")
-
-
-def _build_pure_sdist_wheels(
-    target: PiWheelTarget, wheel_path: Path, wheel_dir: Path
-) -> None:
-    for name in target.pure_sdist_dependencies:
-        _run(
-            [
-                sys.executable,
-                "-m",
-                "pip",
-                "wheel",
-                "--no-deps",
-                "--wheel-dir",
-                str(wheel_dir),
-                "--index-url",
-                target.indexes[0],
-                _requires_dist(wheel_path, name),
-            ]
-        )
-        built = sorted(wheel_dir.glob(f"{name.replace('-', '_')}-*.whl"))
-        if not built or not all(w.name.endswith("-none-any.whl") for w in built):
-            raise SystemExit(
-                f"{name} did not build as a pure-Python wheel: "
-                f"{[w.name for w in built]}"
-            )
-
-
-def build_wheelhouse(wheel_path: Path, output: Path, machine: str) -> Path:
+def build_wheelhouse(wheel_path: Path, output: Path) -> Path:
     """Download every runtime dependency of *wheel_path* as Pi wheels into one tar.
 
-    Binary wheels only, so the CI host never compiles anything (pure-Python
-    sdist-only dependencies become py3-none-any wheels first), followed by an
+    Binary wheels only, so the CI host never compiles anything, followed by an
     offline dry-run install that proves the set is complete for the target.
     """
-    target = PI_WHEEL_TARGETS[machine]
     requirement = f"{wheel_path.resolve()}[esp]"
-    index_args = ["--index-url", target.indexes[0]]
-    for extra_index in target.indexes[1:]:
-        index_args.extend(("--extra-index-url", extra_index))
+    index_args = [
+        "--index-url",
+        WHEELHOUSE_INDEXES[0],
+        "--extra-index-url",
+        WHEELHOUSE_INDEXES[1],
+    ]
     with tempfile.TemporaryDirectory(prefix="vibesensor-wheelhouse-") as tmp:
         wheel_dir = Path(tmp) / "wheels"
-        wheel_dir.mkdir()
-        _build_pure_sdist_wheels(target, wheel_path, wheel_dir)
         _run(
             [
                 sys.executable,
@@ -298,9 +216,7 @@ def build_wheelhouse(wheel_path: Path, output: Path, machine: str) -> Path:
                 "download",
                 "--dest",
                 str(wheel_dir),
-                "--find-links",
-                str(wheel_dir),
-                *_pi_target_args(target),
+                *_pi_target_args(),
                 *index_args,
                 requirement,
             ]
@@ -318,7 +234,7 @@ def build_wheelhouse(wheel_path: Path, output: Path, machine: str) -> Path:
                 "--no-index",
                 "--find-links",
                 str(wheel_dir),
-                *_pi_target_args(target),
+                *_pi_target_args(),
                 requirement,
             ]
         )
@@ -593,9 +509,6 @@ def main(argv: list[str] | None = None) -> int:
     wheelhouse_parser.add_argument("--wheel-path", required=True)
     wheelhouse_parser.add_argument("--version", required=True)
     wheelhouse_parser.add_argument("--output-dir", required=True)
-    wheelhouse_parser.add_argument(
-        "--machine", required=True, choices=sorted(PI_WHEEL_TARGETS)
-    )
 
     manifest_parser = subparsers.add_parser("generate-firmware-manifest")
     manifest_parser.add_argument("--firmware-dir", required=True)
@@ -625,8 +538,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "build-wheelhouse":
-        output = Path(args.output_dir) / wheelhouse_name(args.version, args.machine)
-        print(build_wheelhouse(Path(args.wheel_path), output, args.machine), flush=True)
+        output = Path(args.output_dir) / wheelhouse_name(args.version)
+        print(build_wheelhouse(Path(args.wheel_path), output), flush=True)
         return 0
 
     if args.command == "generate-firmware-manifest":
