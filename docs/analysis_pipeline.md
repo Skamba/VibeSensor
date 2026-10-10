@@ -50,9 +50,14 @@ summary row's FFT peaks and strength metrics from the raw window the row was
 analysed over, so the summary analysis reasons over unfiltered diagnostic
 evidence. Each window is laid out as the live tick's FFT block (three axes,
 each contiguous), so the FFT's per-axis passes read contiguous memory and the
-replay computes a block as the live tick does. The windows' strength metrics
-are taken 16 at a time (`compute_vibration_strength_rows()`), each the one the
-live tick computes for that block on its own. The replay also keeps each
+replay computes a block as the live tick does. Each sensor's windows are
+located in its raw buffer all at once (`contiguous_raw_window_starts()`; a
+window stored in pieces is resolved on its own), their spectra are computed
+64 at a time through one FFT plan on one helper thread
+(`combined_spectra()`), and their strength metrics are taken 128 at a time
+(`compute_vibration_strength_rows()`) on the worker thread meanwhile; each
+result is bit for bit the one the live tick computes for that block on its
+own. The replay also keeps each
 window's combined spectrum in memory (never persisted), so order tracking can
 read each order's level at its line at every sensor ("Order-tracked reads" in
 `docs/order_tracking.md`).
@@ -90,8 +95,8 @@ RunRecorder.stop_recording()            # recording/recorder.py
                             ← persist the summary analysis via the injected HistoryDB
 ```
 
-On the Pi a 30-minute, 4-sensor drive takes about 77 s: loading 4 s, the
-raw replay 36 s, the analysis 36 s (order matching about 24 s of it) and
+On the Pi a 30-minute, 4-sensor drive takes about 48.5 s: loading 4.5 s,
+the raw replay 12.5 s, the analysis 30 s (order matching most of it) and
 storing 1 s. Every speed-up keeps the analysis byte-identical; what was measured,
 kept and rejected (worker processes, thread pools, FFT shortcuts) is in
 `docs/multithreading_performance.md`.
