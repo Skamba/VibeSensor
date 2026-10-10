@@ -129,24 +129,32 @@ class OrderHypothesis:
     # Used to widen match tolerance and soften error/correlation penalties.
     path_compliance: float = 1.0
 
-    def predicted_hz(
-        self,
-        sample: Sample,
-        context: RunMetadata,
-        tire_circumference_m: float | None,
-    ) -> tuple[float | None, str]:
-        if self.order_label_base == "wheel":
-            base = _wheel_hz(sample, tire_circumference_m, context, own_axle=True)
-            return (base * self.order, "speed+tire") if base is not None else (None, "missing")
-        if self.order_label_base == "driveshaft":
-            base = _driveshaft_hz(sample, context, tire_circumference_m)
-            if base is None:
-                return None, "missing"
-            return base * self.order, "speed+tire+final_drive"
-        if self.order_label_base == "engine":
-            base, src = _engine_hz(sample, context, tire_circumference_m)
-            return (base * self.order, src) if base is not None else (None, src)
-        return None, "missing"
+    def order_hz(self, reference: tuple[float | None, str]) -> tuple[float | None, str]:
+        """This order's frequency from its rotation's (``reference_hz``), and its source."""
+        base, source = reference
+        return (base * self.order, source) if base is not None else (None, source)
+
+
+def reference_hz(
+    order_label_base: str,
+    sample: Sample,
+    context: RunMetadata,
+    tire_circumference_m: float | None,
+) -> tuple[float | None, str]:
+    """The rotation's frequency an order of *order_label_base* is a multiple of, and its source.
+
+    The same for every order of one rotation (a wheel's T1 to T6), so it is
+    worked out once per sample for all of them.
+    """
+    if order_label_base == "wheel":
+        base = _wheel_hz(sample, tire_circumference_m, context, own_axle=True)
+        return (base, "speed+tire") if base is not None else (None, "missing")
+    if order_label_base == "driveshaft":
+        base = _driveshaft_hz(sample, context, tire_circumference_m)
+        return (base, "speed+tire+final_drive") if base is not None else (None, "missing")
+    if order_label_base == "engine":
+        return _engine_hz(sample, context, tire_circumference_m)
+    return None, "missing"
 
 
 # The road-speed orders, the same for every car. Wheel orders travel through

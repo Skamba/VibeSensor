@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from bisect import bisect_left
 from collections import defaultdict
 from collections.abc import Sequence, Set
 from dataclasses import dataclass
@@ -47,6 +48,26 @@ class LocationAnalysisResult:
         return self.top_location
 
 
+def _peer_hz_by_location(matches: Sequence[OrderMatchObservation]) -> dict[str, list[float]]:
+    """Each sensor's matched frequencies, sorted: the peers that can corroborate a match."""
+    by_location: dict[str, list[float]] = defaultdict(list)
+    for peer in matches:
+        peer_location = peer.location.strip()
+        if peer_location and peer.matched_hz > 0:
+            by_location[peer_location].append(peer.matched_hz)
+    for peer_hz in by_location.values():
+        peer_hz.sort()
+    return by_location
+
+
+def _has_peer_within(sorted_hz: Sequence[float], hz: float, tolerance_hz: float) -> bool:
+    """Whether any of *sorted_hz* lies within *tolerance_hz* of *hz*: the nearest either side."""
+    above = bisect_left(sorted_hz, hz)
+    return (above < len(sorted_hz) and abs(sorted_hz[above] - hz) <= tolerance_hz) or (
+        above > 0 and abs(sorted_hz[above - 1] - hz) <= tolerance_hz
+    )
+
+
 def score_locations_in_bin(
     bin_label: str,
     matches: Sequence[OrderMatchObservation],
@@ -64,6 +85,7 @@ def score_locations_in_bin(
     per_loc_scores: dict[str, list[float]] = defaultdict(list)
     per_loc_sample_counts: dict[str, int] = defaultdict(int)
     per_loc_corroborated_counts: dict[str, list[int]] = defaultdict(list)
+    peer_hz_by_location = _peer_hz_by_location(matches)
 
     for match in matches:
         location = match.location.strip()
@@ -75,22 +97,14 @@ def score_locations_in_bin(
         rel_error = match.rel_error if match.rel_error >= 0 else None
         quality_weight = max(0.0, min(1.0, 1.0 - rel_error)) if rel_error is not None else 1.0
 
-        corroborating_locations: set[str] = set()
+        corroborated_by_n_sensors = 1
         if matched_hz is not None:
             tolerance_hz = max(0.75, matched_hz * 0.03)
-            for peer in matches:
-                peer_location = peer.location.strip()
-                peer_hz = peer.matched_hz if peer.matched_hz > 0 else None
-                if (
-                    not peer_location
-                    or peer_location == location
-                    or peer_hz is None
-                    or abs(peer_hz - matched_hz) > tolerance_hz
-                ):
-                    continue
-                corroborating_locations.add(peer_location)
-
-        corroborated_by_n_sensors = 1 + len(corroborating_locations)
+            corroborated_by_n_sensors += sum(
+                1
+                for peer_location, peer_hz in peer_hz_by_location.items()
+                if peer_location != location and _has_peer_within(peer_hz, matched_hz, tolerance_hz)
+            )
         corroboration_weight = (
             corroboration_amp_multiplier if corroborated_by_n_sensors >= 2 else 1.0
         )

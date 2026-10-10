@@ -87,24 +87,63 @@ def _sensor_fixed_tones(
                 at_hz[hz].add(index)
     tones = sorted(at_hz)
     min_bins = ceil(log(_MIN_SPEED_SPREAD) / log(_SPEED_BIN_RATIO))
+    needed = [(speed_bin, _HELD_IN_BIN * spectra[speed_bin]) for speed_bin in judged]
+    # The spectra holding a peak within a tone's width of each tone, per speed
+    # bin, counted once each: kept up to date as the window of tones slides up.
+    window = _HoldingWindow(at_hz, bin_of)
     fixed: list[float] = []
     for hz in tones:
         width = _tone_width_hz(hz)
-        lo, hi = bisect_left(tones, hz - width), bisect_right(tones, hz + width)
-        holding = Counter(
-            bin_of[index] for index in set().union(*(at_hz[tone] for tone in tones[lo:hi]))
+        holding = window.slide(
+            tones, bisect_left(tones, hz - width), bisect_right(tones, hz + width)
         )
-        held = sorted(
-            speed_bin
-            for speed_bin in judged
-            if holding[speed_bin] >= _HELD_IN_BIN * spectra[speed_bin]
-        )
+        held = sorted(speed_bin for speed_bin, need in needed if holding[speed_bin] >= need)
         if len(held) < 2 or held[-1] - held[0] < min_bins:
             continue
         between = [speed_bin for speed_bin in judged if held[0] <= speed_bin <= held[-1]]
         if len(held) >= _HELD_BINS * len(between):
             fixed.append(hz)
     return fixed
+
+
+class _HoldingWindow:
+    """The spectra holding any tone of a window ``tones[lo:hi]``, counted per speed bin.
+
+    Each spectrum counts once however many of the window's tones it holds.
+    Moving the window adds and drops only the tones that enter or leave it.
+    """
+
+    def __init__(self, at_hz: dict[float, set[int]], bin_of: dict[int, int]) -> None:
+        self._at_hz = at_hz
+        self._bin_of = bin_of
+        self._held_by: dict[int, int] = defaultdict(int)
+        self._holding: dict[int, int] = defaultdict(int)
+        self._lo = 0
+        self._hi = 0
+
+    def slide(self, tones: Sequence[float], lo: int, hi: int) -> dict[int, int]:
+        # Widen first, so a tone is only dropped once it is in the window.
+        while self._lo > lo:
+            self._lo -= 1
+            self._add(tones[self._lo], 1)
+        while self._hi < hi:
+            self._add(tones[self._hi], 1)
+            self._hi += 1
+        while self._hi > hi:
+            self._hi -= 1
+            self._add(tones[self._hi], -1)
+        while self._lo < lo:
+            self._add(tones[self._lo], -1)
+            self._lo += 1
+        return self._holding
+
+    def _add(self, tone: float, step: int) -> None:
+        held_by, holding, bin_of = self._held_by, self._holding, self._bin_of
+        for index in self._at_hz[tone]:
+            held_by[index] += step
+            # A spectrum enters on its first tone in the window, leaves after its last.
+            if held_by[index] == (1 if step > 0 else 0):
+                holding[bin_of[index]] += step
 
 
 def fixed_tones(

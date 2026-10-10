@@ -16,6 +16,7 @@ from vibesensor.dsp.window_spectrum import (
     LineRead,
     WindowSpectrum,
     line_half_width_hz,
+    line_reads,
     peak_scale_g,
     tone_line_level_g,
 )
@@ -29,9 +30,10 @@ _COMPUTER = SpectralAnalysisComputer(fft_n=_N, spectrum_min_hz=5.0, spectrum_max
 def _spectrum(signal: np.ndarray, rng: np.random.Generator, noise_g: float = 0.002):
     block = rng.normal(0.0, noise_g, size=(3, _N))
     block[2] += signal
-    computed = _COMPUTER.compute_combined_strength_metrics(block.astype(np.float32), _FS)
-    assert computed is not None
-    return computed
+    spectrum = _COMPUTER.combined_spectrum(block.astype(np.float32), _FS)
+    assert spectrum is not None
+    (metrics,) = _COMPUTER.combined_strength_metrics([spectrum], _FS)
+    return metrics, spectrum
 
 
 def test_a_steady_tone_reads_its_peak_level() -> None:
@@ -91,6 +93,34 @@ def test_broadband_noise_alone_reads_no_level_on_average() -> None:
     excess = np.mean([read.excess for read in reads if read is not None])
     flanks = np.mean([read.flanks for read in reads if read is not None])
     assert abs(excess) < 0.1 * flanks
+
+
+def test_reads_taken_together_are_each_read_bit_for_bit() -> None:
+    # Stacked reads keep one read's floating-point order: the drive's verdicts
+    # are the same however its reads are taken. Lines across the whole
+    # spectrum (both edges, off it), held and swept, on a floor that varies
+    # over decades.
+    rng = np.random.default_rng(11)
+    freq = np.arange(5.0, 200.0, _FS / _N, dtype=np.float32)
+    spectra = [
+        WindowSpectrum(
+            freq_hz=freq,
+            amp_g=(10.0 ** rng.uniform(-5.0, -1.0, freq.size)).astype(np.float32),
+        )
+        for _ in range(4)
+    ]
+    reads = [
+        (spectra[index % 4], float(hz), float(half_width))
+        for index, (hz, half_width) in enumerate(
+            zip(rng.uniform(0.0, 210.0, 3000), rng.choice([0.0, 0.3, 2.0, 9.0], 3000), strict=True)
+        )
+    ]
+
+    together = line_reads(reads)
+
+    assert together == [spectrum.line_read(hz, half_width) for spectrum, hz, half_width in reads]
+    assert sum(read is None for read in together) > 100
+    assert sum(read is not None for read in together) > 2000
 
 
 def test_a_line_swept_by_a_speed_change_reads_its_whole_sweep() -> None:

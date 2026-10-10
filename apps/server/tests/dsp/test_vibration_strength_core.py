@@ -12,6 +12,7 @@ from vibesensor.dsp.vibration_strength import (
     _noise_floor_amp_p20_g_aligned,
     combined_spectrum_amp_g,
     compute_vibration_strength_db,
+    compute_vibration_strength_rows,
     median,
     noise_floor_amp_p20_g,
     percentile,
@@ -160,3 +161,36 @@ class TestNoiseFloorAmpP20G:
         assert result["top_peaks"]
         assert result["top_peaks"][0]["hz"] == pytest.approx(10.0)
         assert result["noise_floor_amp_g"] == pytest.approx(0.02)
+
+
+def test_spectra_taken_together_are_each_taken_as_alone() -> None:
+    # The post-stop replay takes many windows' strengths at once; each must be
+    # what its window has on its own, peaks, floors and local floors alike.
+    rng = np.random.default_rng(5)
+    freq_hz = np.arange(25, 1001) * 0.390625
+    in_range = (freq_hz >= 5.0) & (freq_hz <= 200.0)
+    spectra = np.abs(rng.normal(0.0, 0.002, size=(40, freq_hz.size)))
+    for row in spectra[::2]:
+        for centre in rng.uniform(5.0, 380.0, size=int(rng.integers(1, 10))):
+            row += rng.uniform(0.005, 0.2) * np.exp(-0.5 * ((freq_hz - centre) / 0.6) ** 2)
+    spectra[3] = 0.001  # flat: no peaks
+    spectra[7] = np.round(spectra[7], 3)  # flat tops
+    spectra[11, :50] = 0.0
+    spectra = spectra.astype(np.float32)
+
+    together = compute_vibration_strength_rows(
+        freq_hz=freq_hz, spectra=spectra, top_n=8, strength_range_mask=in_range
+    )
+    alone = [
+        compute_vibration_strength_db(
+            freq_hz=freq_hz,
+            combined_spectrum_amp_g_values=row,
+            top_n=8,
+            strength_range_mask=in_range,
+        )
+        for row in spectra
+    ]
+
+    assert together == alone
+    assert not together[3]["top_peaks"]
+    assert sum(len(metrics["top_peaks"]) for metrics in together) > 100

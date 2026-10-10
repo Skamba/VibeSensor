@@ -2,16 +2,17 @@
 
 from __future__ import annotations
 
+from collections import defaultdict
 from dataclasses import dataclass, replace
 from math import isfinite
-from typing import Literal
+from typing import Literal, cast
 
 import numpy as np
 
 from vibesensor.common.json_utils import i18n_ref
-from vibesensor.domain.strength_metrics import StrengthMetrics
 from vibesensor.dsp.constants import SPECTRUM_MAX_HZ, SPECTRUM_MIN_HZ
 from vibesensor.dsp.fft_analysis import SpectralAnalysisComputer
+from vibesensor.dsp.vibration_strength import VibrationStrengthMetrics
 from vibesensor.dsp.window_spectrum import WindowSpectrum
 from vibesensor.recording.raw_capture import RawRunCapture
 from vibesensor.recording.raw_capture_quality import (
@@ -51,6 +52,10 @@ __all__ = [
 type RawReplayCoverageState = Literal["complete", "partial", "missing"]
 type RawReplayConfidence = Literal["full", "partial", "fallback", "unavailable"]
 type RawCaptureMode = Literal["raw_backed", "partial_raw_backed", "summary_only"]
+
+# Raw windows whose strengths are taken together: enough to share the per-call
+# cost of the strength pipeline, few enough to hold little memory.
+_WINDOWS_PER_BATCH = 16
 
 
 @dataclass(frozen=True, slots=True)
@@ -123,10 +128,15 @@ class _ResolvedWindow:
 
 
 @dataclass(frozen=True, slots=True)
-class _ComputedStrengthMetrics:
-    metrics: StrengthMetrics
-    analytically_valid: bool
-    spectrum: WindowSpectrum | None = None
+class _PendingWindow:
+    """A complete raw window's spectrum, its strength still to be taken (``_rebuilt_samples``)."""
+
+    sample: SensorFrame
+    spectrum: WindowSpectrum
+    sample_rate_hz: int
+    last_xyz: tuple[float, float, float]
+    mean_xyz: tuple[float, float, float]
+    reason: str | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -309,7 +319,7 @@ def _assemble_raw_replay_result(
     )
 
 
-def _rebuild_sample(
+def _prepare_window(
     *,
     sample: SensorFrame,
     timeline: RawSensorTimeline | None,
@@ -317,7 +327,8 @@ def _rebuild_sample(
     fft_computer: SpectralAnalysisComputer,
     fft_n: int,
     accel_scale_g_per_lsb: float | None,
-) -> tuple[SensorFrame, RawReplayWindowCoverage]:
+) -> tuple[SensorFrame, RawReplayWindowCoverage] | _PendingWindow:
+    """The raw window behind *sample*, or the sample as it is with why it has none."""
     if timeline is None:
         return (
             sample,
@@ -401,21 +412,17 @@ def _rebuild_sample(
     fft_block = np.array(window_i16.T, dtype=np.float32, order="C")
     if accel_scale_g_per_lsb is not None and accel_scale_g_per_lsb > 0:
         fft_block *= np.float32(accel_scale_g_per_lsb)
-    computed_strength = _compute_strength_metrics(
-        fft_block,
-        sample_rate_hz,
-        fft_computer=fft_computer,
-    )
-    last_xyz = fft_block[:, -1]
+    spectrum = fft_computer.combined_spectrum(fft_block, sample_rate_hz)
+    last_xyz = (float(fft_block[0, -1]), float(fft_block[1, -1]), float(fft_block[2, -1]))
     mean = fft_block.sum(axis=1) / fft_n
     mean_xyz = (float(mean[0]), float(mean[1]), float(mean[2]))
-    if not computed_strength.analytically_valid:
+    if spectrum is None:
         return (
             replace(
                 sample,
-                accel_x_g=float(last_xyz[0]),
-                accel_y_g=float(last_xyz[1]),
-                accel_z_g=float(last_xyz[2]),
+                accel_x_g=last_xyz[0],
+                accel_y_g=last_xyz[1],
+                accel_z_g=last_xyz[2],
                 dominant_freq_hz=None,
                 top_peaks=(),
                 vibration_strength_db=None,
@@ -432,33 +439,48 @@ def _rebuild_sample(
                 mean_xyz=mean_xyz,
             ),
         )
-    domain_strength = computed_strength.metrics
+    return _PendingWindow(
+        sample=sample,
+        spectrum=spectrum,
+        sample_rate_hz=sample_rate_hz,
+        last_xyz=last_xyz,
+        mean_xyz=mean_xyz,
+        reason=(
+            "sample_rate_mismatch"
+            if sample_rate_mismatch
+            else ("timing_fallback" if window.timing_source == "legacy_t_s" else None)
+        ),
+    )
+
+
+def _finish_window(
+    window: _PendingWindow, strength_metrics: VibrationStrengthMetrics
+) -> tuple[SensorFrame, RawReplayWindowCoverage]:
+    """*window*'s sample rebuilt from its raw window's spectrum and *strength_metrics*."""
+    sample, last_xyz = window.sample, window.last_xyz
+    domain_strength = strength_metrics_from_mapping(strength_metrics)
     top_peaks = tuple(peak for peak in domain_strength.top_peaks if peak.is_valid)
     return (
         replace(
             sample,
-            accel_x_g=float(last_xyz[0]),
-            accel_y_g=float(last_xyz[1]),
-            accel_z_g=float(last_xyz[2]),
+            accel_x_g=last_xyz[0],
+            accel_y_g=last_xyz[1],
+            accel_z_g=last_xyz[2],
             dominant_freq_hz=domain_strength.dominant_hz,
             top_peaks=top_peaks,
             vibration_strength_db=domain_strength.vibration_strength_db,
             strength_bucket=domain_strength.strength_bucket,
             strength_peak_amp_g=domain_strength.peak_amp_g,
             strength_floor_amp_g=domain_strength.noise_floor_amp_g,
-            spectrum=computed_strength.spectrum,
+            spectrum=window.spectrum,
         ),
         RawReplayWindowCoverage(
             client_id=sample.client_id,
             t_s=sample.t_s,
             coverage_state="complete",
             raw_backed=True,
-            reason=(
-                "sample_rate_mismatch"
-                if sample_rate_mismatch
-                else ("timing_fallback" if window.timing_source == "legacy_t_s" else None)
-            ),
-            mean_xyz=mean_xyz,
+            reason=window.reason,
+            mean_xyz=window.mean_xyz,
         ),
     )
 
@@ -551,8 +573,9 @@ def _build_replay_windows(
     raw_capture: RawRunCapture,
     context: _ReplayBuildContext,
 ) -> _ReplayWindowBuildResult:
-    replayed: list[SensorFrame] = []
-    coverages: list[RawReplayWindowCoverage] = []
+    replayed, coverages = _rebuilt_samples(
+        samples=samples, raw_capture=raw_capture, context=context
+    )
     raw_backed_count = 0
     complete_window_count = 0
     partial_window_count = 0
@@ -560,15 +583,7 @@ def _build_replay_windows(
     sample_rate_mismatch_count = 0
     timing_fallback_count = 0
     fft_unusable_window_count = 0
-    for sample in samples:
-        rebuilt, coverage = _rebuild_sample(
-            sample=sample,
-            timeline=context.timelines.get(sample.client_id),
-            raw_capture=raw_capture,
-            fft_computer=context.fft_computer,
-            fft_n=context.fft_n,
-            accel_scale_g_per_lsb=context.accel_scale_g_per_lsb,
-        )
+    for coverage in coverages:
         if coverage.raw_backed:
             raw_backed_count += 1
         if coverage.coverage_state == "complete":
@@ -583,8 +598,6 @@ def _build_replay_windows(
             timing_fallback_count += 1
         if coverage.reason == "fft_no_valid_bins":
             fft_unusable_window_count += 1
-        replayed.append(rebuilt)
-        coverages.append(coverage)
     return _ReplayWindowBuildResult(
         samples=tuple(replayed),
         coverages=tuple(coverages),
@@ -596,6 +609,52 @@ def _build_replay_windows(
         timing_fallback_count=timing_fallback_count,
         fft_unusable_window_count=fft_unusable_window_count,
     )
+
+
+def _rebuilt_samples(
+    *,
+    samples: tuple[SensorFrame, ...],
+    raw_capture: RawRunCapture,
+    context: _ReplayBuildContext,
+) -> tuple[list[SensorFrame], list[RawReplayWindowCoverage]]:
+    """Each sample rebuilt from its raw window, and its window's coverage, in order.
+
+    The windows' strengths are taken ``_WINDOWS_PER_BATCH`` at a time: together
+    they cost a fraction of one at a time.
+    """
+    frames = list(samples)
+    coverages: list[RawReplayWindowCoverage | None] = [None] * len(samples)
+    pending: dict[int, list[tuple[int, _PendingWindow]]] = defaultdict(list)
+
+    def finish(windows: list[tuple[int, _PendingWindow]], sample_rate_hz: int) -> None:
+        strength_metrics = context.fft_computer.combined_strength_metrics(
+            [window.spectrum for _index, window in windows], sample_rate_hz
+        )
+        for (index, window), window_metrics in zip(windows, strength_metrics, strict=True):
+            frames[index], coverages[index] = _finish_window(window, window_metrics)
+        windows.clear()
+
+    for index, sample in enumerate(samples):
+        prepared = _prepare_window(
+            sample=sample,
+            timeline=context.timelines.get(sample.client_id),
+            raw_capture=raw_capture,
+            fft_computer=context.fft_computer,
+            fft_n=context.fft_n,
+            accel_scale_g_per_lsb=context.accel_scale_g_per_lsb,
+        )
+        if not isinstance(prepared, _PendingWindow):
+            frames[index], coverages[index] = prepared
+            continue
+        windows = pending[prepared.sample_rate_hz]
+        windows.append((index, prepared))
+        if len(windows) >= _WINDOWS_PER_BATCH:
+            finish(windows, prepared.sample_rate_hz)
+    for sample_rate_hz, windows in pending.items():
+        if windows:
+            finish(windows, sample_rate_hz)
+    # Every sample has its coverage by now.
+    return frames, cast("list[RawReplayWindowCoverage]", coverages)
 
 
 def _summarize_raw_timelines(
@@ -968,27 +1027,3 @@ def _build_replay_warnings(
         )
     )
     return tuple(warnings)
-
-
-def _compute_strength_metrics(
-    fft_block: np.ndarray,
-    sample_rate_hz: int,
-    *,
-    fft_computer: SpectralAnalysisComputer,
-) -> _ComputedStrengthMetrics:
-    computed = (
-        fft_computer.compute_combined_strength_metrics(fft_block, sample_rate_hz)
-        if fft_block.size > 0
-        else None
-    )
-    if computed is None:
-        return _ComputedStrengthMetrics(
-            metrics=strength_metrics_from_mapping(None),
-            analytically_valid=False,
-        )
-    strength_metrics, spectrum = computed
-    return _ComputedStrengthMetrics(
-        metrics=strength_metrics_from_mapping(strength_metrics),
-        analytically_valid=True,
-        spectrum=spectrum,
-    )

@@ -75,12 +75,11 @@ def test_the_combined_strength_alone_matches_the_full_spectrum() -> None:
         block[rng.integers(3)] += np.float32(0.2) * np.sin(2 * np.pi * rng.uniform(5, 150) * t)
 
         full = computer.compute_fft_spectrum(block, _FS)
-        combined = computer.compute_combined_strength_metrics(block, _FS)
+        spectrum = computer.combined_spectrum(block, _FS)
 
         assert full["has_valid_analysis_bins"]
-        assert combined is not None
-        metrics, spectrum = combined
-        assert metrics == full["strength_metrics"]
+        assert spectrum is not None
+        assert computer.combined_strength_metrics([spectrum], _FS) == [full["strength_metrics"]]
         np.testing.assert_array_equal(spectrum.freq_hz, full["freq_slice"])
         np.testing.assert_array_equal(spectrum.amp_g, full["combined_amp"])
 
@@ -91,7 +90,7 @@ def test_no_combined_strength_without_analysis_bins() -> None:
     block = np.zeros((3, _N), dtype=np.float32)
 
     assert not computer.compute_fft_spectrum(block, _FS)["has_valid_analysis_bins"]
-    assert computer.compute_combined_strength_metrics(block, _FS) is None
+    assert computer.combined_spectrum(block, _FS) is None
 
 
 def test_peak_picking_and_hann_window_match_scipy_signal() -> None:

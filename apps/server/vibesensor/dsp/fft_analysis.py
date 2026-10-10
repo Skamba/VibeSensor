@@ -3,6 +3,7 @@ from __future__ import annotations
 import math
 import threading
 from collections import OrderedDict
+from collections.abc import Sequence
 from threading import RLock
 from typing import TYPE_CHECKING, Literal, TypedDict
 
@@ -18,6 +19,7 @@ from vibesensor.dsp.vibration_strength import (
     VibrationStrengthMetrics,
     _combined_spectrum_amp_g_array,
     compute_vibration_strength_db,
+    compute_vibration_strength_rows,
     empty_vibration_strength_metrics,
 )
 from vibesensor.dsp.window_spectrum import WindowSpectrum
@@ -39,7 +41,8 @@ __all__ = [
     "axis_peaks_from_spectrum",
     "SpectrumByAxis",
     "broadband_energy_ratio",
-    "compute_combined_strength_metrics",
+    "combined_spectrum",
+    "combined_strength_metrics",
     "compute_fft_spectrum",
     "fft_frequency_slice",
     "fft_window_values",
@@ -55,6 +58,9 @@ type BoolArray = npt.NDArray[np.bool_]
 type FftWindowFunction = Literal["hann", "boxcar"]
 
 Axis = Literal["x", "y", "z"]
+
+# The combined spectrum's ranked peaks, live and in the post-stop replay.
+_COMBINED_TOP_N = 8
 
 
 class SpectrumAxisData(TypedDict):
@@ -381,16 +387,15 @@ def compute_fft_spectrum(
     }
 
 
-def compute_combined_strength_metrics(
+def combined_spectrum(
     fft_block: FloatArray,
     *,
     fft_window: FloatArray,
     fft_scale: float,
     freq_slice: FloatArray,
     valid_idx: IntIndexArray,
-    strength_range_mask: BoolArray | None = None,
-) -> tuple[VibrationStrengthMetrics, WindowSpectrum] | None:
-    """The combined spectrum and its strength metrics, as ``compute_fft_spectrum`` reports them.
+) -> WindowSpectrum | None:
+    """The block's combined spectrum, as ``compute_fft_spectrum`` has it.
 
     Skips the per-axis peak search, for callers that read only the combined
     spectrum (post-stop raw replay). ``None`` when there are no analysis bins.
@@ -402,12 +407,31 @@ def compute_combined_strength_metrics(
     )
     if specs_all is None or freq_slice.size == 0:
         return None
-    combined_amp, strength_metrics = _combined_strength_metrics(
-        freq_slice=freq_slice,
-        amp_slices=[specs_all[axis_idx, valid_idx] for axis_idx in range(len(AXES))],
+    return WindowSpectrum(
+        freq_hz=freq_slice,
+        amp_g=_combined_amp([specs_all[axis_idx, valid_idx] for axis_idx in range(len(AXES))]),
+    )
+
+
+def combined_strength_metrics(
+    spectra: Sequence[WindowSpectrum],
+    *,
+    strength_range_mask: BoolArray | None = None,
+) -> list[VibrationStrengthMetrics]:
+    """Each combined spectrum's strength metrics, as ``compute_fft_spectrum`` has them.
+
+    All at once (``compute_vibration_strength_rows``): the spectra share their bins.
+    """
+    if not spectra:
+        return []
+    return compute_vibration_strength_rows(
+        freq_hz=spectra[0].freq_hz,
+        spectra=np.stack([spectrum.amp_g for spectrum in spectra]),
+        peak_bandwidth_hz=PEAK_BANDWIDTH_HZ,
+        peak_separation_hz=PEAK_SEPARATION_HZ,
+        top_n=_COMBINED_TOP_N,
         strength_range_mask=strength_range_mask,
     )
-    return strength_metrics, WindowSpectrum(freq_hz=freq_slice, amp_g=combined_amp)
 
 
 def _amplitude_spectra(
@@ -440,25 +464,29 @@ def _amplitude_spectra(
     return specs_all
 
 
-def _combined_strength_metrics(
-    *,
-    freq_slice: FloatArray,
-    amp_slices: list[FloatArray],
-    strength_range_mask: BoolArray | None,
-) -> tuple[FloatArray, VibrationStrengthMetrics]:
-    combined_amp = _combined_spectrum_amp_g_array(
+def _combined_amp(amp_slices: list[FloatArray]) -> FloatArray:
+    return _combined_spectrum_amp_g_array(
         axis_spectra_amp_g=amp_slices,
         axis_count_for_mean=len(amp_slices),
     ).astype(
         np.float32,
         copy=False,
     )
+
+
+def _combined_strength_metrics(
+    *,
+    freq_slice: FloatArray,
+    amp_slices: list[FloatArray],
+    strength_range_mask: BoolArray | None,
+) -> tuple[FloatArray, VibrationStrengthMetrics]:
+    combined_amp = _combined_amp(amp_slices)
     strength_metrics = compute_vibration_strength_db(
         freq_hz=freq_slice,
         combined_spectrum_amp_g_values=combined_amp,
         peak_bandwidth_hz=PEAK_BANDWIDTH_HZ,
         peak_separation_hz=PEAK_SEPARATION_HZ,
-        top_n=8,
+        top_n=_COMBINED_TOP_N,
         strength_range_mask=strength_range_mask,
     )
     return combined_amp, strength_metrics
@@ -505,19 +533,28 @@ class SpectralAnalysisComputer:
         _, _, strength_range_mask = self._fft_cache_entry(sample_rate_hz)
         return strength_range_mask
 
-    def compute_combined_strength_metrics(
+    def combined_spectrum(
         self,
         fft_block: FloatArray,
         sample_rate_hz: int,
-    ) -> tuple[VibrationStrengthMetrics, WindowSpectrum] | None:
-        freq_slice, valid_idx, strength_range_mask = self._fft_cache_entry(sample_rate_hz)
-        return compute_combined_strength_metrics(
+    ) -> WindowSpectrum | None:
+        freq_slice, valid_idx, _strength_range_mask = self._fft_cache_entry(sample_rate_hz)
+        return combined_spectrum(
             fft_block,
             fft_window=self.fft_window,
             fft_scale=self.fft_scale,
             freq_slice=freq_slice,
             valid_idx=valid_idx,
-            strength_range_mask=strength_range_mask,
+        )
+
+    def combined_strength_metrics(
+        self,
+        spectra: Sequence[WindowSpectrum],
+        sample_rate_hz: int,
+    ) -> list[VibrationStrengthMetrics]:
+        """The strength metrics of *spectra*, combined spectra at *sample_rate_hz*."""
+        return combined_strength_metrics(
+            spectra, strength_range_mask=self.strength_range_mask(sample_rate_hz)
         )
 
     def compute_fft_spectrum(
