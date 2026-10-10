@@ -23,7 +23,7 @@ from vibesensor.analysis._reference_resolution import (
 )
 from vibesensor.analysis._sample_metrics import (
     _estimate_strength_floor_amp_g,
-    _sample_peak_prominence_db,
+    _sample_most_prominent_peak,
     _sample_top_peaks,
 )
 from vibesensor.analysis._sensor_locations import _location_label
@@ -88,6 +88,7 @@ from vibesensor.summary.diagnosis_contracts import (
     SpeedAmplitudePoint,
     SpeedDependenceValue,
     TestConditions,
+    UnexplainedVibration,
 )
 
 if TYPE_CHECKING:
@@ -340,7 +341,9 @@ def build_diagnosis(
         "amplitude_basis": basis,
         "location_amplitudes": rows,
         "unexplained_vibration": (
-            verdict is DiagnosisVerdict.NO_FAULT and basis == "overall" and _elevated(located)
+            _unexplained(located, bin_hz)
+            if verdict is DiagnosisVerdict.NO_FAULT and basis == "overall"
+            else None
         ),
         "amplitude_vs_speed": _amplitude_vs_speed(candidate, bin_hz),
         "spectrum": _spectrum(
@@ -853,20 +856,34 @@ def _overall_location_amplitudes(
     return _with_ratios(p95, floors=floors, presence=dict.fromkeys(locations), bin_hz=bin_hz)
 
 
-def _elevated(located: Sequence[tuple[Sample, str]]) -> bool:
-    """A sensor's peaks (p95) stood out of the spectrum around them by the elevated band (L3).
+def _unexplained(
+    located: Sequence[tuple[Sample, str]], bin_hz: float
+) -> UnexplainedVibration | None:
+    """The vibration a sensor felt by the elevated band (L3) or above, where it stood out most.
 
     Each spectrum counts its peak that stands out most from its local floor:
     a tone, not the broad hump the road rings at a wheel sensor's wheel hop.
+    A sensor felt a vibration where those peaks' prominence (p95) reaches the
+    elevated band; the one where it stands out most is named, at the level
+    (p95) of those peaks there. Not the location's strongest peak at any
+    frequency: at a wheel that is mostly the wheel hop every car has.
     """
-    prominence: dict[str, list[float]] = defaultdict(list)
+    prominent: dict[str, list[tuple[float, float]]] = defaultdict(list)
     for sample, location in located:
-        sample_prominence = _sample_peak_prominence_db(sample)
-        if sample_prominence is not None:
-            prominence[location].append(sample_prominence)
-    return any(
-        percentile(sorted(values), 0.95) >= _UNEXPLAINED_MIN_DB for values in prominence.values()
-    )
+        peak = _sample_most_prominent_peak(sample)
+        if peak is not None:
+            prominent[location].append((peak[0], peak[1].amp))
+    felt = [
+        (prominence, location)
+        for location, peaks in prominent.items()
+        for prominence in (percentile(sorted(db for db, _amp in peaks), 0.95),)
+        if prominence >= _UNEXPLAINED_MIN_DB
+    ]
+    if not felt:
+        return None
+    _prominence, location = max(felt, key=lambda found: (found[0], found[1]))
+    amp = percentile(sorted(amp for _db, amp in prominent[location]), 0.95)
+    return {"location": location, "amplitude_mg": _tone_mg(amp, bin_hz)}
 
 
 def _location_amplitudes(

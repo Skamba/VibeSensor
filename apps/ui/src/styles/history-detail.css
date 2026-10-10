@@ -211,6 +211,12 @@
   fill: var(--brand-600);
 }
 
+/* Where a sensor was on a run that found nothing: the diagram's only content,
+   in ink, so it reads on the wheels and the body in both themes. */
+.history-car__marker--plain circle {
+  fill: var(--md-sys-color-on-surface);
+}
+
 .history-car__marker--strongest text {
   font-weight: 700;
 }

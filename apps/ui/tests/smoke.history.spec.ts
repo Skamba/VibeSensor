@@ -545,6 +545,9 @@ test("journey: a no-fault run, one with a loose sensor and one that could check 
   await expect(car.locator(".history-car__marker circle")).toHaveCount(1);
   await expect(car.locator(".history-car__marker text")).toHaveCount(0);
   await expect(car.locator(".history-car__leader")).toHaveCount(0);
+  await expect(car.locator(".history-car__marker--plain circle")).toHaveCount(
+    1,
+  );
 
   await page
     .locator('[data-run-toggle="details"][data-run="run-manual"]')
@@ -583,6 +586,23 @@ test("journey: a no-fault run, one with a loose sensor and one that could check 
   const dark = await colors();
   expect(dark.box).toBe(dark.warn);
   expect(dark.box).not.toBe(light.box);
+  // The sensor's dot sits on its wheel: in ink, not the wheel's grey, in dark too.
+  const fills = await owner.locator(".history-car").evaluate((svg) => {
+    const fill = (selector: string) =>
+      getComputedStyle(svg.querySelector(selector) as Element).fill;
+    const probe = document.createElement("div");
+    probe.style.color = "var(--md-sys-color-on-surface)";
+    document.body.append(probe);
+    const ink = getComputedStyle(probe).color;
+    probe.remove();
+    return {
+      dot: fill(".history-car__marker circle"),
+      wheel: fill(".history-car__wheel"),
+      ink,
+    };
+  });
+  expect(fills.dot).toBe(fills.ink);
+  expect(fills.dot).not.toBe(fills.wheel);
 });
 
 test("journey: the car diagram's labels never overlap, with a sensor at every location", async ({

@@ -375,7 +375,7 @@ export interface components {
             speed_dependence: components["schemas"]["SpeedDependenceValue"] | null;
             speed_max_kmh: number | null;
             speed_min_kmh: number | null;
-            unexplained_vibration: boolean;
+            unexplained_vibration: components["schemas"]["UnexplainedVibration"] | null;
             verdict: components["schemas"]["DiagnosisVerdictValue"];
             weak_reasons: string[];
             zone: string | null;
@@ -1409,6 +1409,17 @@ export interface components {
             tire_provenance: components["schemas"]["ReferenceProvenanceValue"];
         };
         TireSpeedAxle: "front" | "rear" | "average";
+        /**
+         * The vibration a no-fault run felt that no checked cause explains, where it stood out most.
+         *
+         * *amplitude_mg* is the level (p95) of the peaks there that stand out most
+         * from the spectrum around them, on the diagnosis's mg scale: the vibration
+         * that raised the flag, not the location's strongest peak at any frequency.
+         */
+        UnexplainedVibration: {
+            amplitude_mg: number;
+            location: string;
+        };
         /** Response body confirming whether an OTA update job was cancelled. */
         UpdateCancelResponse: {
             cancelled: boolean;

@@ -361,7 +361,8 @@ the PDF both show:
   pinion. Empty for an EV, without
   a layout, or for another source (`_driveline_parts` in `diagnosis.py`).
 - `unexplained_vibration`: a `no_fault` run with no candidate where a sensor
-  still felt a vibration in the elevated strength band (see `docs/metrics.md`).
+  still felt a vibration in the elevated strength band (see `docs/metrics.md`):
+  where it stood out most and its level (`{location, amplitude_mg}`), else `null`.
   The report and the UI then say a vibration was found that no checked cause
   explains, not that none was found.
 - `felt`: the causes by their level at the sensor nearest the occupants (the

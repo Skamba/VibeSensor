@@ -128,6 +128,11 @@ the same scale so the peaks stand out of it as on the spectrum.
   a seat mode, 13-16 dB for a healthy car on a generated ISO 8608 road (33-37 dB
   over the overall floor); a 13 Hz body resonance (29 dB), an EV motor order
   with no ratio entered (37 dB) or fixed body resonances (38 dB) are above.
+  The field names the location whose p95 prominence stands highest and the
+  p95 level (mg) of those most prominent peaks there (`{location,
+  amplitude_mg}`, `null` when nothing was felt): the vibration that raised the
+  flag, not the location's strongest peak at any frequency, which on a wheel
+  sensor is mostly the wheel hop.
 - `amplitude_vs_speed`: median order amplitude (mg) per 5 km/h speed bin and
   location; `spectrum.peaks`: median amplitude (mg) of peaks recurring in at
   least 20% of the strongest location's windows within ±5 km/h of the reference

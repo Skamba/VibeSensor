@@ -1233,7 +1233,7 @@ def _not_checked_summary() -> dict[str, Any]:
 def _unexplained_summary() -> dict[str, Any]:
     summary = deepcopy(_healthy_summary())
     summary["diagnosis"].update(
-        unexplained_vibration=True,
+        unexplained_vibration={"location": "Rear Right Wheel", "amplitude_mg": 228.5},
         location_amplitudes=[
             {
                 "location": "Rear Right Wheel",
@@ -1272,6 +1272,41 @@ def test_a_run_that_found_nothing_draws_its_sensors_without_the_roads_level() ->
     assert marker.value in unexplained.owner.description
     assert unexplained.mechanic.amplitude_note is None
     assert report_view_for(_wheel_summary()).mechanic.amplitude_note is None
+
+
+@pytest.mark.parametrize(
+    ("lang", "sentence", "wheel"),
+    [
+        ("en", "The vibration that stood out, 150\N{NO-BREAK SPACE}mg at the driver", "front-left"),
+        ("nl", "De trilling die opviel, 150\N{NO-BREAK SPACE}mg bij", "linksvoor"),
+    ],
+)
+def test_an_unexplained_vibration_is_named_where_it_stood_out(
+    lang: str, sentence: str, wheel: str
+) -> None:
+    """On a real road a wheel's wheel-hop hump is the strongest peak at any
+    frequency; the sentence, next step and shop request name the vibration that
+    raised the flag, where it stood out and at its level, not that hump."""
+    summary = _unexplained_summary()
+    diagnosis = summary["diagnosis"]
+    diagnosis["unexplained_vibration"] = {"location": "Driver Seat", "amplitude_mg": 150.0}
+    diagnosis["location_amplitudes"].insert(
+        0,
+        {
+            "location": "Front Left Wheel",
+            "amplitude_mg": 2200.0,
+            "db_above_floor": 40.0,
+            "ratio_to_strongest": 1.0,
+            "presence_ratio": None,
+        },
+    )
+    view = report_view_for(summary, lang=lang)
+    owner = view.owner
+    (shop,) = view.mechanic.shop
+
+    assert sentence in owner.description
+    for text in (owner.description, owner.next_step or "", shop):
+        assert wheel not in text and "2200" not in text
 
 
 @pytest.mark.parametrize(

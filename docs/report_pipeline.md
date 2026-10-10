@@ -112,10 +112,12 @@ file.pdf]` (`vibesensor.cli.report`) renders the same report from a stored run.
        the elevated strength band, 26 dB and up, that no checked order explains,
        such as a body resonance or an EV run with no motor ratio): the
        headline is "Vibration found, but no checked cause explains it", never
-       "No significant vibration found". The sentence names the strongest
-       location and its level and lists what was checked and ruled out; the
-       next step is to record again holding that speed, then have a workshop
-       look for a loose or resonating part there (also the shop-request text).
+       "No significant vibration found". The sentence names the location
+       where that vibration stood out most and its level (not the strongest
+       peak at any frequency, which at a wheel is mostly its wheel hop) and
+       lists what was checked and ruled out; the next step is to record
+       again holding that speed, then have a workshop look for a loose or
+       resonating part there (also the shop-request text).
        The verdict box is grey, as for weak evidence, not green, in History
        too.
 2. **Workshop page** (always included):

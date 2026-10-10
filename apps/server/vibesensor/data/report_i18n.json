@@ -1996,8 +1996,8 @@
     "nl": "Geen uitslag: deze rit kon niet op een oorzaak controleren"
   },
   "VERDICT_UNEXPLAINED_BODY": {
-    "en": "The strongest vibration, {amplitude} at the {location}, did not follow the rhythm of anything this run could check.",
-    "nl": "De sterkste trilling, {amplitude} bij {location}, volgde het ritme van niets wat deze rit kon controleren."
+    "en": "The vibration that stood out, {amplitude} at the {location}, did not follow the rhythm of anything this run could check.",
+    "nl": "De trilling die opviel, {amplitude} bij {location}, volgde het ritme van niets wat deze rit kon controleren."
   },
   "VERDICT_UNEXPLAINED_CHECKED": {
     "en": "Checked and not the cause: {checked}.",

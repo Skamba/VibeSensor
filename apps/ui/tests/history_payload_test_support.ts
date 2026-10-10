@@ -89,7 +89,7 @@ export function makeDiagnosis(
     order_findings: [],
     amplitude_basis: "overall",
     location_amplitudes: [],
-    unexplained_vibration: false,
+    unexplained_vibration: null,
     amplitude_vs_speed: [],
     spectrum: null,
     source_checks: [],
