@@ -24,9 +24,11 @@ const entries: SeriesEntry[] = [
   { id: "b", label: "Rear", color: "blue", values: [2, 4, 8, 6] },
 ];
 const freqAxis = [10, 20, 30, 40];
-// A sensor's strength (dB above its floor) is not its peak bin's chart level.
+// A sensor's strength (dB above its floor) is not its peak bin's chart level;
+// it ranks by mg, as the report ranks locations, not by dB.
 const levels: SensorLevels = {
-  strengthDb: (id) => ({ a: 6, b: 3 })[id] ?? null,
+  strengthDb: (id) => ({ a: 6, b: 9 })[id] ?? null,
+  peakMg: (id) => ({ a: 120, b: 80 })[id] ?? null,
   topPeakHz: (id) => ({ a: 19, b: 31 })[id] ?? null,
 };
 const bands = orderBands(
@@ -36,19 +38,26 @@ const bands = orderBands(
     driveshaft: { rpm: null, mode: null, reason: null },
     engine: { rpm: null, mode: null, reason: null },
     order_bands: [
-      { key: "wheel_1x", center_hz: 20, tolerance: 0.1 },
-      { key: "engine_1x", center_hz: 30, tolerance: 0.1 },
-      { key: "broken", center_hz: 0, tolerance: 0.1 },
+      { key: "wheel_1x", code: "T1", center_hz: 20, tolerance: 0.1 },
+      { key: "engine_1x", code: "E1", center_hz: 30, tolerance: 0.1 },
+      { key: "broken", code: "X", center_hz: 0, tolerance: 0.1 },
     ],
   },
   null,
   t,
 );
 
-const engineLabel = t("bands.with_basis", {
-  band: "bands.engine_1x",
-  basis: "bands.basis.estimated_top_gear",
-});
+// Every band leads with the report's workshop label (T1, P1, E2).
+const coded = (code: string, band: string) =>
+  t("bands.with_code", { code, band });
+const wheelLabel = coded("T1", "bands.wheel_1x");
+const engineLabel = coded(
+  "E1",
+  t("bands.with_basis", {
+    band: "bands.engine_1x",
+    basis: "bands.basis.estimated_top_gear",
+  }),
+);
 
 function input(overrides: Partial<InspectorInput> = {}): InspectorInput {
   return {
@@ -66,7 +75,7 @@ describe("order bands", () => {
   test("turns valid server bands into labelled frequency ranges", () => {
     expect(bands.map((band) => [band.label, band.min_hz, band.max_hz])).toEqual(
       [
-        ["bands.wheel_1x", 18, 22],
+        [wheelLabel, 18, 22],
         [engineLabel, 27, 33],
       ],
     );
@@ -81,19 +90,27 @@ describe("order bands", () => {
         driveshaft: { rpm: 1800, mode: null, reason: null },
         engine: { rpm: 2400, mode: "measured", reason: null },
         order_bands: [
-          { key: "driveshaft_engine_1x", center_hz: 40, tolerance: 0.1 },
-          { key: "driveshaft_1x", center_hz: 30, tolerance: 0.1 },
+          {
+            key: "driveshaft_engine_1x",
+            code: "P1/E1",
+            center_hz: 40,
+            tolerance: 0.1,
+          },
+          { key: "driveshaft_1x", code: "P1", center_hz: 30, tolerance: 0.1 },
         ],
       },
       "PHEV",
       t,
     );
     expect(measured.map((band) => band.label)).toEqual([
-      t("bands.with_basis", {
-        band: "bands.driveshaft_engine_1x",
-        basis: "bands.basis.measured",
-      }),
-      "bands.driveshaft_1x",
+      coded(
+        "P1/E1",
+        t("bands.with_basis", {
+          band: "bands.driveshaft_engine_1x",
+          basis: "bands.basis.measured",
+        }),
+      ),
+      coded("P1", "bands.driveshaft_1x"),
     ]);
   });
 
@@ -105,17 +122,22 @@ describe("order bands", () => {
         driveshaft: { rpm: 5400, mode: null, reason: null },
         engine: { rpm: 5400, mode: "calculated", reason: null },
         order_bands: [
-          { key: "wheel_1x", center_hz: 10, tolerance: 0.1 },
-          { key: "driveshaft_engine_1x", center_hz: 90, tolerance: 0.1 },
-          { key: "engine_2x", center_hz: 180, tolerance: 0.1 },
+          { key: "wheel_1x", code: "T1", center_hz: 10, tolerance: 0.1 },
+          {
+            key: "driveshaft_engine_1x",
+            code: "P1/E1",
+            center_hz: 90,
+            tolerance: 0.1,
+          },
+          { key: "engine_2x", code: "E2", center_hz: 180, tolerance: 0.1 },
         ],
       },
       "EV",
       t,
     );
     expect(ev.map((band) => band.label)).toEqual([
-      "bands.wheel_1x",
-      "bands.motor_1x",
+      coded("T1", "bands.wheel_1x"),
+      coded("P1/E1", "bands.motor_1x"),
     ]);
   });
 
@@ -127,9 +149,15 @@ describe("order bands", () => {
         driveshaft: { rpm: 1800, mode: null, reason: null },
         engine: { rpm: 2400, mode: "measured", reason: null },
         order_bands: [
-          { key: "engine_1x", center_hz: 40, tolerance: 0.1 },
-          { key: "engine_3x", center_hz: 120, tolerance: 0.1, firing: true },
-          { key: "engine_1_5x", center_hz: 60, tolerance: 0.1 },
+          { key: "engine_1x", code: "E1", center_hz: 40, tolerance: 0.1 },
+          {
+            key: "engine_3x",
+            code: "E3",
+            center_hz: 120,
+            tolerance: 0.1,
+            firing: true,
+          },
+          { key: "engine_1_5x", code: "E1.5", center_hz: 60, tolerance: 0.1 },
         ],
       },
       "ICE",
@@ -137,25 +165,29 @@ describe("order bands", () => {
     );
     const basis = "bands.basis.measured";
     expect(six.map((band) => band.label)).toEqual([
-      t("bands.with_basis", { band: "bands.engine_1x", basis }),
-      t("bands.with_basis", {
-        band: t("bands.firing", {
-          band: t("bands.engine_order", { order: "3x" }),
+      coded("E1", t("bands.with_basis", { band: "bands.engine_1x", basis })),
+      coded(
+        "E3",
+        t("bands.with_basis", {
+          band: t("bands.firing", {
+            band: t("bands.engine_order", { order: "3x" }),
+          }),
+          basis,
         }),
-        basis,
-      }),
-      t("bands.with_basis", {
-        band: t("bands.engine_order", { order: "1.5x" }),
-        basis,
-      }),
+      ),
+      coded(
+        "E1.5",
+        t("bands.with_basis", {
+          band: t("bands.engine_order", { order: "1.5x" }),
+          basis,
+        }),
+      ),
     ]);
   });
 
   test("the band legend lists the bands at the inspected frequency", () => {
     expect(activeFrequency(input())).toBe(20);
-    expect(bandsAt(bands, 20).map((band) => band.label)).toEqual([
-      "bands.wheel_1x",
-    ]);
+    expect(bandsAt(bands, 20).map((band) => band.label)).toEqual([wheelLabel]);
     expect(activeFrequency(input({ cursorIdx: 2 }))).toBe(30);
     expect(activeFrequency(input({ pinnedId: "b" }))).toBe(30);
     expect(bandsAt(bands, 40)).toEqual([]);
@@ -280,7 +312,7 @@ describe("band status", () => {
 });
 
 describe("trace focus", () => {
-  test("focuses the pinned trace, else the loudest", () => {
+  test("focuses the pinned trace, else the strongest in mg (not the most dB above its floor)", () => {
     expect(focusEntry(entries, null, levels)?.id).toBe("a");
     expect(focusEntry(entries, "b", levels)?.id).toBe("b");
     expect(focusEntry(entries, "gone", levels)?.id).toBe("a");
@@ -291,7 +323,7 @@ describe("trace focus", () => {
     expect(all?.allActive).toBe(true);
     expect(all?.items.map((item) => [item.detail, item.state])).toEqual([
       ['spectrum.legend.sensor_level:{"value":"6"}', undefined],
-      ['spectrum.legend.sensor_level:{"value":"3"}', undefined],
+      ['spectrum.legend.sensor_level:{"value":"9"}', undefined],
     ]);
     const pinned = legendModel(entries, "a", levels, t);
     expect(pinned?.allActive).toBe(false);
@@ -301,12 +333,12 @@ describe("trace focus", () => {
     ]);
     expect(pinned?.items[0]?.title).toBe("spectrum.legend.clear_focus");
     expect(pinned?.items[1]?.ariaLabel).toBe(
-      'Rear. spectrum.legend.state_inactive. spectrum.legend.sensor_level:{"value":"3"}',
+      'Rear. spectrum.legend.state_inactive. spectrum.legend.sensor_level:{"value":"9"}',
     );
     const noLevels = legendModel(
       entries,
       null,
-      { strengthDb: () => null, topPeakHz: () => null },
+      { strengthDb: () => null, peakMg: () => null, topPeakHz: () => null },
       t,
     );
     expect(noLevels?.items[0]?.detail).toBe("spectrum.legend.state_visible");
@@ -326,10 +358,10 @@ describe("inspector", () => {
     );
     expect(inspectorText(input(), t)).toEqual({
       mode: "focus",
-      text: 'spectrum.inspector_focus_strongest:{"sensor":"Front","freq":"20.0","value":"6"} · bands.wheel_1x',
+      text: `spectrum.inspector_focus_strongest:{"sensor":"Front","freq":"20.0","mg":"120","value":"6"} · ${wheelLabel}`,
     });
     expect(inspectorText(input({ pinnedId: "b" }), t).text).toBe(
-      `spectrum.inspector_focus_selected:${JSON.stringify({ sensor: "Rear", freq: "30.0", value: "3" })} · ${engineLabel}`,
+      `spectrum.inspector_focus_selected:${JSON.stringify({ sensor: "Rear", freq: "30.0", mg: "80", value: "9" })} · ${engineLabel}`,
     );
     expect(inspectorText(input({ entries: [] }), t)).toEqual({
       mode: "idle",

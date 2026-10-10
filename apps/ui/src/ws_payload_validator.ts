@@ -75,6 +75,7 @@ const rotationalSpeedValueSchema = v.looseObject({
 
 const orderBandSchema = v.looseObject({
   key: v.string(),
+  code: v.string(),
   center_hz: finiteNumberSchema,
   tolerance: finiteNumberSchema,
   firing: v.optional(v.boolean()),
@@ -92,6 +93,7 @@ const spectrumSeriesSchema = v.looseObject({
   freq: v.optional(finiteNumberArraySchema),
   combined_spectrum_amp_g: v.optional(finiteNumberArraySchema),
   strength_metrics: v.optional(strengthMetricsSchema),
+  peak_mg: v.optional(finiteNumberSchema),
 });
 
 const spectraSchema = v.looseObject({

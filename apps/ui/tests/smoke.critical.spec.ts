@@ -162,6 +162,7 @@ test("critical journey: live dashboard records and opens History", async ({
           "001122334455": {
             freq: [1, 2, 3],
             combined_spectrum_amp_g: [0.1, 0.2, 0.15],
+            peak_mg: 100,
             strength_metrics: strengthMetrics,
           },
         },

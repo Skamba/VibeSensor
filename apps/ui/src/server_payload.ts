@@ -36,13 +36,18 @@ function adaptSpectra(
     const freq = rawPerClientFreq.length > 0 ? rawPerClientFreq : sharedFreq;
     const combined = spectrum.combined_spectrum_amp_g ?? [];
     const strengthMetrics = spectrum.strength_metrics ?? null;
-    if (!hasCompleteSpectrumData(freq, combined, strengthMetrics)) {
+    const peakMg = spectrum.peak_mg;
+    if (
+      !hasCompleteSpectrumData(freq, combined, strengthMetrics) ||
+      peakMg === undefined
+    ) {
       continue;
     }
     adaptedClients[clientId] = {
       freq,
       combined,
       strength_metrics: strengthMetrics,
+      peak_mg: peakMg,
     };
   }
 

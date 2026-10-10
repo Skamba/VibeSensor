@@ -131,19 +131,26 @@ def test_multi_spectrum_payload_omits_clients_without_spectrum() -> None:
     assert proc.multi_spectrum_payload(["unknown", "client1"])["clients"] == {}
 
 
-def test_client_spectrum_payload_has_vibration_strength_db() -> None:
-    proc = _make_processor(sample_rate_hz=800, fft_n=256, spectrum_max_hz=200)
-    t = np.arange(400, dtype=np.float32) / np.float32(800.0)
-    tone = (0.03 * np.sin(2.0 * np.pi * 32.0 * t)).astype(np.float32)
-    samples = np.column_stack((tone, tone * 0.8, tone * 0.6)).astype(np.float32)
-    proc.ingest("client1", samples, sample_rate_hz=800)
+@pytest.mark.parametrize(
+    ("axes", "expected_mg"),
+    [((1.0, 0.0, 0.0), 30.0), ((1.0, 1.0, 1.0), 30.0 * np.sqrt(3.0))],
+    ids=["one-axis", "every-axis"],
+)
+def test_live_peak_mg_is_the_reports_mg_of_a_tone(
+    axes: tuple[float, float, float], expected_mg: float
+) -> None:
+    # The live view and the report read one mg scale: a tone's peak, the axes as a vector.
+    proc = _make_processor(sample_rate_hz=800, waveform_seconds=3, fft_n=2048, spectrum_max_hz=200)
+    t = np.arange(2048) / 800.0
+    tone = 0.03 * np.sin(2.0 * np.pi * 47.3 * t)
+    samples = _random_samples(2048, scale=0.0005) + np.outer(tone, axes)
+    proc.ingest("client1", samples.astype(np.float32), sample_rate_hz=800)
     proc.compute_metrics("client1")
 
     result = proc.multi_spectrum_payload(["client1"])["clients"]["client1"]
-    assert "combined_spectrum_db_above_floor" not in result
-    assert "vibration_strength_db" in result["strength_metrics"]
-    db = float(result["strength_metrics"]["vibration_strength_db"])
-    assert -200.0 < db < 200.0
+
+    assert result["strength_metrics"]["top_peaks"][0]["hz"] == pytest.approx(47.3, abs=0.2)
+    assert result["peak_mg"] == pytest.approx(expected_mg, rel=0.05)
 
 
 def test_client_spectrum_payload_is_reused_until_next_compute() -> None:

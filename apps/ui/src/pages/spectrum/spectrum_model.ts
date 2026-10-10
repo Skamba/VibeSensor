@@ -34,6 +34,8 @@ export interface FocusMarker {
 /** What the spectrum knows about each sensor's level and strongest peak. */
 export interface SensorLevels {
   strengthDb(id: string): number | null;
+  /** The strongest peak in mg on the report's scale; ranks the sensors as the report does. */
+  peakMg(id: string): number | null;
   topPeakHz(id: string): number | null;
 }
 
@@ -73,11 +75,10 @@ export function freqGridsMatch(
 export const formatHz = (value: number) => fmt(value, value >= 100 ? 0 : 1);
 /** A sensor's strength, dB above its noise floor, as the overview and report show it. */
 const formatDbAboveFloor = (value: number) => fmt(value, 0);
-/** A chart bin's amplitude (dB re 0.1 mg) in mg, with two significant digits under 10 mg. */
-const formatBinMg = (db: number) => {
-  const mg = spectrumDbToMg(db);
-  return fmt(mg, mg < 1 ? 2 : mg < 10 ? 1 : 0);
-};
+/** An amplitude in mg, with two significant digits under 10 mg. */
+const formatMg = (mg: number) => fmt(mg, mg < 1 ? 2 : mg < 10 ? 1 : 0);
+/** A chart bin's amplitude (dB re 0.1 mg) in mg. */
+const formatBinMg = (db: number) => formatMg(spectrumDbToMg(db));
 const isFiniteNumber = (value: unknown): value is number =>
   typeof value === "number" && Number.isFinite(value);
 
@@ -158,12 +159,15 @@ export function orderBands(
     }
     const style = BAND_STYLE[band.key];
     const engine = isEngineBand(band.key);
+    // The report's workshop label (T1, P1, E2) leads, so both name an order alike.
+    const coded = (label: string) =>
+      t("bands.with_code", { code: band.code, band: label });
     if (electric) {
       if (engine && !EV_BAND_NAME[band.key]) {
         continue;
       }
       output.push({
-        label: t(EV_BAND_NAME[band.key] ?? style?.name ?? band.key),
+        label: coded(t(EV_BAND_NAME[band.key] ?? style?.name ?? band.key)),
         min_hz: Math.max(0, center * (1 - tolerance)),
         max_hz: center * (1 + tolerance),
         color: style?.color ?? orderBandFills.wheel1,
@@ -175,9 +179,11 @@ export function orderBands(
       : (engineOrderName(band.key, t) ?? t(band.key));
     const name = band.firing ? t("bands.firing", { band: plain }) : plain;
     output.push({
-      label: engine
-        ? t("bands.with_basis", { band: name, basis: engineBasis(speeds, t) })
-        : name,
+      label: coded(
+        engine
+          ? t("bands.with_basis", { band: name, basis: engineBasis(speeds, t) })
+          : name,
+      ),
       min_hz: Math.max(0, center * (1 - tolerance)),
       max_hz: center * (1 + tolerance),
       color:
@@ -282,7 +288,7 @@ export function bandsAt(
   return bands.filter((band) => freqHz >= band.min_hz && freqHz <= band.max_hz);
 }
 
-/** The pinned trace, else the loudest one. */
+/** The pinned trace, else the strongest one (the report's ranking: by mg). */
 export function focusEntry(
   entries: readonly SeriesEntry[],
   pinnedId: string | null,
@@ -295,11 +301,11 @@ export function focusEntry(
     return pinned;
   }
   let best: SeriesEntry | null = null;
-  let bestDb = Number.NEGATIVE_INFINITY;
+  let bestMg = Number.NEGATIVE_INFINITY;
   for (const entry of entries) {
-    const db = levels.strengthDb(entry.id);
-    if (isFiniteNumber(db) && db > bestDb) {
-      bestDb = db;
+    const mg = levels.peakMg(entry.id);
+    if (isFiniteNumber(mg) && mg > bestMg) {
+      bestMg = mg;
       best = entry;
     }
   }
@@ -369,9 +375,10 @@ export function inspectorText(
   if (!peak) {
     return idle;
   }
-  // The sensor's strength above its floor, the number the overview, the legend
-  // and the report give, not the peak bin's level on the chart.
+  // The sensor's level as the overview and the report give it (mg, then dB
+  // above its floor), not the peak bin's level on the chart.
   const strength = input.levels.strengthDb(entry.id);
+  const mg = input.levels.peakMg(entry.id);
   return {
     mode: "focus",
     text: withBands(
@@ -382,6 +389,7 @@ export function inspectorText(
         {
           sensor: entry.label,
           freq: formatHz(peak.freq),
+          mg: isFiniteNumber(mg) ? formatMg(mg) : "--",
           value: isFiniteNumber(strength) ? formatDbAboveFloor(strength) : "--",
         },
       ),

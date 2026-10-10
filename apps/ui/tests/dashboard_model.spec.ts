@@ -19,7 +19,9 @@ import {
   setupModel,
   speedText,
   stopConfirmation,
+  STRONGEST_AVERAGE_MS,
   strongestSensor,
+  withLevelFrame,
   withLoggingError,
 } from "../src/pages/dashboard/dashboard_model";
 import {
@@ -773,20 +775,82 @@ describe("live overview helpers", () => {
     });
   });
 
-  test("the strongest sensor is the loudest connected one", () => {
-    const spectra = {
-      clients: {
-        a: { strength_metrics: { vibration_strength_db: 10 } },
-        b: { strength_metrics: { vibration_strength_db: 20 } },
-        c: { strength_metrics: { vibration_strength_db: 30 } },
-      },
-    } as never;
-    const result = strongestSensor(
-      [client(), client({ id: "b" }), client({ id: "c", connected: false })],
-      spectra,
+  test("the strongest sensor is the connected one with the most mg, averaged over a few seconds", () => {
+    const frame = (levels: Record<string, [number, number]>) =>
+      ({
+        clients: Object.fromEntries(
+          Object.entries(levels).map(([id, [mg, db]]) => [
+            id,
+            { peak_mg: mg, strength_metrics: { vibration_strength_db: db } },
+          ]),
+        ),
+      }) as never;
+    const clients = [
+      client(),
+      client({ id: "b" }),
+      client({ id: "c", connected: false }),
+    ];
+    // Ranked by mg, as the report ranks locations, not by dB above each
+    // sensor's own floor; a disconnected sensor never counts.
+    let history = withLevelFrame(
+      [],
+      frame({ a: [400, 30], b: [100, 34], c: [900, 40] }),
+      0,
     );
-    expect(result?.client.id).toBe("b");
-    expect(strongestSensor([client()], { clients: {} })).toBeNull();
+    expect(strongestSensor(clients, history)).toEqual({
+      client: clients[0],
+      tied: 1,
+      mg: 400,
+      db: 30,
+    });
+    // One frame where b peaks does not move it: the level is averaged in
+    // power over the last few seconds.
+    history = withLevelFrame(
+      history,
+      frame({ a: [400, 32], b: [450, 35] }),
+      1_000,
+    );
+    const averaged = strongestSensor(clients, history);
+    expect(averaged?.client?.id).toBe("a");
+    expect(averaged?.mg).toBeCloseTo(400);
+    expect(averaged?.db).toBeCloseTo(31);
+    // Frames older than the average drop out.
+    history = withLevelFrame(
+      history,
+      frame({ a: [300, 30], b: [450, 35] }),
+      STRONGEST_AVERAGE_MS + 500,
+    );
+    expect(history.map((entry) => entry.atMs)).toEqual([
+      1_000,
+      STRONGEST_AVERAGE_MS + 500,
+    ]);
+    expect(strongestSensor([client()], [])).toBeNull();
+  });
+
+  test("no sensor stands out while another is within the report's tie ratio", () => {
+    const history = withLevelFrame(
+      [],
+      {
+        clients: {
+          a: { peak_mg: 110, strength_metrics: { vibration_strength_db: 30 } },
+          b: { peak_mg: 100, strength_metrics: { vibration_strength_db: 29 } },
+          c: { peak_mg: 50, strength_metrics: { vibration_strength_db: 25 } },
+        },
+      } as never,
+      0,
+    );
+    const clients = [client(), client({ id: "b" }), client({ id: "c" })];
+    // The road rings every wheel alike: 110 mg is under 1.15x 100 mg.
+    expect(strongestSensor(clients, history)).toEqual({
+      client: null,
+      tied: 2,
+      mg: 110,
+      db: 30,
+    });
+    // Past the ratio one sensor stands out.
+    expect(
+      strongestSensor([client(), client({ id: "c" })], history)?.client?.id,
+    ).toBe("a");
   });
 
   test("elapsed time counts on from the server's monotonic elapsed time", () => {

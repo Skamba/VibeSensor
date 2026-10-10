@@ -56,6 +56,7 @@ function makeRepresentativePayload(): LiveWsPayload {
       order_bands: [
         {
           key: "1x",
+          code: "T1",
           center_hz: 40,
           tolerance: 0.5,
         },
@@ -67,6 +68,7 @@ function makeRepresentativePayload(): LiveWsPayload {
       clients: {
         "sensor-1": {
           combined_spectrum_amp_g: [0.1, 0.2, 0.3],
+          peak_mg: 120,
           strength_metrics: makeStrengthMetrics(),
         },
       },
@@ -144,6 +146,7 @@ describe("validateLiveWsPayload", () => {
           clients: {
             "sensor-1": {
               combined_spectrum_amp_g: [0.1, 0.2, 0.3],
+              peak_mg: 100,
               strength_metrics: makeStrengthMetrics(),
             },
           },
@@ -189,6 +192,7 @@ describe("validateLiveWsPayload", () => {
           clients: {
             "sensor-1": {
               combined_spectrum_amp_g: [0.1, 0.2, 0.3],
+              peak_mg: 100,
               strength_metrics: {
                 ...makeStrengthMetrics(),
                 top_peaks: [
@@ -221,6 +225,7 @@ describe("validateLiveWsPayload", () => {
           order_bands: [
             {
               key: "1x",
+              code: "T1",
               center_hz: 40,
               tolerance: "wide",
             },

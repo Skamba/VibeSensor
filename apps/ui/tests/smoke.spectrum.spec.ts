@@ -28,6 +28,7 @@ function spectrumSeries(
     combined_spectrum_amp_g: FREQ.map((hz) =>
       hz === peakHz ? peakAmp : 0.002 + (hz % 5) * 0.0005,
     ),
+    peak_mg: peakAmp * 3740,
     strength_metrics: {
       vibration_strength_db: db,
       peak_amp_g: peakAmp,
@@ -153,7 +154,9 @@ test("journey: live spectrum renders sensor traces, legend focus, and order band
           wheel: { rpm: 700, mode: "calculated", reason: null },
           driveshaft: { rpm: null, mode: null, reason: "missing_final_drive" },
           engine: { rpm: null, mode: null, reason: "missing_final_drive" },
-          order_bands: [{ key: "wheel_1x", center_hz: 11.7, tolerance: 0.08 }],
+          order_bands: [
+            { key: "wheel_1x", code: "T1", center_hz: 11.7, tolerance: 0.08 },
+          ],
         },
       },
     },
@@ -188,7 +191,8 @@ test("journey: live spectrum renders sensor traces, legend focus, and order band
   await expect(page.locator("#bandLegend")).toBeHidden();
   await bandToggle.click();
   await expect(bandToggle).toHaveAttribute("aria-pressed", "true");
-  await expect(page.locator("#bandLegend")).toContainText("Wheel 1x");
+  // Bands lead with the report's order label.
+  await expect(page.locator("#bandLegend")).toContainText("T1 · Wheel 1x");
 
   // Hovering the plot inspects the nearest frequency bin.
   const box = await page.locator("#specChart canvas").boundingBox();

@@ -62,6 +62,7 @@ export const inspector = signal("");
 const levels: SensorLevels = {
   strengthDb: (id) =>
     spectra.value.clients[id]?.strength_metrics?.vibration_strength_db ?? null,
+  peakMg: (id) => spectra.value.clients[id]?.peak_mg ?? null,
   topPeakHz: (id) =>
     spectra.value.clients[id]?.strength_metrics?.top_peaks?.[0]?.hz ?? null,
 };

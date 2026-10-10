@@ -33,6 +33,7 @@ interface ClientSpectrumOptions {
   noiseFloorAmpG?: number;
   peakAmp?: number;
   peakHz?: number;
+  peakMg?: number;
   vibrationStrengthDb?: number;
 }
 
@@ -87,6 +88,7 @@ export function makeSpectrum(
   return {
     freq,
     combined,
+    peak_mg: options.peakMg ?? 100,
     strength_metrics: {
       noise_floor_amp_g: options.noiseFloorAmpG ?? 0.1,
       peak_amp_g: peakAmp,
