@@ -324,6 +324,74 @@ assert_fast_boot_contract() {
   fi
 }
 
+# The image must carry the userland VS_PI_ARCH asked for (libc6's dpkg
+# architecture) and boot the matching kernel: arm_64bit=1 for arm64 only.
+assert_image_architecture() {
+  local root_mnt="$1"
+  local boot_mnt="$2"
+  local expected_arch="$3"
+  local actual_arch=""
+  local config_txt="${boot_mnt}/config.txt"
+
+  actual_arch="$(awk '
+    $0 == "Package: libc6" {in_pkg = 1; next}
+    /^Package: / && in_pkg {exit}
+    in_pkg && /^Architecture: / {print $2; exit}
+  ' "${root_mnt}/var/lib/dpkg/status" 2>/dev/null || true)"
+  if [ "${actual_arch}" != "${expected_arch}" ]; then
+    echo "Validation failed: image userland is '${actual_arch:-unknown}' (libc6), expected '${expected_arch}'"
+    exit 1
+  fi
+  if [ "${expected_arch}" = "arm64" ]; then
+    if ! grep -Eq '^arm_64bit=1[[:space:]]*$' "${config_txt}"; then
+      echo "Validation failed: arm64 image must boot the 64-bit kernel (arm_64bit=1 in config.txt)"
+      exit 1
+    fi
+  elif grep -Eq '^arm_64bit=1[[:space:]]*$' "${config_txt}"; then
+    echo "Validation failed: ${expected_arch} image must not set arm_64bit=1 in config.txt"
+    exit 1
+  fi
+}
+
+# VibeSensor is headless (no HDMI, no camera): the minimum GPU split and no KMS
+# display driver leave the most RAM to Linux on a 512 MB Pi 3 A+. gpu_mem=16
+# boots the cut-down GPU firmware, so it must be on the boot partition.
+assert_headless_boot_config() {
+  local boot_mnt="$1"
+  local config_txt="${boot_mnt}/config.txt"
+  local gpu_mem=""
+  local firmware=""
+
+  if [ ! -f "${config_txt}" ]; then
+    echo "Validation failed: missing ${config_txt}"
+    exit 1
+  fi
+  # The last gpu_mem that applies to every board ([all] or no filter) wins.
+  gpu_mem="$(awk '
+    /^\[/ {section = $0; next}
+    /^gpu_mem=/ && (section == "" || section == "[all]") {value = substr($0, 9)}
+    END {print value}
+  ' "${config_txt}")"
+  if [ "${gpu_mem%%[[:space:]]*}" != "16" ]; then
+    echo "Validation failed: config.txt must set gpu_mem=16 for all boards (headless), got '${gpu_mem}'"
+    exit 1
+  fi
+  if grep -Eq '^(dtoverlay=vc4-(f)?kms-v3d|max_framebuffers=)' "${config_txt}"; then
+    echo "Validation failed: config.txt still enables the KMS display driver (dtoverlay=vc4-kms-v3d / max_framebuffers)"
+    exit 1
+  fi
+  if grep -Eq '^camera_auto_detect=1' "${config_txt}"; then
+    echo "Validation failed: config.txt still auto-detects cameras (camera_auto_detect=1)"
+    exit 1
+  fi
+  for firmware in start_cd.elf fixup_cd.dat; do
+    if [ ! -f "${boot_mnt}/${firmware}" ]; then
+      echo "Validation failed: gpu_mem=16 needs ${firmware} on the boot partition"
+      exit 1
+    fi
+  done
+}
+
 validate_image_artifact() {
   local FINAL_ARTIFACT="$1"
   local INSPECT_DIR="${OUT_DIR}/inspect"
@@ -469,6 +537,8 @@ validate_image_artifact() {
   assert_root_executes_only_root_owned_code "${ROOT_MNT}"
   assert_root_side_stamp_matches_app "${ROOT_MNT}"
   assert_fast_boot_contract "${ROOT_MNT}"
+  assert_image_architecture "${ROOT_MNT}" "${BOOT_MNT}" "${VS_PI_ARCH}"
+  assert_headless_boot_config "${BOOT_MNT}"
 
   if ! grep -Fq 'rfkill unblock wifi || rfkill unblock all || true' \
     "${ROOT_MNT}/etc/systemd/system/vibesensor-hotspot.service"; then
@@ -577,8 +647,12 @@ validate_image_artifact() {
   fi
 
   run_qemu_chroot() {
-    sudo cp /usr/bin/qemu-arm-static "${ROOT_MNT}/usr/bin/"
-    sudo chroot "${ROOT_MNT}" /usr/bin/qemu-arm-static "$@"
+    if [ -z "${QEMU_STATIC_BIN}" ]; then
+      sudo chroot "${ROOT_MNT}" "$@"
+      return
+    fi
+    sudo cp "/usr/bin/${QEMU_STATIC_BIN}" "${ROOT_MNT}/usr/bin/"
+    sudo chroot "${ROOT_MNT}" "/usr/bin/${QEMU_STATIC_BIN}" "$@"
   }
 
   PYTHON_RUNTIME_INFO_PATH="${ROOT_MNT}/opt/VibeSensor/apps/server/.venv/.vibesensor-python-runtime.env"
@@ -890,6 +964,9 @@ exit(crypt($plain, $shadow_hash) eq $shadow_hash ? 0 : 1);
   else
     echo "OK: no apt-get found"
   fi
+
+  echo "=== Validation: ${VS_PI_ARCH} image, headless boot config ==="
+  grep -En '^#?(arm_64bit|gpu_mem|camera_auto_detect|dtoverlay=vc4|max_framebuffers)' "${BOOT_MNT}/config.txt" || true
 
   echo "=== Validation: hotspot script references /var/log/wifi ==="
   grep -n "/var/log/wifi" "${ROOT_MNT}${ROOT_HELPER_DIR}/hotspot_nmcli.sh"

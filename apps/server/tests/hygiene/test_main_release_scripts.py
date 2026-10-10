@@ -8,6 +8,7 @@ import json
 import subprocess
 import sys
 import tarfile
+import zipfile
 from datetime import UTC, datetime
 from pathlib import Path
 from urllib import error
@@ -147,7 +148,7 @@ def test_build_wheelhouse_downloads_pi_binaries_and_proves_an_offline_install(
         commands.append(command_list)
         if command_list[3] == "download":
             dest = Path(command_list[command_list.index("--dest") + 1])
-            dest.mkdir(parents=True)
+            dest.mkdir(parents=True, exist_ok=True)
             for name in (wheel_path.name, "numpy-2.5.3-cp313-cp313-linux_armv7l.whl"):
                 (dest / name).write_text(name, encoding="utf-8")
         return subprocess.CompletedProcess(command_list, 0, stdout="", stderr="")
@@ -165,6 +166,8 @@ def test_build_wheelhouse_downloads_pi_binaries_and_proves_an_offline_install(
                 "2026.4.6",
                 "--output-dir",
                 str(tmp_path / "out"),
+                "--machine",
+                "armv7l",
             ]
         )
         == 0
@@ -184,6 +187,57 @@ def test_build_wheelhouse_downloads_pi_binaries_and_proves_an_offline_install(
     assert {"--dry-run", "--no-index"} <= set(dry_run)
     with tarfile.open(output) as tar:
         assert tar.getnames() == ["numpy-2.5.3-cp313-cp313-linux_armv7l.whl"]
+
+
+def test_build_wheelhouse_for_arm64_builds_pure_sdists_and_uses_pypi_aarch64_wheels(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    module = _load_main_release_module()
+    wheel_path = tmp_path / "dist" / "vibesensor-2026.4.6-py3-none-any.whl"
+    wheel_path.parent.mkdir()
+    with zipfile.ZipFile(wheel_path, "w") as wheel:
+        wheel.writestr(
+            "vibesensor-2026.4.6.dist-info/METADATA",
+            "Name: vibesensor\n"
+            "Requires-Dist: numpy<3,>=2.4.4\n"
+            'Requires-Dist: esptool<6,>=5.2.0; extra == "esp"\n',
+        )
+    numpy = "numpy-2.5.3-cp313-cp313-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl"
+    commands: list[list[str]] = []
+
+    def _fake_run(command: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
+        command_list = [str(part) for part in command]
+        commands.append(command_list)
+        if command_list[3] == "wheel":
+            wheel_dir = Path(command_list[command_list.index("--wheel-dir") + 1])
+            (wheel_dir / "esptool-5.5.0-py3-none-any.whl").write_text("e", encoding="utf-8")
+        if command_list[3] == "download":
+            dest = Path(command_list[command_list.index("--dest") + 1])
+            (dest / numpy).write_text("n", encoding="utf-8")
+        return subprocess.CompletedProcess(command_list, 0, stdout="", stderr="")
+
+    monkeypatch.setattr(module.subprocess, "run", _fake_run)
+    monkeypatch.setattr(module.sys, "executable", "/fake/python")
+
+    args = ["build-wheelhouse", "--wheel-path", str(wheel_path), "--version", "2026.4.6"]
+    out_dir = tmp_path / "out"
+    assert module.main([*args, "--output-dir", str(out_dir), "--machine", "aarch64"]) == 0
+
+    # Updaters before arm64 support take the first vibesensor-wheelhouse-*.tar asset.
+    output = out_dir / "vibesensor-arm64-wheelhouse-2026.4.6-cp313-linux_aarch64.tar"
+    assert capsys.readouterr().out.strip() == str(output)
+    build, download, dry_run = commands
+    assert build[3:5] == ["wheel", "--no-deps"]
+    assert build[-1] == "esptool<6,>=5.2.0"
+    assert "https://www.piwheels.org/simple" not in download
+    for command in (download, dry_run):
+        assert "linux_aarch64" in command
+        assert "manylinux_2_28_aarch64" in command
+        assert not any("armv7l" in part for part in command)
+    with tarfile.open(output) as tar:
+        assert tar.getnames() == ["esptool-5.5.0-py3-none-any.whl", numpy]
 
 
 def _partition_entry(subtype: int, offset: int, size: int, label: bytes) -> bytes:

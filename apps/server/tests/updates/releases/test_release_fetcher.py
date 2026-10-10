@@ -19,6 +19,7 @@ from vibesensor.updates.releases.models import (
     ReleaseInfo,
     resolve_release_fetcher_config,
 )
+from vibesensor.updates.releases.release_discovery import device_wheelhouse_platform
 from vibesensor.updates.releases.release_fetcher import ServerReleaseFetcher
 from vibesensor.updates.releases.version_policy import select_update_release
 
@@ -264,6 +265,62 @@ class TestServerReleaseFetcher:
         assert release.wheelhouse_url == "https://api.github.com/assets/457"
         assert release.wheelhouse_sha256 == "c" * 64
 
+    @pytest.mark.parametrize(
+        ("platform_tag", "expected"),
+        [
+            ("linux_armv7l", "vibesensor-wheelhouse-2025.6.16-cp313-linux_armv7l.tar"),
+            ("linux_aarch64", "vibesensor-arm64-wheelhouse-2025.6.16-cp313-linux_aarch64.tar"),
+        ],
+    )
+    def test_find_latest_takes_the_wheelhouse_for_the_device(
+        self, platform_tag: str, expected: str
+    ) -> None:
+        # The arm64 wheelhouse comes first: the armhf device must still skip it.
+        wheelhouses = {
+            "vibesensor-arm64-wheelhouse-2025.6.16-cp313-linux_aarch64.tar": "https://a/64",
+            "vibesensor-wheelhouse-2025.6.16-cp313-linux_armv7l.tar": "https://a/32",
+        }
+        releases = [
+            _release_record(
+                tag_name="server-v2025.6.16",
+                draft=False,
+                prerelease=False,
+                assets=[
+                    _asset_record(
+                        name="vibesensor-2025.6.16-py3-none-any.whl",
+                        url="https://a/whl",
+                        digest=f"sha256:{'a' * 64}",
+                    ),
+                    *(
+                        _asset_record(name=name, url=url, digest=f"sha256:{'d' * 64}")
+                        for name, url in wheelhouses.items()
+                    ),
+                ],
+            ),
+        ]
+        client = MagicMock(spec=GitHubApiClient)
+        client.get_typed_json.return_value = releases
+        with patch(
+            "vibesensor.updates.releases.release_fetcher.device_wheelhouse_platform",
+            return_value=platform_tag,
+        ):
+            release = self._make_fetcher(client=client).find_latest_release()
+
+        assert release.wheelhouse_name == expected
+        assert release.wheelhouse_url == wheelhouses[expected]
+
+    def test_arm64_device_gets_no_wheelhouse_from_an_armhf_only_release(self) -> None:
+        client = MagicMock(spec=GitHubApiClient)
+        client.get_typed_json.return_value = MOCK_RELEASES
+        with patch(
+            "vibesensor.updates.releases.release_fetcher.device_wheelhouse_platform",
+            return_value="linux_aarch64",
+        ):
+            release = self._make_fetcher(client=client).find_latest_release()
+
+        assert release.tag == "server-v2025.6.15"
+        assert (release.wheelhouse_name, release.wheelhouse_url) == ("", "")
+
     def test_find_latest_skips_draft(self) -> None:
         releases = [
             _release_record(
@@ -416,3 +473,19 @@ class TestVersionPolicy:
         assert result is release
         mock_logger.warning.assert_called_once()
         assert "Could not compare versions" in mock_logger.warning.call_args[0][0]
+
+
+@pytest.mark.parametrize(
+    ("machine", "is_64bit_python", "expected"),
+    [
+        ("armv7l", False, "linux_armv7l"),
+        # armhf userland on a 64-bit kernel: the interpreter decides, not uname.
+        ("aarch64", False, "linux_armv7l"),
+        ("aarch64", True, "linux_aarch64"),
+        ("x86_64", True, "linux_armv7l"),
+    ],
+)
+def test_device_wheelhouse_platform_follows_the_python_userland(
+    machine: str, is_64bit_python: bool, expected: str
+) -> None:
+    assert device_wheelhouse_platform(machine, is_64bit_python=is_64bit_python) == expected
