@@ -134,7 +134,9 @@ def render_ui_shared_constants_module() -> str:
         # location scoring calls a tie.
         + _render_export(
             "nearTieDominanceThreshold",
-            _load_number_constant(LOCATION_SCORING_PATH, "NEAR_TIE_DOMINANCE_THRESHOLD"),
+            _load_number_constant(
+                LOCATION_SCORING_PATH, "NEAR_TIE_DOMINANCE_THRESHOLD"
+            ),
         )
     )
 
