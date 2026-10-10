@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import math
+import sys
 import threading
 from collections import OrderedDict
 from collections.abc import Sequence
 from threading import RLock
-from typing import TYPE_CHECKING, Literal, TypedDict
+from typing import TYPE_CHECKING, Literal, TypedDict, cast
 
 import numpy as np
 import numpy.typing as npt
@@ -26,6 +27,8 @@ from vibesensor.dsp.window_spectrum import WindowSpectrum
 from vibesensor.live.payload_types import AxisPeak
 
 if TYPE_CHECKING:
+    from types import ModuleType
+
     import pyfftw
 
 __all__ = [
@@ -40,7 +43,6 @@ __all__ = [
     "SpectrumAxisData",
     "axis_peaks_from_spectrum",
     "SpectrumByAxis",
-    "broadband_energy_ratio",
     "combined_spectrum",
     "combined_spectra",
     "combined_strength_metrics",
@@ -49,7 +51,6 @@ __all__ = [
     "fft_window_values",
     "fill_lost_samples",
     "float_list",
-    "high_frequency_energy_ratio",
     "present_centre",
 ]
 
@@ -97,6 +98,36 @@ _PLAN_CACHE: dict[tuple[int, int], threading.local] = {}
 _RFFT_PLAN_FLAGS = ("FFTW_ESTIMATE",)
 
 
+_PYFFTW_IMPORT_LOCK = threading.Lock()
+
+
+def _import_pyfftw() -> ModuleType:
+    """Import pyfftw without the scipy interfaces it would otherwise load.
+
+    pyfftw's package imports ``pyfftw.interfaces``, which imports
+    ``scipy.fftpack`` and ``scipy.fft`` (and with them scipy.special,
+    scipy.linalg, numpy.testing, ...) when scipy is installed, only to offer
+    drop-in scipy FFT functions. This module uses ``pyfftw.FFTW`` alone, and
+    nothing else in the server imports scipy. A ``None`` entry in
+    ``sys.modules`` makes that optional import fail, so pyfftw skips them:
+    about 30 MB less resident and over a second less on the first FFT on the
+    Pi. The entry is removed again, so a later ``import scipy.fftpack`` works.
+    """
+    with _PYFFTW_IMPORT_LOCK:
+        loaded = sys.modules.get("pyfftw")
+        if loaded is not None:
+            return loaded
+        block = "scipy.fftpack" not in sys.modules
+        if block:
+            sys.modules["scipy.fftpack"] = None  # type: ignore[assignment]
+        try:
+            import pyfftw
+        finally:
+            if block and sys.modules.get("scipy.fftpack", ...) is None:
+                del sys.modules["scipy.fftpack"]
+        return cast("ModuleType", pyfftw)
+
+
 def _get_rfft_plan(axes_count: int, fft_n: int) -> pyfftw.FFTW:
     """Return a thread-local FFTW rfft plan for shape ``(axes_count, fft_n)``."""
     key = (axes_count, fft_n)
@@ -107,9 +138,8 @@ def _get_rfft_plan(axes_count: int, fft_n: int) -> pyfftw.FFTW:
             _PLAN_CACHE[key] = tls
     plan = getattr(tls, "plan", None)
     if plan is None:
-        # Imported on the first FFT, not at server start: pyfftw pulls in
-        # scipy.fft, which takes over a second to import on the Pi.
-        import pyfftw
+        # Imported on the first FFT, not at server start.
+        pyfftw = _import_pyfftw()
 
         input_array = pyfftw.empty_aligned((axes_count, fft_n), dtype=np.float32)
         output_array = pyfftw.empty_aligned(
@@ -126,16 +156,6 @@ def _get_rfft_plan(axes_count: int, fft_n: int) -> pyfftw.FFTW:
         )
         tls.plan = plan
     return plan
-
-
-def _sanitize_float_array(values: FloatArray) -> FloatArray:
-    return np.nan_to_num(
-        values,
-        copy=True,
-        nan=0.0,
-        posinf=0.0,
-        neginf=0.0,
-    ).astype(np.float32, copy=False)
 
 
 def fft_window_values(
@@ -281,69 +301,6 @@ def float_list(values: FloatArray | list[float]) -> list[float]:
         )
         return sanitized.ravel().tolist()
     return [float(v) if _isfinite(v) else 0.0 for v in values]
-
-
-def broadband_energy_ratio(
-    fft_block: FloatArray,
-    *,
-    top_bin_count: int = 3,
-) -> float | None:
-    """Return broadband energy share outside the strongest spectral bins."""
-
-    if fft_block.ndim != 2 or fft_block.shape[1] < 8:
-        return None
-    sanitized = _sanitize_float_array(fft_block)
-    centered = sanitized - np.mean(sanitized, axis=1, keepdims=True)
-    from scipy import fft as scipy_fft  # lazy: see _get_rfft_plan
-
-    spectrum = scipy_fft.rfft(centered, axis=1)
-    magnitude = np.abs(spectrum).astype(np.float64, copy=False)
-    power_by_bin = np.sum(magnitude * magnitude, axis=0)
-    if power_by_bin.size <= 1:
-        return None
-    power = power_by_bin[1:]
-    total_power = float(np.sum(power))
-    if not math.isfinite(total_power) or total_power <= 1e-18:
-        return None
-    top_count = min(max(1, top_bin_count), power.size)
-    top_power = float(np.sum(np.partition(power, -top_count)[-top_count:]))
-    if not math.isfinite(top_power):
-        return None
-    return max(0.0, min(1.0, 1.0 - (top_power / total_power)))
-
-
-def high_frequency_energy_ratio(
-    fft_block: FloatArray,
-    *,
-    sample_rate_hz: int,
-    high_frequency_start_hz: float,
-) -> float | None:
-    """Return energy share at or above a high-frequency threshold."""
-
-    if (
-        fft_block.ndim != 2
-        or fft_block.shape[1] < 8
-        or sample_rate_hz <= 0
-        or high_frequency_start_hz <= 0.0
-    ):
-        return None
-    sanitized = _sanitize_float_array(fft_block)
-    from scipy import fft as scipy_fft  # lazy: see _get_rfft_plan
-
-    spectrum = scipy_fft.rfft(sanitized, axis=1)
-    magnitude = np.abs(spectrum).astype(np.float64, copy=False)
-    power_by_bin = np.sum(magnitude * magnitude, axis=0)
-    if power_by_bin.size <= 1:
-        return None
-    freqs = np.fft.rfftfreq(fft_block.shape[1], d=1.0 / float(sample_rate_hz))
-    analysis_mask = freqs > 0.0
-    total_power = float(np.sum(power_by_bin[analysis_mask]))
-    if not math.isfinite(total_power) or total_power <= 1e-18:
-        return None
-    high_frequency_power = float(np.sum(power_by_bin[freqs >= high_frequency_start_hz]))
-    if not math.isfinite(high_frequency_power):
-        return None
-    return max(0.0, min(1.0, high_frequency_power / total_power))
 
 
 def compute_fft_spectrum(
