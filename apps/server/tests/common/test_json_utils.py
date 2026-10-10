@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 from typing import Any
 
 import numpy as np
@@ -280,6 +281,14 @@ class TestSafeJsonLoads:
     )
     def test_loads_expected_values(self, value: str | None, expected: object) -> None:
         assert safe_json_loads(value, context="test") == expected
+
+    def test_non_standard_numbers_read_as_stdlib_json_reads_them(self) -> None:
+        result = safe_json_loads(
+            "[NaN, -Infinity, 1e400, 123456789012345678901234567890]", context="test"
+        )
+        assert isinstance(result, list)
+        assert math.isnan(result[0])
+        assert result[1:] == [-math.inf, math.inf, 123456789012345678901234567890]
 
     def test_invalid_json_returns_none_and_logs_context(
         self,

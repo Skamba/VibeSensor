@@ -171,7 +171,8 @@ During `execute_post_analysis()`, `PostAnalysisWorker`:
    persistence envelope.
 
 History readers unwrap the envelope back to the summary shape without copying
-it (a reader that changes the summary copies it first) and stay
+it; the history projections build new objects for what they change and never
+change the stored summary in place. They stay
 persistence-only; they never re-run diagnostics. Analyses stored under an
 older persisted-analysis schema version are re-analysed on startup (see
 `docs/history_db_schema.md`).

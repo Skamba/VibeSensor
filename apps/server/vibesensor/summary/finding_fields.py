@@ -398,8 +398,43 @@ def _metrics_from_evidence(
     return metrics
 
 
+def _float_or_none(value: object) -> bool:
+    return value is None or type(value) is float
+
+
 def order_match_observation_from_mapping(raw: Mapping[str, object]) -> OrderMatchObservation:
     """Decode one raw mapping into a typed order-match observation."""
+    if type(raw) is dict:
+        # Stored points are plain floats and strings: build them without coercion.
+        predicted_hz = raw.get("predicted_hz")
+        matched_hz = raw.get("matched_hz")
+        rel_error = raw.get("rel_error")
+        amp = raw.get("amp")
+        location = raw.get("location")
+        t_s = raw.get("t_s")
+        speed_kmh = raw.get("speed_kmh")
+        phase = raw.get("phase")
+        if (
+            type(predicted_hz) is float
+            and type(matched_hz) is float
+            and type(rel_error) is float
+            and type(amp) is float
+            and type(location) is str
+            and _float_or_none(t_s)
+            and _float_or_none(speed_kmh)
+            and (phase is None or type(phase) is str)
+        ):
+            return OrderMatchObservation(
+                predicted_hz=predicted_hz,
+                matched_hz=matched_hz,
+                rel_error=rel_error,
+                amp=amp,
+                location=location,
+                t_s=cast("float | None", t_s),
+                speed_kmh=cast("float | None", speed_kmh),
+                phase=phase,
+                heard=raw.get("heard") is True,
+            )
 
     def _opt_float(key: str) -> float | None:
         value = raw.get(key)

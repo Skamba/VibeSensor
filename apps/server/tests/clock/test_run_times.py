@@ -97,7 +97,7 @@ def _row_times(db: HistoryDB, run_id: str) -> tuple[datetime | None, ...]:
 def _times(db: HistoryDB, run_id: str) -> dict[str, object]:
     run = db.get_run(run_id)
     assert run is not None and run.analysis is not None
-    analysis = run.analysis.to_json_object()
+    analysis = dict(run.analysis.payload)
     analysis_metadata = analysis["metadata"]
     assert isinstance(analysis_metadata, dict)
     entry = next(entry for entry in db.list_runs() if entry.run_id == run_id)
