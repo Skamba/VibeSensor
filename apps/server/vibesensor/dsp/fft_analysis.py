@@ -459,13 +459,12 @@ def combined_spectra(
         amp[:, 0] *= 0.5
     if (fft_n % 2) == 0 and stop == plan.output_array.shape[1] and plan.output_array.shape[1] > 1:
         amp[:, -1] *= 0.5
-    axes = amp.reshape(count, len(AXES), stop - first).astype(np.float64)
-    if not np.isfinite(axes).all():
-        axes = np.where(np.isfinite(axes), axes, 0.0)
-    np.square(axes, out=axes)
+    if not np.isfinite(amp).all():
+        amp = np.where(np.isfinite(amp), amp, np.float32(0.0))
+    # Squared in float64 straight from float32 (exact widening), one pass.
+    axes = np.square(amp, dtype=np.float64).reshape(count, len(AXES), stop - first)
     # The axes summed in order, as ``np.sum`` over that axis.
-    combined = axes[:, 0]
-    combined += axes[:, 1]
+    combined = np.add(axes[:, 0], axes[:, 1])
     combined += axes[:, 2]
     combined /= float(len(AXES))
     return np.sqrt(combined, out=combined).astype(np.float32)
