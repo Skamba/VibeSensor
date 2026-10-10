@@ -148,7 +148,9 @@ function CarDiagram(props: { diagram: DiagramModel }) {
       viewBox={`${-DIAGRAM_SIDE_ROOM} 0 ${diagram.width + 2 * DIAGRAM_SIDE_ROOM} ${diagram.height}`}
       role="img"
       aria-label={diagram.markers
-        .map((marker) => `${marker.label}: ${marker.value}`)
+        .map((marker) =>
+          marker.value ? `${marker.label}: ${marker.value}` : marker.label,
+        )
         .join(", ")}
     >
       <text
@@ -227,13 +229,15 @@ function CarDiagram(props: { diagram: DiagramModel }) {
           data-location-key={marker.code}
         >
           <circle cx={marker.cx} cy={marker.cy} r={marker.r} />
-          <text
-            x={marker.text.x}
-            y={marker.text.y}
-            text-anchor={marker.text.anchor}
-          >
-            {marker.value}
-          </text>
+          {marker.text ? (
+            <text
+              x={marker.text.x}
+              y={marker.text.y}
+              text-anchor={marker.text.anchor}
+            >
+              {marker.value}
+            </text>
+          ) : null}
         </g>
       ))}
     </svg>

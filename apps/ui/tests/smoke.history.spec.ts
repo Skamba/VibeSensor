@@ -478,12 +478,13 @@ test("journey: a no-fault run, one with a loose sensor and one that could check 
       zone: null,
       front_label: "FRONT",
       markers: [
+        // Nothing found: the server sends where the sensor was, no level.
         {
           code: "front_left_wheel",
           label: "front-left wheel",
-          value: "3.9 mg",
-          ratio: 1,
-          strongest: true,
+          value: "",
+          ratio: null,
+          strongest: false,
         },
       ],
     },
@@ -538,6 +539,12 @@ test("journey: a no-fault run, one with a loose sensor and one that could check 
   await expect(owner).toContainText("What this test covered");
   await expect(owner).toContainText("Speeds below 50 km/h");
   await expect(owner.locator(".history-owner__level")).toHaveCount(0);
+  // The diagram marks the sensor, with no level beside "No significant vibration".
+  const car = owner.locator(".history-car");
+  await expect(car).toHaveAttribute("aria-label", "front-left wheel");
+  await expect(car.locator(".history-car__marker circle")).toHaveCount(1);
+  await expect(car.locator(".history-car__marker text")).toHaveCount(0);
+  await expect(car.locator(".history-car__leader")).toHaveCount(0);
 
   await page
     .locator('[data-run-toggle="details"][data-run="run-manual"]')

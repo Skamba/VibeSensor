@@ -826,8 +826,6 @@ def _order_location_amplitudes(
         )
         for location in locations
     }
-    if levels:
-        floors = {**floors, **{location: level.floor_g for location, level in levels.items()}}
     presence: dict[str, float | None] = {
         location: (
             min(1.0, heard[location] / speed_samples[location]) if speed_samples[location] else None

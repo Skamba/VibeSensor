@@ -638,6 +638,8 @@ def _car_diagram(
         canvas.setFillColor(BRAND if code in highlighted_wheels else colors.HexColor("#3a3d46"))
         canvas.roundRect(cx - 2.2 * MM, cy - 5 * MM, 4.4 * MM, 10 * MM, 1.2 * MM, stroke=0, fill=1)
     markers = {marker.code: marker for marker in diagram.markers if marker.code in _POSITIONS}
+    # A run that found no vibration shows where its sensors were, with no level beside them.
+    labelled = [code for code, marker in markers.items() if marker.value]
     # The label layout works in millimetres from the box's top-left corner, y down.
     circles: dict[str, tuple[float, float, float]] = {}
     for code, marker in markers.items():
@@ -646,7 +648,7 @@ def _car_diagram(
         circles[code] = ((cx - x) / MM, (y_top - cy) / MM, 1.6 + 2.4 * max(0.0, min(1.0, ratio)))
     font_size = 7
     labels = _diagram_labels(
-        circles,
+        {code: circles[code] for code in labelled},
         body_x0=(bx - x) / MM,
         body_x1=(bx - x + body_w) / MM,
         pitch=font_size * 1.3 / MM,
@@ -738,6 +740,9 @@ def _mechanic_tables(canvas: Canvas, page: MechanicPage) -> float:
         size=7.5,
         highlight=[row.strongest for row in page.amplitudes],
     )
+    if page.amplitude_note:
+        # Below the table's bottom rule, as the felt note.
+        left_y = _paragraph(canvas, page.amplitude_note, MARGIN, left_y - 3.5 * MM, half, size=7.5)
     right_x = MARGIN + half + GAP
     right_y = _section_title(canvas, page.ruled_out_title, right_x, top)
     for line in page.ruled_out:

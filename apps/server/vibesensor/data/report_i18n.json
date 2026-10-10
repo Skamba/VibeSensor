@@ -23,13 +23,17 @@
     "en": "a wheel or tire ({code})",
     "nl": "een wiel of band ({code})"
   },
+  "AMPLITUDE_NOTE_ROAD": {
+    "en": "Nothing was found: these levels are the road's shake, which every car has (at a wheel mostly wheel hop, the wheel bouncing on its tire), not a fault.",
+    "nl": "Niets gevonden: deze niveaus zijn het schudden van de weg, dat elke auto heeft (bij een wiel vooral het stuiteren van het wiel op de band), geen defect."
+  },
   "AMPLITUDE_TITLE_ORDER": {
     "en": "Amplitude at {order} per location",
     "nl": "Amplitude bij {order} per locatie"
   },
   "AMPLITUDE_TITLE_OVERALL": {
-    "en": "Vibration level per location (95th percentile)",
-    "nl": "Trillingsniveau per locatie (95e percentiel)"
+    "en": "Strongest peak, any frequency (95th percentile)",
+    "nl": "Sterkste piek, elke frequentie (95e percentiel)"
   },
   "AMP_LEVEL": {
     "en": "Amplitude (dB above floor)",

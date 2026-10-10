@@ -52,7 +52,7 @@ make benchmark-post-analysis-30min BENCHMARK_OPTS="--benchmark-save=post-analysi
 make benchmark-compare-backend
 ```
 
-Direct pytest benchmark runs need `-o addopts=''` so default xdist addopts do not disable benchmark mode.
+Direct pytest benchmark runs need `-o addopts=''` so default xdist addopts do not disable benchmark mode. The 30-minute benchmark records its drive and traces post-analysis memory, about 3 minutes on x86, so it carries its own `@pytest.mark.timeout(600)` instead of the suite's 120 s.
 
 ## Diagnosis accuracy benchmark
 

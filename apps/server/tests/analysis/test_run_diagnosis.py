@@ -16,11 +16,13 @@ from vibesensor.analysis.orders.tracking import window_duration_s
 from vibesensor.domain.finding import Finding
 from vibesensor.domain.finding_evidence import FindingEvidence
 from vibesensor.domain.finding_types import VibrationSource
-from vibesensor.domain.order_match import OrderMatchObservation
+from vibesensor.domain.order_match import OrderMatchObservation, SensorOrderLevel
 from vibesensor.domain.run_capture import RunCapture
 from vibesensor.domain.test_run import TestRun
+from vibesensor.dsp.vibration_strength import vibration_strength_db_scalar
 from vibesensor.dsp.window_spectrum import tone_line_level_g
 from vibesensor.recording.run_metadata import run_metadata_from_mapping
+from vibesensor.recording.sensor_frame_mapping import sensor_frame_from_mapping
 
 SENSORS = ["front-left", "front-right", "rear-left", "rear-right"]
 
@@ -149,6 +151,45 @@ def test_amplitudes_are_shown_as_the_peak_of_the_tone_that_reads_them() -> None:
     assert [point["amplitude_mg"] for point in diagnosis["amplitude_vs_speed"]] == [
         pytest.approx(30.0)
     ]
+
+
+def test_an_order_rows_db_is_over_its_locations_floor_as_every_other_db() -> None:
+    """The bracketed dB has one meaning: over the location's spectrum floor, as
+    a no-fault run's rows and the live view give it, not over the floor beside
+    the order's line (a wheel imbalance on a road's wheel hop read 6 dB there,
+    34 dB live, while a healthy wheel's row read 40 dB)."""
+    finding = _order_finding(
+        "wheel_1x", VibrationSource.WHEEL_TIRE, confidence=0.6, amps={"front-left": 0.1}
+    )
+    finding = replace(
+        finding,
+        sensor_levels=(SensorOrderLevel("front-left", level_g=0.1, floor_g=0.05, windows=40),),
+    )
+    metadata = run_metadata_from_mapping({"run_id": "run-1", **standard_metadata()})
+    samples = [
+        sensor_frame_from_mapping(
+            make_sample(
+                t_s=float(index),
+                speed_kmh=80.0,
+                client_name="front-left",
+                strength_floor_amp_g=floor_g,
+            )
+        )
+        for index, floor_g in enumerate((0.001, 0.002, 0.004))
+    ]
+    diagnosis = build_diagnosis(
+        test_run=TestRun(
+            capture=RunCapture(run_id="run-1"), findings=(finding,), top_causes=(finding,)
+        ),
+        samples=samples,
+        metadata=metadata,
+        sensor_count=1,
+    )
+
+    (row,) = diagnosis["location_amplitudes"]
+    assert row["db_above_floor"] == pytest.approx(
+        vibration_strength_db_scalar(peak_band_rms_amp_g=0.1, floor_amp_g=0.002)
+    )
 
 
 @pytest.mark.parametrize(

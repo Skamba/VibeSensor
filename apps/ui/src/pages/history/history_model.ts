@@ -948,8 +948,9 @@ export interface DiagramModel {
     cy: number;
     r: number;
     strongest: boolean;
-    /** The level label, in a column beside the car (see `diagramLabels`). */
-    text: { x: number; y: number; anchor: "start" | "end" };
+    /** The level label, in a column beside the car (see `diagramLabels`);
+     * none on a run that found no vibration, which shows only where the sensors were. */
+    text: { x: number; y: number; anchor: "start" | "end" } | null;
     /** A line from the marker to its label, unless the label sits at its wheel. */
     leader: { x1: number; y1: number; x2: number; y2: number } | null;
   }>;
@@ -1168,7 +1169,14 @@ export function ownerDiagram(diagram: OwnerPage["diagram"]): DiagramModel {
       return [marker.code, { cx, cy, r }];
     }),
   );
-  const labels = diagramLabels(circles);
+  // A run that found no vibration sends no levels: no label column to lay out.
+  const labels = diagramLabels(
+    new Map(
+      placed
+        .filter((marker) => marker.value)
+        .map((marker) => [marker.code, circles.get(marker.code) as Circle]),
+    ),
+  );
   return {
     width: DIAGRAM_W,
     height: DIAGRAM_H,
@@ -1198,8 +1206,8 @@ export function ownerDiagram(diagram: OwnerPage["diagram"]): DiagramModel {
     }),
     markers: placed.map((marker) => {
       const circle = circles.get(marker.code) as Circle;
-      const label = labels.get(marker.code) as LabelSpot;
-      const left = label.side === "left";
+      const label = labels.get(marker.code);
+      const left = label?.side === "left";
       return {
         code: marker.code,
         label: marker.label,
@@ -1207,12 +1215,14 @@ export function ownerDiagram(diagram: OwnerPage["diagram"]): DiagramModel {
         ...circle,
         strongest: marker.strongest,
         // The digits' middle sits on the label's centre line.
-        text: {
-          x: label.x,
-          y: label.y + LABEL_FONT * 0.35,
-          anchor: left ? "end" : "start",
-        },
-        leader: label.leader
+        text: label
+          ? {
+              x: label.x,
+              y: label.y + LABEL_FONT * 0.35,
+              anchor: left ? "end" : "start",
+            }
+          : null,
+        leader: label?.leader
           ? {
               x1: circle.cx,
               y1: circle.cy,

@@ -178,7 +178,8 @@ on demand (`report/view_model.py`, rendered by `report/pdf.py`; see
 Persisted post-stop analysis strength/intensity outputs are in dB. The one
 exception is the `diagnosis` block (`analysis/diagnosis.py`), which reports
 amplitude at the diagnosed order in mg next to its dB above the location's
-noise floor (see `docs/metrics.md`). Raw ingest/sample acceleration fields may
+noise floor, the same floor `vibration_strength_db` stands over (see
+`docs/metrics.md`). Raw ingest/sample acceleration fields may
 still be expressed in g.
 
 ### Braking
