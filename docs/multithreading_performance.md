@@ -60,6 +60,15 @@ path caps the loop's duty cycle at 50%. Even at a 5–10× slower Raspberry Pi
   is byte-identical on that drive, the CI-seed accuracy benchmark and the
   diagnostic matrix. The live tick's FFT and strength cost is unchanged
   (4.1 ms on the Pi).
+- Of the FFT thread's ~9.4 s on the Pi (49 ms per 64-window chunk), the FFT
+  itself (pyFFTW, float32) is ~1.8 s; the rest is elementwise passes (int16
+  to g, mean, window, magnitude, the float64 combine). The combine squares
+  the float32 magnitudes straight into float64 rather than widening them
+  first (exact, one pass fewer): the replay went from 12.4 s to 11.8 s.
+- Tried and not kept for the replay's FFT: FFTW_MEASURE plans (29 s to plan
+  on the Pi, no faster than FFTW_ESTIMATE, not bit-identical), scipy.fft on
+  float32 (14.7 ms per chunk against FFTW's 10.7 ms) and float64 FFTs (FFTW
+  20.3 ms, scipy.fft 20.4 ms, numpy 17.8 ms; not bit-identical either).
 - Tried and not kept for the replay: each step's numpy calls on the FFT
   thread wait for the GIL while the worker thread runs Python (5 ms switch
   interval), so fewer, larger calls are what helped; 32 windows per FFT
@@ -145,7 +154,7 @@ path caps the loop's duty cycle at 50%. Even at a 5–10× slower Raspberry Pi
 | Host | CPU time | Peak RSS |
 |------|----------|----------|
 | x86 dev host | ~5.4 s | ~223 MB |
-| Raspberry Pi 3 A+ (`nice -n 10`) | ~40 s | ~162 MB |
+| Raspberry Pi 3 A+ (`nice -n 10`) | ~39 s | ~162 MB |
 
 ## Benchmarks
 
