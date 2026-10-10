@@ -99,7 +99,7 @@ NO_FAULT_DIAGNOSIS: DiagnosisPayload = {
     "order_findings": [],
     "amplitude_basis": "overall",
     "location_amplitudes": [],
-    "unexplained_vibration": False,
+    "unexplained_vibration": None,
     "amplitude_vs_speed": [],
     "spectrum": None,
     "source_checks": [],

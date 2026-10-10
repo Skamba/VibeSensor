@@ -254,7 +254,8 @@ without a schema-version bump so existing v15 databases keep opening:
 (`PERSISTED_ANALYSIS_SCHEMA_VERSION` in `summary/persisted_analysis.py`). When
 the summary contract gains a required field or drops one (the top-level
 summary forbids unknown keys), or a stored value changes meaning (the
-diagnosis's mg scale, its `db_above_floor` floor), the version is bumped. On startup,
+diagnosis's mg scale, its `db_above_floor` floor, `unexplained_vibration` going
+from a flag to where and how strong), the version is bumped. On startup,
 `HistoryDB.requeue_outdated_analyses()` moves every `complete` run whose stored
 version differs back to `analyzing` with its analysis cleared, and the startup
 re-queue of `analyzing` runs re-analyses them from their stored samples (and raw

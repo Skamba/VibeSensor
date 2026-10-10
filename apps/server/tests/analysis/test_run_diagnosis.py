@@ -383,3 +383,35 @@ def test_the_coast_down_is_judged_where_the_order_is_heard() -> None:
     presence = {row["location"]: row["presence_ratio"] for row in diagnosis["location_amplitudes"]}
     assert presence["trunk"] == 0.0
     assert presence["front-left"] > 0.5
+
+
+def test_an_unexplained_vibration_is_named_where_it_stood_out_not_by_the_strongest_peak() -> None:
+    """On a real road a wheel sensor's strongest peak is the wheel-hop hump (2 g,
+    12 dB over the spectrum around it); a 0.15 g tone 34 dB clear at the seat
+    is the vibration that raises the flag, so it is the one named, at its level."""
+    samples = [
+        make_sample(
+            t_s=float(t),
+            speed_kmh=80.0,
+            client_name=name,
+            location=location,
+            top_peaks=[{"hz": hz, "amp": amp, "local_floor_amp_g": floor}],
+            strength_peak_amp_g=amp,
+        )
+        for t in range(40)
+        for name, location, hz, amp, floor in (
+            ("hop", "front_left_wheel", 12.0, 2.0, 0.5),
+            ("seat", "driver_seat", 47.0, 0.15, 0.003),
+        )
+    ]
+    metadata = run_metadata_from_mapping({"run_id": "run-1", **standard_metadata()})
+    seat_mg = 1000.0 * 0.15 / tone_line_level_g(1.0, 1.0 / window_duration_s(metadata))
+
+    diagnosis = run_analysis(samples, standard_metadata())["diagnosis"]
+
+    assert diagnosis["verdict"] == "no_fault"
+    assert diagnosis["location_amplitudes"][0]["location"] == "Front Left Wheel"
+    assert diagnosis["unexplained_vibration"] == {
+        "location": "Driver Seat",
+        "amplitude_mg": pytest.approx(seat_mg),
+    }

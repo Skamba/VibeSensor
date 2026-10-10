@@ -224,7 +224,9 @@ function CarDiagram(props: { diagram: DiagramModel }) {
           class={
             marker.strongest
               ? "history-car__marker history-car__marker--strongest"
-              : "history-car__marker"
+              : marker.value
+                ? "history-car__marker"
+                : "history-car__marker history-car__marker--plain"
           }
           data-location-key={marker.code}
         >

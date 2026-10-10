@@ -42,6 +42,7 @@ __all__ = [
     "SpectrumPeak",
     "SpeedAmplitudePoint",
     "TestConditions",
+    "UnexplainedVibration",
 ]
 
 _FORBID_EXTRA = ConfigDict(extra="forbid")
@@ -135,6 +136,19 @@ type FinalDriveAxleValue = Literal["front", "rear"]
 # bearings; on AWD the front propshaft and front differential pinion), or the
 # propshaft and the rear axle's drive (joints, centre bearing, rear differential).
 type DrivelinePart = Literal["front_drive", "propshaft_rear"]
+
+
+@with_config(_FORBID_EXTRA)
+class UnexplainedVibration(TypedDict):
+    """The vibration a no-fault run felt that no checked cause explains, where it stood out most.
+
+    *amplitude_mg* is the level (p95) of the peaks there that stand out most
+    from the spectrum around them, on the diagnosis's mg scale: the vibration
+    that raised the flag, not the location's strongest peak at any frequency.
+    """
+
+    location: str
+    amplitude_mg: float
 
 
 @with_config(_FORBID_EXTRA)
@@ -325,8 +339,8 @@ class DiagnosisPayload(TypedDict):
     amplitude_basis: AmplitudeBasis
     location_amplitudes: list[LocationAmplitudeRow]
     # No cause found, yet a sensor felt a vibration in the elevated strength band
-    # (L3) or above: the run must not read as vibration-free.
-    unexplained_vibration: bool
+    # (L3) or above: the run must not read as vibration-free. Where and how strong.
+    unexplained_vibration: UnexplainedVibration | None
     amplitude_vs_speed: list[SpeedAmplitudePoint]
     spectrum: DiagnosisSpectrum | None
     source_checks: list[SourceCheck]

@@ -38,6 +38,7 @@ from vibesensor.summary.diagnosis_contracts import (
     OrderFindingRow,
     ReferenceProvenanceValue,
     TestConditions,
+    UnexplainedVibration,
 )
 from vibesensor.summary.phases import PHASE_I18N_KEYS
 from vibesensor.summary.run_context_warning import (
@@ -786,7 +787,7 @@ def _owner_page(
         if loose is not None:
             description = f"{description} {loose}"
             tone = "caution"
-        strongest = _unexplained_row(diagnosis)
+        unexplained = _unexplained(diagnosis)
         if not _checked_anything(diagnosis):
             # Nothing was compared with any rhythm: no result, and what fixes that.
             headline = ctx.t("VERDICT_NOT_CHECKED")
@@ -794,11 +795,11 @@ def _owner_page(
             next_step = ctx.t(
                 _NOT_CHECKED_STEP_KEYS.get(_not_checked_reason(diagnosis), "STEP_NOT_CHECKED")
             )
-        elif strongest is not None:
+        elif unexplained is not None:
             # A vibration was there; it just followed nothing the run could check.
             headline = ctx.t("VERDICT_UNEXPLAINED")
             result = ctx.t("RESULT_UNEXPLAINED")
-            where = ctx.location(strongest["location"])
+            where = ctx.location(unexplained["location"])
             next_step = ctx.t("STEP_UNEXPLAINED", location=where)
     elif verdict == "weak_evidence":
         headline = ctx.t("VERDICT_WEAK")
@@ -913,7 +914,7 @@ def _owner_tone(diagnosis: DiagnosisPayload) -> OwnerTone:
     A no-fault run with a loose sensor is amber instead (``_owner_page``).
     """
     if diagnosis["verdict"] == "no_fault":
-        clear = _checked_anything(diagnosis) and _unexplained_row(diagnosis) is None
+        clear = _checked_anything(diagnosis) and _unexplained(diagnosis) is None
         return "good" if clear else "muted"
     if diagnosis["verdict"] == "weak_evidence":
         return "muted"
@@ -1266,13 +1267,12 @@ def _coverage(
             checked.append(name)
             continue
         gaps.append(ctx.t("NOT_COVERED_SOURCE", source=ctx.t(f"SOURCE_{key}"), detail=detail))
-    strongest = _unexplained_row(diagnosis)
-    if strongest is not None:
-        amplitude = strongest["amplitude_mg"]
+    unexplained = _unexplained(diagnosis)
+    if unexplained is not None:
         description = ctx.t(
             "VERDICT_UNEXPLAINED_BODY",
-            amplitude=ctx.mg(amplitude) if amplitude is not None else ctx.t("VALUE_UNKNOWN"),
-            location=ctx.location(strongest["location"]),
+            amplitude=ctx.mg(unexplained["amplitude_mg"]),
+            location=ctx.location(unexplained["location"]),
         )
         if checked:
             description = (
@@ -1286,7 +1286,7 @@ def _coverage(
             if ctx.electric
             else "VERDICT_NO_FAULT_BODY_NOTHING_CHECKED"
         )
-    if not_checked and (checked or strongest is not None):
+    if not_checked and (checked or unexplained is not None):
         description = (
             f"{description} {ctx.t('VERDICT_NO_FAULT_NOT_CHECKED', sources=ctx.join(not_checked))}"
         )
@@ -1377,12 +1377,11 @@ def _not_checked_reason(diagnosis: DiagnosisPayload) -> str:
     )
 
 
-def _unexplained_row(diagnosis: DiagnosisPayload) -> LocationAmplitudeRow | None:
-    """The strongest location of a no-fault run that still felt a significant vibration."""
-    if diagnosis["verdict"] != "no_fault" or not diagnosis["unexplained_vibration"]:
+def _unexplained(diagnosis: DiagnosisPayload) -> UnexplainedVibration | None:
+    """The vibration a no-fault run felt that no checked cause explains: where, and how strong."""
+    if diagnosis["verdict"] != "no_fault":
         return None
-    rows = [row for row in diagnosis["location_amplitudes"] if row["amplitude_mg"] is not None]
-    return rows[0] if rows else None
+    return diagnosis["unexplained_vibration"]
 
 
 def _never_analysed(ctx: _Ctx, diagnosis: DiagnosisPayload) -> list[str]:
@@ -1796,9 +1795,9 @@ def _shop(ctx: _Ctx, diagnosis: DiagnosisPayload) -> tuple[str, ...]:
     if verdict == "no_fault" and not _checked_anything(diagnosis):
         return (ctx.t("SHOP_NOT_CHECKED"),)
     if verdict == "no_fault":
-        strongest = _unexplained_row(diagnosis)
-        if strongest is not None:
-            return (ctx.t("SHOP_UNEXPLAINED", location=ctx.location(strongest["location"])),)
+        unexplained = _unexplained(diagnosis)
+        if unexplained is not None:
+            return (ctx.t("SHOP_UNEXPLAINED", location=ctx.location(unexplained["location"])),)
         return (ctx.t("SHOP_NO_FAULT"),)
     if verdict == "weak_evidence":
         return (ctx.t("SHOP_WEAK"),)

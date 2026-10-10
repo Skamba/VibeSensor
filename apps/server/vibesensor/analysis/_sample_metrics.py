@@ -35,22 +35,28 @@ def _sample_top_peaks(sample: Sample) -> list[tuple[float, float]]:
     return [(peak.hz, peak.amp) for peak in _analysed_peaks(sample)]
 
 
-def _sample_peak_prominence_db(sample: Sample) -> float | None:
-    """How far the sample's most prominent peak stands out of the spectrum around it (dB).
+def _sample_most_prominent_peak(sample: Sample) -> tuple[float, StrengthPeak] | None:
+    """The sample's peak that stands out most from the spectrum around it, and by how much (dB).
 
     A peak recorded without its local floor stands on the sample's overall floor.
     """
     overall_floor = sample.strength_floor_amp_g or 0.0
     return max(
         (
-            vibration_strength_db_scalar(
-                peak_band_rms_amp_g=peak.amp,
-                floor_amp_g=(
-                    peak.local_floor_amp_g if peak.local_floor_amp_g is not None else overall_floor
+            (
+                vibration_strength_db_scalar(
+                    peak_band_rms_amp_g=peak.amp,
+                    floor_amp_g=(
+                        peak.local_floor_amp_g
+                        if peak.local_floor_amp_g is not None
+                        else overall_floor
+                    ),
                 ),
+                peak,
             )
             for peak in _analysed_peaks(sample)
         ),
+        key=lambda prominent: prominent[0],
         default=None,
     )
 

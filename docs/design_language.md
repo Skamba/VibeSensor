@@ -85,8 +85,9 @@ A4 portrait, built-in Helvetica, light/print-friendly, drawn by
    fault with a loose sensor, red for Strong, grey for weak evidence. It holds one confidence chip (the level word
    and its action meaning) and one plain sentence. Below that, the next step,
    fallback step, and check-the-fix boxes, with the car diagram beside them
-   (a run that found no vibration draws its sensors as small grey dots with
-   no level).
+   (a run that found no vibration draws its sensors as small dots with no
+   level: grey in the PDF, `on-surface` ink in History, so a dot on a wheel
+   stays visible in dark mode).
 2. **Workshop page**: test conditions grid, findings table (diagnosed row
    tinted), amplitude table, ruled-out list, spectrum and amplitude-vs-speed
    charts, and the shop-request box.
