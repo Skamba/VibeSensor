@@ -102,22 +102,18 @@ jobs:
             --host 127.0.0.1 \
             --port 18080
 
-      - name: Build Pi dependency wheelhouses
+      - name: Build Pi dependency wheelhouse
         shell: bash
         run: |
           set -euo pipefail
           python_bin="${{ steps.setup-python.outputs.python-path }}"
           wheel_path="$(echo apps/server/dist/*.whl)"
-          # Binary-only CPython 3.13 wheels for the armhf (armv7l: PyPI + piwheels)
-          # and arm64 (aarch64: PyPI) Pi images, so OTA updates can install changed
-          # dependencies offline into a new venv slot.
-          for machine in armv7l aarch64; do
-            "${python_bin}" tools/release/main_release.py build-wheelhouse \
-              --wheel-path "${wheel_path}" \
-              --version "${{ steps.version.outputs.version }}" \
-              --output-dir apps/server/dist \
-              --machine "${machine}"
-          done
+          # Binary-only Pi (armv7l, CPython 3.13) wheels from PyPI + piwheels, so OTA
+          # updates can install changed dependencies offline into a new venv slot.
+          "${python_bin}" tools/release/main_release.py build-wheelhouse \
+            --wheel-path "${wheel_path}" \
+            --version "${{ steps.version.outputs.version }}" \
+            --output-dir apps/server/dist
 
       - name: Install PlatformIO
         shell: bash
@@ -230,7 +226,6 @@ jobs:
           gh release create "${{ steps.version.outputs.tag }}" \
             apps/server/dist/*.whl \
             apps/server/dist/vibesensor-wheelhouse-*.tar \
-            apps/server/dist/vibesensor-arm64-wheelhouse-*.tar \
             "${{ steps.bundle.outputs.path }}" \
             --target "${{ steps.release_source.outputs.sha }}" \
             --title "Wheel / ESP release ${{ steps.version.outputs.version }}" \

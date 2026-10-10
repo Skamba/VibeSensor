@@ -584,34 +584,3 @@ def test_image_is_headless_with_the_minimum_gpu_split(
 
     assert result.returncode == (0 if breakage is None else 1), result.stdout
     assert message in result.stdout
-
-
-@pytest.mark.smoke
-@pytest.mark.parametrize(
-    ("libc_arch", "arm_64bit", "expected_arch", "message"),
-    [
-        ("armhf", False, "armhf", ""),
-        ("arm64", True, "arm64", ""),
-        ("armhf", False, "arm64", "userland is 'armhf' (libc6), expected 'arm64'"),
-        ("arm64", False, "arm64", "arm_64bit=1"),
-        ("armhf", True, "armhf", "must not set arm_64bit=1"),
-    ],
-)
-def test_image_validation_checks_the_target_architecture(
-    tmp_path: Path, libc_arch: str, arm_64bit: bool, expected_arch: str, message: str
-) -> None:
-    boot = _headless_boot_partition(tmp_path, arm_64bit=arm_64bit)
-    rootfs = tmp_path / "rootfs"
-    (rootfs / "var/lib/dpkg").mkdir(parents=True)
-    (rootfs / "var/lib/dpkg/status").write_text(
-        "Package: libc-bin\nArchitecture: all\n\n"
-        f"Package: libc6\nStatus: install ok installed\nArchitecture: {libc_arch}\n\n",
-        encoding="utf-8",
-    )
-
-    result = _run_image_validation_script(
-        f'assert_image_architecture "{rootfs}" "{boot}" {expected_arch}', check=False
-    )
-
-    assert result.returncode == (0 if not message else 1), result.stdout
-    assert message in result.stdout

@@ -43,7 +43,7 @@ render_stage_templates() {
   render_template_file \
     "${TEMPLATE_ROOT}/stage-vibesensor/prerun.sh.template" \
     "${STAGE_DIR}/prerun.sh" \
-    "__RASPBIAN_MIRROR__" "${RASPBIAN_MIRROR:-http://raspbian.raspberrypi.com/raspbian/}"
+    "__RASPBIAN_MIRROR__" "${RASPBIAN_MIRROR}"
   chmod +x "${STAGE_DIR}/prerun.sh"
 
   render_template_file \

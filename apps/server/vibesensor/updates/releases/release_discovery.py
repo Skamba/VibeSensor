@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import platform
-import sys
 from collections.abc import Iterable
 
 from vibesensor.updates.releases.github_api import GitHubApiReleaseRecord
@@ -15,7 +13,6 @@ from vibesensor.updates.releases.models import (
 
 __all__ = [
     "decode_server_releases",
-    "device_wheelhouse_platform",
     "find_latest_server_release",
     "find_server_wheel_asset",
     "find_wheelhouse_asset",
@@ -37,39 +34,11 @@ def find_server_wheel_asset(release: GitHubRelease) -> GitHubReleaseAsset | None
     return None
 
 
-def device_wheelhouse_platform(
-    machine: str | None = None, *, is_64bit_python: bool | None = None
-) -> str:
-    """Return the wheelhouse platform tag this device's Python installs from.
-
-    Decided by the interpreter, not the kernel: the 32-bit (armhf) image may boot
-    a 64-bit kernel, where ``platform.machine()`` still says ``aarch64``. Only a
-    64-bit ARM Python (the arm64 image) takes ``linux_aarch64``; every other
-    interpreter keeps the armhf image's ``linux_armv7l`` wheelhouse.
-    """
-
-    machine = platform.machine() if machine is None else machine
-    is_64bit_python = sys.maxsize > 2**32 if is_64bit_python is None else is_64bit_python
-    if is_64bit_python and machine.lower() in {"aarch64", "arm64"}:
-        return "linux_aarch64"
-    return "linux_armv7l"
-
-
-def find_wheelhouse_asset(
-    release: GitHubRelease, *, wheelhouse_platform: str
-) -> GitHubReleaseAsset | None:
-    """Return the Pi dependency wheelhouse for *wheelhouse_platform* when present.
-
-    Release tools name them ``vibesensor-wheelhouse-<v>-cp313-linux_armv7l.tar`` and
-    ``vibesensor-arm64-wheelhouse-<v>-cp313-linux_aarch64.tar``.
-    """
+def find_wheelhouse_asset(release: GitHubRelease) -> GitHubReleaseAsset | None:
+    """Return the Pi dependency wheelhouse (``vibesensor-wheelhouse-*.tar``) when present."""
 
     for asset in release.assets:
-        if (
-            asset.name.startswith("vibesensor-")
-            and "wheelhouse-" in asset.name
-            and asset.name.endswith(f"-{wheelhouse_platform}.tar")
-        ):
+        if asset.name.startswith("vibesensor-wheelhouse-") and asset.name.endswith(".tar"):
             return asset
     return None
 
@@ -78,14 +47,8 @@ def find_latest_server_release(
     releases: Iterable[GitHubRelease],
     *,
     server_repo: str,
-    wheelhouse_platform: str,
 ) -> ReleaseInfo:
-    """Select the first eligible server release from decoded GitHub rows.
-
-    The release's wheelhouse is the one for *wheelhouse_platform*; a release
-    without one (published before arm64 wheelhouses) keeps empty wheelhouse
-    fields, which the updater refuses to install.
-    """
+    """Select the first eligible server release from decoded GitHub rows."""
 
     for release in releases:
         if release.draft:
@@ -100,7 +63,7 @@ def find_latest_server_release(
             raise ValueError(
                 f"Server release {tag} is missing a trusted SHA-256 digest for {asset.name}",
             )
-        wheelhouse = find_wheelhouse_asset(release, wheelhouse_platform=wheelhouse_platform)
+        wheelhouse = find_wheelhouse_asset(release)
         return ReleaseInfo(
             tag=tag,
             version=tag.removeprefix("server-v"),

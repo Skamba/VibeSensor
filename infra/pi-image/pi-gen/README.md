@@ -4,27 +4,13 @@ Builds a custom Raspberry Pi OS Lite (Trixie) image with VibeSensor
 pre-installed. After flashing to an SD card and booting, the Pi is ready to use
 with no manual setup.
 
-Two userlands are supported, chosen with `VS_PI_ARCH`:
-
-- `armhf` (default): 32-bit Raspberry Pi OS, the image the weekly release publishes.
-- `arm64`: 64-bit Raspberry Pi OS (64-bit kernel, `arm_64bit=1`), for comparing
-  post-drive analysis speed and memory on the same Pi 3 A+. Built the same way;
-  workflow artifact only.
-
-```bash
-VS_PI_ARCH=arm64 ./infra/pi-image/pi-gen/build.sh
-VS_PI_ARCH=arm64 ./infra/pi-image/pi-gen/validate-image.sh   # validate an arm64 artifact
-```
-
 ## Prerequisites
 
 - Linux build machine (or WSL2)
 - Docker
 - git, rsync
-- `qemu-user` (provides host `qemu-arm` for current upstream `pi-gen`; armhf builds)
-- `qemu-user-static` (used by VibeSensor's post-build image validator:
-  `qemu-arm-static` for armhf, `qemu-aarch64-static` for arm64 on a non-arm64 host;
-  an aarch64 host validates an arm64 image natively)
+- `qemu-user` (provides host `qemu-arm` for current upstream `pi-gen`)
+- `qemu-user-static` (used by VibeSensor's post-build image validator)
 - ~20 minutes build time (depends on cache and network)
 - For best x86/WSL performance, keep the repo on the Linux filesystem (for example `/home/...`), not on a Windows-mounted path.
 
@@ -81,10 +67,8 @@ built image and verifies that it satisfies the packaged-server floor declared in
 `apps/server/pyproject.toml`.
 
 Artifacts:
-- app artifacts: `infra/pi-image/pi-gen/out/app-artifacts/` (the same for both arches)
-- image: `infra/pi-image/pi-gen/out/image_<date>-vibesensor-rpi3a-plus-trixie-lite-vibesensor-lite.zip`
-  (armhf) or `...-vibesensor-arm64-lite.zip` (arm64); the arch suffixes never match
-  each other, so both can sit in `out/`
+- app artifacts: `infra/pi-image/pi-gen/out/app-artifacts/`
+- image: `infra/pi-image/pi-gen/out/vibesensor-rpi3a-plus-trixie-lite.img`
 - image build metadata: `infra/pi-image/pi-gen/out/*.version.txt` (includes the
   validated embedded server Python version/floor when post-build validation runs)
 
@@ -161,7 +145,7 @@ When `build.sh` fails, isolate which stage failed before retrying everything:
 
 The image contains:
 
-- Raspberry Pi OS Lite (Trixie, armhf or arm64)
+- Raspberry Pi OS Lite (Trixie, armhf)
 - A headless boot config (`templates/stage-vibesensor/01-headless-boot/`): `gpu_mem=16`,
   the KMS display driver (`dtoverlay=vc4-kms-v3d`, `max_framebuffers`) commented
   out, and `camera_auto_detect=0` in `config.txt`. VibeSensor never uses HDMI or a
@@ -195,14 +179,7 @@ Use [Raspberry Pi Imager](https://www.raspberrypi.com/software/) to write the
 `.img` file (or `.img.xz`/`.zip` artifact) to an SD card.
 
 Insert the card into a Raspberry Pi 3 A+ and power on. The hotspot and server
-start automatically on first boot. Both arches use the same user, password,
-hotspot and SSH defaults listed above.
-
-On-device updates work on both: each server release carries a dependency
-wheelhouse per userland, and the updater installs from the one matching its
-Python (`linux_armv7l` on armhf, `linux_aarch64` on arm64). Releases published
-before arm64 wheelhouses existed have none for arm64, and the updater refuses
-them with "no dependency wheelhouse for this device".
+start automatically on first boot.
 
 ## Weekly GitHub release builds
 
@@ -211,15 +188,11 @@ Actions:
 
 - workflow: [`.github/workflows/weekly-pi-image.yml`](../../../.github/workflows/weekly-pi-image.yml)
 - runner: GitHub-hosted `ubuntu-24.04-arm` (native ARM, no x64 emulation)
-- triggers: weekly schedule (always publishes the armhf image) plus manual
-  `workflow_dispatch`; manual runs only upload a workflow artifact unless the
-  `publish` input is set (publishing requires `main` and `arch=armhf`)
-- `arch` input (manual runs): `armhf` (default) or `arm64`. An arm64 run builds
-  natively on the ARM runner (no QEMU in the chroot) and uploads
-  `VibeSensor-<yy-mm-dd>-arm64.img.zip` as workflow artifact
-  `pi-image-<yy-mm-dd>-arm64`; armhf runs upload `pi-image-<yy-mm-dd>-armhf`
-- assets: compressed Pi image, checksum, and version metadata (with `arch=`),
-  uploaded as a workflow artifact on every run
+- triggers: weekly schedule (always publishes) plus manual `workflow_dispatch`;
+  manual runs only upload a workflow artifact unless the `publish` input is set
+  (publishing requires `main`)
+- assets: compressed Pi image, checksum, and version metadata, uploaded as a
+  workflow artifact on every run
 - release retention: publishing deletes the previous weekly Pi-image release
   first, so GitHub Releases only shows the latest weekly Pi image entry
 
@@ -243,11 +216,7 @@ invokes it automatically when `VALIDATE=1`, and you can rerun it separately
 against an already-built artifact.
 
 The build uses upstream [pi-gen](https://github.com/RPi-Distro/pi-gen) at the
-commit pinned by `PI_GEN_REF` in `lib/common.sh`, not upstream `master`.
-Upstream builds 64-bit images from its `arm64` branch (it hard-codes
-`ARCH=arm64`, bootstraps from Debian and adds `arm_64bit=1`), so `VS_PI_ARCH=arm64`
-pins the `arm64` branch commit that merged the armhf pin; bump both together
-(`PI_GEN_REF=arm64` for a trial build). The
+commit pinned by `PI_GEN_REF` in `lib/common.sh`, not upstream `master`. The
 patches below match upstream files by exact text, so an unpinned `master` let
 an upstream change (RPi-Distro/pi-gen#933) fail the scheduled weekly image on an
 unchanged `main` (2026-09-21 and 09-28). To move to a newer pi-gen, run
@@ -256,9 +225,7 @@ manual weekly workflow run on a branch with the bumped pin), fix any patch that
 no longer matches, then update the pinned SHA. `PI_GEN_REF` also accepts a
 branch or another commit for one-off builds.
 
-During pi-gen repo preparation, the build also patches upstream (the mirror,
-Docker base image and keyring fixes apply to armhf only; the `arm64` branch
-installs from Debian's mirrors and already uses the native `debian:trixie` base):
+During pi-gen repo preparation, the build also patches upstream:
 
 - `export-image/prerun.sh` to size the boot partition at `1 GiB`. Current
   Raspberry Pi kernel/security updates overflow the stock `512 MiB` bootfs
@@ -275,14 +242,12 @@ installs from Debian's mirrors and already uses the native `debian:trixie` base)
 ## How It Works
 
 `build.sh` still uses [pi-gen](https://github.com/RPi-Distro/pi-gen) in Docker
-(container `pigen_work` for armhf, `pigen_arm64_work` for arm64) to produce the
-image. The current flow is:
+to produce the image. The current flow is:
 
 1. build app artifacts (UI bundle + `vibesensor-*.whl`),
 2. sync runtime repo + app artifacts into the tracked stage templates,
 3. copy those templates into the generated `pi-gen` stage tree,
-4. build an ARM wheelhouse (armhf: PyPI + piwheels; arm64: PyPI's aarch64 wheels),
-   install the server from the prebuilt wheel (non-editable), and
+4. build an ARM wheelhouse, install the server from the prebuilt wheel (non-editable), and
    move the venv into its first A/B slot (`python -m vibesensor.updates.venv_slots adopt`),
 5. run `install_systemd_units.sh` in the chroot: install the root-side helpers, render the
    server, hotspot, hotspot watchdog timer and privileged socket units, write the root-side
