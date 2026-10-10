@@ -90,9 +90,9 @@ RunRecorder.stop_recording()            # recording/recorder.py
                             ← persist the summary analysis via the injected HistoryDB
 ```
 
-On the Pi a 30-minute, 4-sensor drive takes about 99 s: loading 14 s, the
-raw replay 36 s, the analysis 45 s (order matching most of it) and storing
-4 s. Every speed-up keeps the analysis byte-identical; what was measured,
+On the Pi a 30-minute, 4-sensor drive takes about 77 s: loading 4 s, the
+raw replay 36 s, the analysis 36 s (order matching about 24 s of it) and
+storing 1 s. Every speed-up keeps the analysis byte-identical; what was measured,
 kept and rejected (worker processes, thread pools, FFT shortcuts) is in
 `docs/multithreading_performance.md`.
 

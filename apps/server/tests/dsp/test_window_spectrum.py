@@ -311,7 +311,7 @@ def test_an_order_is_judged_by_the_floor_scatter_beside_its_line() -> None:
     assert cells.heard_sensors() == set()
 
     controls = [0.3 * (-1) ** index for index in range(60)]
-    cells.add_reads(key, [], [], [], controls, [1.0] * len(controls))
+    cells.add_reads(key, [], [], [], [], controls, [1.0] * len(controls))
 
     assert cells.heard_sensors() == {"front_left"}
 

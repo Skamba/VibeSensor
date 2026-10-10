@@ -75,7 +75,7 @@ def clear(excess: Sequence[float], flanks: Sequence[float]) -> bool:
 
 def scatter(distances: Sequence[float]) -> float:
     """One read's scatter: the median distance from the middle, scaled to a standard deviation."""
-    return _MAD_TO_SD * median(abs(distance) for distance in distances)
+    return _MAD_TO_SD * median(map(abs, distances))
 
 
 def deviations(groups: Sequence[Sequence[float]], min_pooled: int) -> list[float]:

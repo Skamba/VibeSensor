@@ -129,11 +129,6 @@ class OrderHypothesis:
     # Used to widen match tolerance and soften error/correlation penalties.
     path_compliance: float = 1.0
 
-    def order_hz(self, reference: tuple[float | None, str]) -> tuple[float | None, str]:
-        """This order's frequency from its rotation's (``reference_hz``), and its source."""
-        base, source = reference
-        return (base * self.order, source) if base is not None else (None, source)
-
 
 def reference_hz(
     order_label_base: str,
