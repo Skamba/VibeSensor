@@ -25,11 +25,34 @@ __all__ = [
     "VibrationSource",
     "speed_band_sort_key",
     "speed_bin_label",
+    "workshop_order_code",
 ]
 
 _LOGGER = logging.getLogger(__name__)
 # An engine order's finding key (``EngineOrder.key``): ``engine_3x``, ``engine_1_5x``.
 _ENGINE_ORDER_KEY = re.compile(r"engine_(?P<whole>\d+)(?:_(?P<fraction>\d))?x")
+_ROAD_ORDER_CODES: dict[str, str] = {
+    "wheel_1x": "T1",
+    "wheel_2x": "T2",
+    "driveshaft_1x": "P1",
+    "driveshaft_2x": "P2",
+}
+
+
+def workshop_order_code(key: str) -> str | None:
+    """The workshop label of an order key (T1/T2 tire, P1/P2 propshaft, E<m> engine).
+
+    An engine order's key names its multiple: ``engine_3x`` is E3,
+    ``engine_1_5x`` E1.5. ``None`` for a key that is not an order.
+    """
+    key = key.strip().lower()
+    if (code := _ROAD_ORDER_CODES.get(key)) is not None:
+        return code
+    engine = _ENGINE_ORDER_KEY.fullmatch(key)
+    if engine is None:
+        return None
+    fraction = engine["fraction"]
+    return f"E{engine['whole']}" + (f".{fraction}" if fraction else "")
 
 
 @dataclass(frozen=True, slots=True)
@@ -236,28 +259,10 @@ class Finding:
         """Action-defined confidence level shown to users (never a percentage)."""
         return self.classify_confidence(self.effective_confidence)
 
-    _ROAD_ORDER_CODES: ClassVar[dict[str, str]] = {
-        "wheel_1x": "T1",
-        "wheel_2x": "T2",
-        "driveshaft_1x": "P1",
-        "driveshaft_2x": "P2",
-    }
-
     @property
     def order_code(self) -> str | None:
-        """Workshop order label (T1/T2 tire, P1/P2 propshaft, E<m> engine), if order-tracked.
-
-        An engine order's key names its multiple: ``engine_3x`` is E3,
-        ``engine_1_5x`` E1.5.
-        """
-        key = self.finding_key.strip().lower()
-        if (code := self._ROAD_ORDER_CODES.get(key)) is not None:
-            return code
-        engine = _ENGINE_ORDER_KEY.fullmatch(key)
-        if engine is None:
-            return None
-        fraction = engine["fraction"]
-        return f"E{engine['whole']}" + (f".{fraction}" if fraction else "")
+        """Workshop order label (T1/T2 tire, P1/P2 propshaft, E<m> engine), if order-tracked."""
+        return workshop_order_code(self.finding_key)
 
     @property
     def phase_adjusted_score(self) -> float:

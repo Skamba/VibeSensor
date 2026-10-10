@@ -38,3 +38,5 @@ export const defaultLiveAnalysisConfig = {
   "peakDetectorVersion": "peak-band-rms-v1",
   "calibrationProfileId": "noise-floor-p20-v1"
 } as const;
+
+export const nearTieDominanceThreshold = 1.15 as const;

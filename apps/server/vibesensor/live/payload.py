@@ -11,7 +11,9 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from vibesensor.common.units import G_TO_MG
 from vibesensor.dsp.fft_analysis import float_list
+from vibesensor.dsp.window_spectrum import tone_line_level_g
 from vibesensor.live.models import (
     SpectrumAxisData,
 )
@@ -60,9 +62,18 @@ def build_spectrum_payload(buf: ClientBuffer) -> SpectrumSeriesPayload:
     ):
         return buf.cached_spectrum_payload
     combined_axis = _axis_data_or_empty(buf.latest_spectrum, "combined")
+    freq = combined_axis["freq"]
+    peak_mg = 0.0
+    if freq.size > 1:
+        # The level as the report reads it: a steady tone's peak, the axes as a vector.
+        bin_hz = float(freq[1] - freq[0])
+        peak_mg = (
+            buf.latest_strength_metrics["peak_amp_g"] / tone_line_level_g(1.0, bin_hz) * G_TO_MG
+        )
     payload: SpectrumSeriesPayload = {
         "combined_spectrum_amp_g": float_list(combined_axis["amp"]),
         "strength_metrics": buf.latest_strength_metrics,
+        "peak_mg": peak_mg,
     }
     buf.cached_spectrum_payload = payload
     buf.cached_spectrum_payload_generation = buf.spectrum_generation

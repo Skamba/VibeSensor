@@ -30,6 +30,7 @@ export interface components {
         FirmwareStatus: "current" | "outdated" | "unknown";
         OrderBandPayload: {
             center_hz: number;
+            code: string;
             firing?: boolean;
             key: string;
             tolerance: number;
@@ -56,6 +57,7 @@ export interface components {
         SpectrumSeriesPayload: {
             combined_spectrum_amp_g?: number[];
             freq?: number[];
+            peak_mg?: number;
             strength_metrics?: components["schemas"]["VibrationStrengthMetrics"];
         };
         StrengthPeak: {

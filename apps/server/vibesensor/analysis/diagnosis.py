@@ -43,7 +43,7 @@ from vibesensor.analysis.location_scoring import NEAR_TIE_DOMINANCE_THRESHOLD
 from vibesensor.analysis.orders.tracking import window_duration_s
 from vibesensor.analysis.phase_segmentation import BRAKING_MIN_DURATION_S, TimeSpanLookup
 from vibesensor.analysis.speed_profile_helpers import run_speed_source, speed_typed_in
-from vibesensor.common.units import SECONDS_PER_MINUTE
+from vibesensor.common.units import G_TO_MG, SECONDS_PER_MINUTE
 from vibesensor.domain.car import WEAK_FIELD_CONFIDENCES, ReferenceProvenance, reference_provenance
 from vibesensor.domain.driving_segment import DrivingPhase
 from vibesensor.domain.engine_profile import (
@@ -98,7 +98,6 @@ if TYPE_CHECKING:
 
 __all__ = ["build_diagnosis"]
 
-_G_TO_MG = 1000.0
 _SPEED_BIN_KMH = 5.0
 _MIN_POINTS_PER_SPEED_BIN = 2
 _SPECTRUM_HALF_WINDOW_KMH = 5.0
@@ -736,7 +735,7 @@ def _positive(value: float | None) -> float | None:
 
 
 def _mg(amp_g: float) -> float:
-    return amp_g * _G_TO_MG
+    return amp_g * G_TO_MG
 
 
 def _tone_mg(level_g: float, bin_hz: float) -> float:

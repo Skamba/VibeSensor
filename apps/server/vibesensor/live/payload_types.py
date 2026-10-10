@@ -67,6 +67,9 @@ class ClientApiRow(TypedDict, total=True):
 class SpectrumSeriesPayload(TypedDict, total=False):
     combined_spectrum_amp_g: list[float]
     strength_metrics: VibrationStrengthMetrics
+    peak_mg: float
+    """The dominant peak's level in mg on the report's scale: the peak of a tone,
+    the three axes as a vector (``docs/metrics.md``, "Diagnosis amplitude (mg)")."""
     freq: list[float]
 
 
@@ -95,6 +98,9 @@ class RotationalSpeedValuePayload(TypedDict):
 
 class OrderBandPayload(TypedDict):
     key: str
+    code: str
+    """The report's workshop label: T1, T2, P1, E1, E2, E3, E1.5; ``P1/E1`` where
+    the propshaft and the engine turn together."""
     center_hz: float
     tolerance: float
     # The engine's firing order (E3 for a six); absent on every other band.
