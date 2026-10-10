@@ -15,12 +15,14 @@ from vibesensor.dsp.constants import PEAK_BANDWIDTH_HZ
 
 __all__ = [
     "LineRead",
+    "SpectraByRows",
     "WindowSpectrum",
     "line_half_width_hz",
     "line_reach_hz",
     "line_reads",
     "peak_band_bins",
     "peak_scale_g",
+    "spectra_by_rows",
     "tone_line_level_g",
 ]
 
@@ -180,16 +182,51 @@ class WindowSpectrum:
 _READS_PER_STACK = 4096
 
 
+@dataclass(frozen=True, slots=True)
+class SpectraByRows:
+    """Spectra (``None`` where there is none), with where each is kept as a row.
+
+    Each spectrum's group (the array its row is kept in, ``WindowSpectrum.rows``;
+    -1 on its own) and row, and each group's first spectrum: located once for
+    every ``line_reads`` of them.
+    """
+
+    spectra: Sequence[WindowSpectrum | None]
+    group_of: npt.NDArray[np.intp]
+    row_of: npt.NDArray[np.intp]
+    firsts: Sequence[WindowSpectrum]
+
+
+def spectra_by_rows(spectra: Sequence[WindowSpectrum | None]) -> SpectraByRows:
+    """*spectra* as ``SpectraByRows``."""
+    groups: dict[tuple[int, int], int] = {}
+    firsts: list[WindowSpectrum] = []
+    group_of = np.full(len(spectra), -1, dtype=np.intp)
+    row_of = np.zeros(len(spectra), dtype=np.intp)
+    for index, spectrum in enumerate(spectra):
+        if spectrum is None or spectrum.rows is None or spectrum.freq_hz.size < 2:
+            continue
+        key = (id(spectrum.rows), id(spectrum.freq_hz))
+        group = groups.get(key)
+        if group is None:
+            group = groups[key] = len(firsts)
+            firsts.append(spectrum)
+        group_of[index] = group
+        row_of[index] = spectrum.row
+    return SpectraByRows(spectra, group_of, row_of, firsts)
+
+
 def line_reads(
-    spectra: Sequence[WindowSpectrum],
+    spectra: SpectraByRows,
     spectrum_index: npt.NDArray[np.intp],
     hz: npt.NDArray[np.float64],
     half_width_hz: npt.NDArray[np.float64],
 ) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.bool_]]:
-    """Each read ``spectra[spectrum_index[i]].line_read(hz[i], half_width_hz[i])``.
+    """Each read ``spectra.spectra[spectrum_index[i]].line_read(hz[i], half_width_hz[i])``.
 
     Returned as each read's excess, flanks and whether it has a read (NaN
-    where not). The same reads, bit for bit, at a fraction of the cost: the
+    where not); every spectrum read must be there. The same reads, bit for
+    bit, at a fraction of the cost: the
     reads of spectra kept together (``WindowSpectrum.rows``) are located as
     arrays, and those with a full band and both flanks inside their spectrum
     are gathered by band width and computed as arrays in the same
@@ -200,21 +237,7 @@ def line_reads(
     excess = np.full(count, np.nan)
     flanks = np.full(count, np.nan)
     taken = np.zeros(count, dtype=np.bool_)
-    # Each spectrum's group (the array its row is kept in; -1 on its own) and row.
-    groups: dict[tuple[int, int], int] = {}
-    firsts: list[WindowSpectrum] = []
-    group_of = np.full(len(spectra), -1, dtype=np.intp)
-    row_of = np.zeros(len(spectra), dtype=np.intp)
-    for index, spectrum in enumerate(spectra):
-        if spectrum.rows is None or spectrum.freq_hz.size < 2:
-            continue
-        key = (id(spectrum.rows), id(spectrum.freq_hz))
-        group = groups.get(key)
-        if group is None:
-            group = groups[key] = len(firsts)
-            firsts.append(spectrum)
-        group_of[index] = group
-        row_of[index] = spectrum.row
+    group_of, row_of, firsts = spectra.group_of, spectra.row_of, spectra.firsts
     read_group = group_of[spectrum_index]
     alone = read_group < 0
     for group, first in enumerate(firsts):
@@ -237,7 +260,7 @@ def line_reads(
                 excess[target], flanks[target] = _stacked_line_reads(segments, band_half, bin_hz)
                 taken[target] = True
     _loose_line_reads(
-        spectra,
+        spectra.spectra,
         spectrum_index,
         hz,
         half_width_hz,
@@ -248,7 +271,7 @@ def line_reads(
 
 
 def _loose_line_reads(
-    spectra: Sequence[WindowSpectrum],
+    spectra: Sequence[WindowSpectrum | None],
     spectrum_index: npt.NDArray[np.intp],
     hz: npt.NDArray[np.float64],
     half_width_hz: npt.NDArray[np.float64],
@@ -277,7 +300,7 @@ def _loose_line_reads(
                 reads_hz[at],
                 reads_half_width_hz[at],
             )
-            spectrum = spectra[reads_spectrum[at]]
+            spectrum = cast("WindowSpectrum", spectra[reads_spectrum[at]])
             freq = spectrum.freq_hz
             size = freq.size
             if size < 2:

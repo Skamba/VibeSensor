@@ -18,6 +18,7 @@ from vibesensor.dsp.window_spectrum import (
     line_half_width_hz,
     line_reads,
     peak_scale_g,
+    spectra_by_rows,
     tone_line_level_g,
 )
 
@@ -122,7 +123,7 @@ def test_reads_taken_together_are_each_read_bit_for_bit() -> None:
 
     spectra_of = {id(spectrum): index for index, spectrum in enumerate(spectra)}
     excess, flanks, taken = line_reads(
-        spectra,
+        spectra_by_rows(spectra),
         np.array([spectra_of[id(spectrum)] for spectrum, _hz, _half_width in reads]),
         np.array([hz for _spectrum, hz, _half_width in reads]),
         np.array([half_width for _spectrum, _hz, half_width in reads]),

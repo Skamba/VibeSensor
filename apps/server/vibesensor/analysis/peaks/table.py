@@ -136,19 +136,20 @@ def top_peaks_table_rows(
     n_samples = resolved_scan.sample_count
     for row in resolved_scan.rows:
         speed = row.speed_kmh
+        moving = speed if speed is not None and speed > 0 else None
         sample_speed_bin = row.speed_bin
         location = row.location
+        floor_amp = row.floor_amp_g
         for hz, amp in row.peaks:
             freq_key = floor(hz / freq_bin_hz) * freq_bin_hz
-            if freq_key not in grouped:
-                grouped[freq_key] = _PeakBucket(frequency_hz=freq_key)
-            bucket = grouped[freq_key]
+            bucket = grouped.get(freq_key)
+            if bucket is None:
+                bucket = grouped[freq_key] = _PeakBucket(frequency_hz=freq_key)
             bucket.amps.append(amp)
-            floor_amp = row.floor_amp_g
             if floor_amp is not None:
                 bucket.floor_amps.append(floor_amp)
-            if speed is not None and speed > 0:
-                bucket.speeds.append(speed)
+            if moving is not None:
+                bucket.speeds.append(moving)
                 bucket.speed_amps.append(amp)
             if location:
                 bucket.location_counts[location] = bucket.location_counts.get(location, 0) + 1

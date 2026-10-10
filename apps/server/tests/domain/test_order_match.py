@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from types import MappingProxyType
 
 import pytest
@@ -11,6 +12,20 @@ from vibesensor.summary.finding_fields import order_match_observation_from_mappi
 
 
 class TestOrderMatchObservation:
+    def test_with_amp_is_replace_of_every_other_field(self) -> None:
+        point = OrderMatchObservation(
+            predicted_hz=12.5,
+            matched_hz=12.75,
+            rel_error=0.02,
+            amp=0.01,
+            location="front-left",
+            t_s=3.5,
+            speed_kmh=88.0,
+            phase="cruise",
+            heard=True,
+        )
+        assert point.with_amp(0.3) == replace(point, amp=0.3)
+
     @pytest.mark.parametrize(
         ("overrides", "message"),
         [

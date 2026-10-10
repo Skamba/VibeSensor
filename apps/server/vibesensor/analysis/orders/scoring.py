@@ -111,7 +111,7 @@ def _at_tracked_levels(
     } <= set(levels):
         return points, frozenset()
     return (
-        [replace(point, amp=levels[point.location]) for point in points],
+        [point.with_amp(levels[point.location]) for point in points],
         frozenset(location for location, level in levels.items() if level <= 0),
     )
 

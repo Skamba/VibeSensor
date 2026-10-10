@@ -72,14 +72,22 @@ def accumulate_peak_bin_stats(
     local_phase_str = _phase_to_str
     floor_fn = _math_floor
 
+    # The dicts bound once, and what is the same for every peak of a sample
+    # worked out once per sample: the loop runs over every peak of the drive.
+    bin_amps, bin_floors = stats.bin_amps, stats.bin_floors
+    bin_speeds, bin_speed_amp_pairs = stats.bin_speeds, stats.bin_speed_amp_pairs
+    bin_location_counts = stats.bin_location_counts
+    bin_speed_bin_counts = stats.bin_speed_bin_counts
+    bin_phase_counts = stats.bin_phase_counts
     for i, sample in enumerate(samples):
         stats.n_samples += 1
         speed = sample.speed_kmh
-        sample_speed_bin = local_speed_bin(speed) if speed is not None and speed > 0 else None
+        moving = speed if speed is not None and speed > 0 else None
+        sample_speed_bin = local_speed_bin(moving) if moving is not None else None
         if sample_speed_bin is not None:
             stats.total_speed_bin_counts[sample_speed_bin] += 1
         floor_raw = local_floor_est(sample)
-        floor_amp = floor_raw if floor_raw is not None else 0.0
+        floor_amp = max(0.0, floor_raw if floor_raw is not None else 0.0)
         location = local_location(sample, lang=lang)
         if location:
             stats.total_locations.add(location)
@@ -91,16 +99,16 @@ def accumulate_peak_bin_stats(
             if hz <= 0 or amp <= 0:
                 continue
             bin_center = floor_fn(hz / freq_bin_hz) * freq_bin_hz + freq_bin_hz_half
-            stats.bin_amps[bin_center].append(amp)
-            stats.bin_floors[bin_center].append(max(0.0, floor_amp))
-            if speed is not None and speed > 0:
-                stats.bin_speeds[bin_center].append(speed)
-                stats.bin_speed_amp_pairs[bin_center].append((speed, amp))
+            bin_amps[bin_center].append(amp)
+            bin_floors[bin_center].append(floor_amp)
+            if moving is not None:
+                bin_speeds[bin_center].append(moving)
+                bin_speed_amp_pairs[bin_center].append((moving, amp))
             if location:
-                stats.bin_location_counts[bin_center][location] += 1
+                bin_location_counts[bin_center][location] += 1
             if sample_speed_bin is not None:
-                stats.bin_speed_bin_counts[bin_center][sample_speed_bin] += 1
+                bin_speed_bin_counts[bin_center][sample_speed_bin] += 1
             if sample_phase is not None:
-                stats.bin_phase_counts[bin_center][sample_phase] += 1
+                bin_phase_counts[bin_center][sample_phase] += 1
 
     return stats
