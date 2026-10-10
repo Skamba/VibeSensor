@@ -49,15 +49,19 @@ path caps the loop's duty cycle at 50%. Even at a 5–10× slower Raspberry Pi
   Pi 3 A+ (424 MB) cannot spare while the live server runs.
 - Order matching tests each hypothesis (about ten) against every window. What
   every hypothesis reads of a window the same way (its sensor, speed bin,
-  driving phase, floor and cell) is worked out once per drive
-  (`sample_facts`); each hypothesis then finds every window's nearest ranked
-  peak in one array operation (`PeakTable`), plans its line reads as arrays
-  and files them by cell (`_line_reads`), and judges each sensor's reads once
-  (`TrackedCells` keeps its judges until a new read comes in). Measured on a
-  30-minute, 4-sensor drive on the Pi: the analyze step went from 60 s to
-  45 s, the whole post-analysis from 112 s to 99 s, peak RSS +3 MB; the
-  analysis JSON is byte-identical on that drive, the CI-seed accuracy
-  benchmark and the diagnostic matrix.
+  driving phase, floor, cell, speed and time) is worked out once per drive
+  (`drive_facts`), as is each rotation's reference frequency by sample
+  (`reference_columns`); each hypothesis then places its frequencies and
+  finds every window's nearest ranked peak in one array operation
+  (`PeakTable`), plans its line reads as arrays and files them by cell
+  (`_line_reads`), and judges each sensor's reads once (`TrackedCells` keeps
+  its judges until a new read comes in). Measured on a 30-minute, 4-sensor
+  drive on the Pi: the analyze step went from 60 s to 42 s, the whole
+  post-analysis from 112 s to 96 s, peak RSS +3 MB; the analysis JSON is
+  byte-identical on that drive, the CI-seed accuracy benchmark and the
+  diagnostic matrix. The line reads gather straight from the replay's
+  spectra where it keeps them as rows of one array (`WindowSpectrum.rows`),
+  which would save about 6 s more on the Pi.
 - Tried and not kept for order matching: a pool of 3 forked processes, one
   hypothesis each, saved 21 s on the Pi but each child dirtied 30-45 MB of
   the parent's pages through reference counts (86-135 MB in all), leaving 54-100
@@ -89,7 +93,7 @@ path caps the loop's duty cycle at 50%. Even at a 5–10× slower Raspberry Pi
 | Host | CPU time | Peak RSS |
 |------|----------|----------|
 | x86 dev host | ~7.5 s | ~227 MB |
-| Raspberry Pi 3 A+ (`nice -n 10`) | ~79 s | ~150 MB |
+| Raspberry Pi 3 A+ (`nice -n 10`) | ~77 s | ~147 MB |
 
 ## Benchmarks
 

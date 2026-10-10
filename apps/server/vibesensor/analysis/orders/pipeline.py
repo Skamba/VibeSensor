@@ -33,11 +33,13 @@ from vibesensor.analysis.orders.match_rate import (
 )
 from vibesensor.analysis.orders.matching import (
     OrderMatchAccumulator,
+    ReferenceColumns,
+    drive_facts,
     fft_bin_hz,
     is_harmonic_of,
     match_samples_for_hypothesis,
     peak_table,
-    sample_facts,
+    reference_columns,
 )
 from vibesensor.analysis.orders.physics import (
     WHEEL_HARMONIC_HYPOTHESES,
@@ -50,7 +52,7 @@ from vibesensor.analysis.orders.scoring import (
     score_order_finding,
 )
 from vibesensor.analysis.orders.settings import ORDER_CONFIDENCE_SETTINGS
-from vibesensor.analysis.orders.tracking import speed_rates_kmh_per_s, window_duration_s
+from vibesensor.analysis.orders.tracking import window_duration_s
 from vibesensor.domain.finding import Finding as DomainFinding
 from vibesensor.domain.finding_types import VibrationSource
 from vibesensor.domain.order_match import frequency_tracking_slope, trend_moves
@@ -222,7 +224,6 @@ class OrderAnalysisSession:
         "_speed_following_peaks",
         "_order_reference_spec",
         "_speed_moves",
-        "_speed_rates",
         "_speed_following_tones",
         "_references",
         "_facts",
@@ -247,11 +248,10 @@ class OrderAnalysisSession:
             for sample in self._samples
             if sample.t_s is not None and sample.speed_kmh is not None and sample.speed_kmh > 0
         )
-        self._speed_rates = speed_rates_kmh_per_s(self._samples)
-        self._facts = sample_facts(
+        self._facts = drive_facts(
             self._samples, request.context, request.per_sample_phases, request.lang
         )
-        self._references: dict[str, list[tuple[float | None, str]]] = {}
+        self._references: dict[str, ReferenceColumns] = {}
         self._cached_peaks: list[list[tuple[float, float]]] = [
             _sample_top_peaks(sample) for sample in self._samples
         ]
@@ -427,17 +427,20 @@ class OrderAnalysisSession:
             self._facts,
             self._per_sample_phases is not None
             and len(self._per_sample_phases) == len(self._samples),
-            self._speed_rates,
         )
 
-    def _reference_hz(self, order_label_base: str) -> list[tuple[float | None, str]]:
+    def _reference_hz(self, order_label_base: str) -> ReferenceColumns:
         """Each sample's ``reference_hz`` for the orders of one rotation, worked out once."""
         references = self._references.get(order_label_base)
         if references is None:
-            references = [
-                reference_hz(order_label_base, sample, self._context, self._tire_circumference_m)
-                for sample in self._samples
-            ]
+            references = reference_columns(
+                [
+                    reference_hz(
+                        order_label_base, sample, self._context, self._tire_circumference_m
+                    )
+                    for sample in self._samples
+                ]
+            )
             self._references[order_label_base] = references
         return references
 

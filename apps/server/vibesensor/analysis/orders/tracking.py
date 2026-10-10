@@ -196,13 +196,15 @@ class TrackedCells:
     braking_alone: bool = False
     cells: dict[tuple[str, str, str], _Cell] = field(default_factory=dict)
     times: dict[str, list[float]] = field(default_factory=lambda: defaultdict(list))
-    # Each driving phase's judges (``_judges``) and the phases that hear the
-    # order (``heard_phases``), worked out once the reads are in: every
-    # verdict on the order asks for them again. A new read clears them.
+    # Each driving phase's judges (``_judges``), the phases that hear the
+    # order (``heard_phases``) and each sensor's independent share, worked
+    # out once the reads are in: every verdict on the order asks for them
+    # again. A new read clears them.
     _judged: dict[str | None, dict[str, _Judge]] = field(
         default_factory=dict, repr=False, compare=False
     )
     _hearing: list[set[tuple[str, str]]] = field(default_factory=list, repr=False, compare=False)
+    _shares: dict[str, float] = field(default_factory=dict, repr=False, compare=False)
 
     def _cell(self, key: tuple[str, str, str]) -> _Cell:
         cell = self.cells.get(key)
@@ -241,28 +243,38 @@ class TrackedCells:
         key: tuple[str, str, str],
         excess: Sequence[float],
         flanks: Sequence[float],
-        t_s: Sequence[float | None],
+        t_s: Sequence[float],
+        times_s: Sequence[float],
         control_excess: Sequence[float],
         control_flanks: Sequence[float],
     ) -> None:
-        """``add`` of a cell's reads in order, and ``add_control`` of its control reads."""
+        """``add`` of a cell's reads in order, and ``add_control`` of its control reads.
+
+        *t_s* is each read's time (NaN where unknown), *times_s* the known ones.
+        """
         self._forget()
         cell = self._cell(key)
         cell.excess.extend(excess)
         cell.flanks.extend(flanks)
-        cell.t.extend(t if t is not None else float("nan") for t in t_s)
-        self.times[key[0]].extend(t for t in t_s if t is not None)
+        cell.t.extend(t_s)
+        self.times[key[0]].extend(times_s)
         cell.control_excess.extend(control_excess)
         cell.control_flanks.extend(control_flanks)
 
     def _forget(self) -> None:
-        if self._judged or self._hearing:
+        if self._judged or self._hearing or self._shares:
             self._judged.clear()
             self._hearing.clear()
+            self._shares.clear()
 
     def _independent_share(self, location: str) -> float:
         """The share of a sensor's windows that count as independent reads."""
-        return independent_share(self.times.get(location, ()), self.window_s)
+        share = self._shares.get(location)
+        if share is None:
+            share = self._shares[location] = independent_share(
+                self.times.get(location, ()), self.window_s
+            )
+        return share
 
     @property
     def _block_s(self) -> float:
