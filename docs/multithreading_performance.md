@@ -37,16 +37,42 @@ path caps the loop's duty cycle at 50%. Even at a 5–10× slower Raspberry Pi
 - `PostAnalysisWorker` in `apps/server/vibesensor/analysis/post_analysis.py`
   owns a single daemon thread for completed-run post-analysis. Report requests
   read persisted analysis and render on demand.
-- Post-analysis stays on that one thread. Its cost is many small steps per
-  window (the raw replay's strength pipeline, order matching, line reads), so
-  it is cut by taking windows together as arrays (the replay's strengths 16
-  windows at a time, an order's line reads all at once), each result bit for
-  bit the one-at-a-time result. A thread pool over the replay's batches made
-  post-analysis slower, not faster (GIL contention: the build step went from
-  1.9 s to 3.7 s on x86 with 1 or 3 workers; no gain on the Pi), and each
-  window's FFT (3 × 2048 points) is too small for FFT workers. Worker
-  processes would each hold a copy of the run's samples and spectra, which the
-  Pi 3 A+ (424 MB) cannot spare while the live server runs.
+- Post-analysis stays on that one thread, with one helper thread for the raw
+  replay's FFTs. Its cost is many small steps per window (the raw replay's
+  strength pipeline, order matching, line reads), so it is cut by taking
+  windows together as arrays (an order's line reads all at once, the replay's
+  windows as below), each result bit for bit the one-at-a-time result.
+  Worker processes would each hold a copy of the run's samples and spectra,
+  which the Pi 3 A+ (424 MB) cannot spare while the live server runs.
+- The raw replay locates each sensor's windows in its raw buffer all at once
+  (`contiguous_raw_window_starts`), gathers 64 at a time in one strided step,
+  and computes their spectra through one FFT plan (`combined_spectra`; a
+  short chunk is zero-padded so there is only the one plan) on a single
+  helper thread, while the worker thread takes the strengths of the spectra
+  already computed 128 at a time (peaks ranked with one `lexsort`) and reads
+  their metrics directly. It keeps the spectra as rows of one array per
+  sample rate (`WindowSpectrum.rows`), which order matching's line reads
+  gather from. Measured on a 30-minute, 4-sensor drive on the Pi: the replay
+  (build step) went from 35 s to 12.5 s, the analyze step from 35.5 s to
+  29.7 s (the line reads on rows), the whole post-analysis from 77 s to 48.5
+  s; peak RSS +13 MB (147 to 160 MB: the helper thread and one chunk's FFT
+  working set), MemAvailable at least 166 MB throughout. The analysis JSON
+  is byte-identical on that drive, the CI-seed accuracy benchmark and the
+  diagnostic matrix. The live tick's FFT and strength cost is unchanged
+  (4.1 ms on the Pi).
+- Tried and not kept for the replay: each step's numpy calls on the FFT
+  thread wait for the GIL while the worker thread runs Python (5 ms switch
+  interval), so fewer, larger calls are what helped; 32 windows per FFT
+  chunk were 2 s slower on the Pi than 64 and save only ~2 MB, and 128
+  gained nothing for more memory. A second FFT thread saved 0.4 s for +9 MB
+  and 2 s more CPU; one chunk queued instead of two cost 2 s; strengths on
+  worker threads were slower (GIL); a fancy-index gather of each window was
+  3.7 s on the Pi, and a `sliding_window_view` of a sensor's whole buffer is
+  refused on the Pi's 32-bit numpy. The strength batch size does not change
+  peak memory, nor does reusing one block buffer. Raising
+  `sys.setswitchinterval` would hit the live server too. A per-row `argsort`
+  for strength peak candidates was left alone: its tie order would have to
+  match the stable sort's.
 - Order matching tests each hypothesis (about ten) against every window. What
   every hypothesis reads of a window the same way (its sensor, speed bin,
   driving phase, floor, cell, speed and time) is worked out once per drive
@@ -60,18 +86,16 @@ path caps the loop's duty cycle at 50%. Even at a 5–10× slower Raspberry Pi
   post-analysis from 112 s to 96 s, peak RSS +3 MB; the analysis JSON is
   byte-identical on that drive, the CI-seed accuracy benchmark and the
   diagnostic matrix. The line reads gather straight from the replay's
-  spectra where it keeps them as rows of one array (`WindowSpectrum.rows`),
-  which would save about 6 s more on the Pi.
+  spectra where it keeps them as rows of one array (`WindowSpectrum.rows`).
 - Tried and not kept for order matching: a pool of 3 forked processes, one
   hypothesis each, saved 21 s on the Pi but each child dirtied 30-45 MB of
   the parent's pages through reference counts (86-135 MB in all), leaving 54-100
   MB available while the live server runs, and forking a threaded server is
   fragile; a thread pool gains nothing, as the matching is Python bound under
-  the GIL. More than one FFT thread in the replay gains nothing on the Pi.
-  Algorithmic cuts to the replay's FFT (decimation, a zoom FFT or Goertzel at
-  the order lines) are capped by the FFT's small share once it is batched
-  (about 3-4 s of the Pi's total), well under the 15 % a change to the
-  analysis must earn.
+  the GIL. Algorithmic cuts to the replay's FFT (decimation, a zoom FFT or
+  Goertzel at the order lines) are capped by the FFT's small share once it
+  is batched (about 3-4 s of the Pi's total), well under the 15 % a change
+  to the analysis must earn.
 - Loading the run and storing its analysis are I/O and decode work, cut
   without changing a byte of the stored analysis: sample rows are decoded a
   column per batch, with msgspec decoding each row's peaks JSON straight into
@@ -103,8 +127,8 @@ path caps the loop's duty cycle at 50%. Even at a 5–10× slower Raspberry Pi
 
 | Host | CPU time | Peak RSS |
 |------|----------|----------|
-| x86 dev host | ~7.5 s | ~227 MB |
-| Raspberry Pi 3 A+ (`nice -n 10`) | ~77 s | ~147 MB |
+| x86 dev host | ~5.4 s | ~223 MB |
+| Raspberry Pi 3 A+ (`nice -n 10`) | ~48.5 s | ~160 MB |
 
 ## Benchmarks
 

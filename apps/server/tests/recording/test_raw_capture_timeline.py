@@ -4,7 +4,8 @@ Locating the chunk a window ends in, and whether the window crosses a gap or an
 overlap, are binary searches over column arrays. The reference below is the
 straightforward scan over every chunk and interval that they replace; the two
 must give the same window for every request on gappy, overlapping and
-out-of-order timelines.
+out-of-order timelines. So must the lookup of many windows at once
+(``contiguous_raw_window_starts``) wherever it finds a window in one slice.
 """
 
 from __future__ import annotations
@@ -27,6 +28,7 @@ from vibesensor.recording.raw_capture_timeline import (
     RawTimelineWindow,
     RawWindowSegment,
     build_raw_sensor_timeline,
+    contiguous_raw_window_starts,
     resolve_raw_window_end_time,
 )
 
@@ -209,20 +211,41 @@ def test_window_lookup_matches_a_full_scan_on_gappy_timelines(seed: int) -> None
     if not chunks:
         assert not timeline.anchored
         return
-    for requested_end_us in _requested_ends(chunks, rng):
-        for sample_count in (1, 64, 256):
+    requested_ends = _requested_ends(chunks, rng)
+    for sample_count in (1, 64, 256):
+        raw_starts = contiguous_raw_window_starts(
+            timeline=timeline,
+            requested_end_us=np.array(requested_ends, dtype=np.float64),
+            sample_count=sample_count,
+        ).tolist()
+        for requested_end_us, raw_start in zip(requested_ends, raw_starts, strict=True):
             window: RawTimelineWindow = resolve_raw_window_end_time(
                 timeline=timeline,
                 requested_end_us=requested_end_us,
                 sample_count=sample_count,
             )
-            assert (window.coverage_state, window.reason, window.segments) == _reference_window(
+            expected = _reference_window(
                 chunks,
                 gaps,
                 overlaps,
                 requested_end_us=requested_end_us,
                 sample_count=sample_count,
-            ), (requested_end_us, sample_count)
+            )
+            assert (window.coverage_state, window.reason, window.segments) == expected, (
+                requested_end_us,
+                sample_count,
+            )
+            # At once: where the window starts when it is complete and one slice.
+            assert raw_start == _one_slice_start(expected[2]), (requested_end_us, sample_count)
+
+
+def _one_slice_start(segments: tuple[RawWindowSegment, ...]) -> int:
+    """Where *segments* start in the raw buffer when they follow on there; -1 otherwise."""
+    follow_on = all(
+        segment.sample_end == following.sample_start
+        for segment, following in zip(segments, segments[1:], strict=False)
+    )
+    return segments[0].sample_start if segments and follow_on else -1
 
 
 def test_the_generated_timelines_exercise_every_outcome() -> None:
@@ -234,17 +257,20 @@ def test_the_generated_timelines_exercise_every_outcome() -> None:
             continue
         for requested_end_us in _requested_ends(chunks, rng):
             for sample_count in (1, 64, 256):
-                state, reason, _ = _reference_window(
+                state, reason, segments = _reference_window(
                     chunks,
                     gaps,
                     overlaps,
                     requested_end_us=requested_end_us,
                     sample_count=sample_count,
                 )
+                if state == "complete" and _one_slice_start(segments) < 0:
+                    reason = "in_pieces"
                 outcomes.add((state, reason))
 
     assert outcomes == {
         ("complete", None),
+        ("complete", "in_pieces"),
         ("partial", "window_crosses_gap"),
         ("partial", "window_crosses_overlap"),
         ("missing", "window_before_capture"),

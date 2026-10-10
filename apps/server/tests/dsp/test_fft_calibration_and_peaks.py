@@ -65,11 +65,12 @@ def test_peaks_must_clear_the_floor_threshold_and_be_separated() -> None:
 
 
 def test_the_combined_strength_alone_matches_the_full_spectrum() -> None:
-    # Post-stop replay needs only the combined strength and spectrum; they must
-    # be the full (live) spectrum's, value for value.
+    # Post-stop replay needs only the combined strength and spectrum, many
+    # blocks at once; they must be the full (live) spectrum's, value for value.
     rng = np.random.default_rng(11)
     computer = SpectralAnalysisComputer(fft_n=_N, spectrum_min_hz=5.0, spectrum_max_hz=200.0)
     t = np.arange(_N) / _FS
+    blocks, live = [], []
     for _ in range(5):
         block = rng.normal(0.0, 0.01, size=(3, _N)).astype(np.float32)
         block[rng.integers(3)] += np.float32(0.2) * np.sin(2 * np.pi * rng.uniform(5, 150) * t)
@@ -82,6 +83,13 @@ def test_the_combined_strength_alone_matches_the_full_spectrum() -> None:
         assert computer.combined_strength_metrics([spectrum], _FS) == [full["strength_metrics"]]
         np.testing.assert_array_equal(spectrum.freq_hz, full["freq_slice"])
         np.testing.assert_array_equal(spectrum.amp_g, full["combined_amp"])
+        blocks.append(block)
+        live.append(full["combined_amp"])
+
+    together = computer.combined_spectra(np.stack(blocks), _FS)
+
+    assert together is not None
+    np.testing.assert_array_equal(together, np.stack(live))
 
 
 def test_no_combined_strength_without_analysis_bins() -> None:
@@ -91,6 +99,7 @@ def test_no_combined_strength_without_analysis_bins() -> None:
 
     assert not computer.compute_fft_spectrum(block, _FS)["has_valid_analysis_bins"]
     assert computer.combined_spectrum(block, _FS) is None
+    assert computer.combined_spectra(block[None], _FS) is None
 
 
 def test_peak_picking_and_hann_window_match_scipy_signal() -> None:

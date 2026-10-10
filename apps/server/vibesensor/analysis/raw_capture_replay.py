@@ -2,19 +2,24 @@
 
 from __future__ import annotations
 
-from collections import defaultdict
+from collections import defaultdict, deque
+from collections.abc import Sequence
+from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass, replace
 from math import isfinite
 from typing import Literal, cast
 
 import numpy as np
+import numpy.typing as npt
+from numpy.lib.stride_tricks import as_strided
 
 from vibesensor.common.json_utils import i18n_ref
+from vibesensor.domain.strength_metrics import StrengthPeak
 from vibesensor.dsp.constants import SPECTRUM_MAX_HZ, SPECTRUM_MIN_HZ
 from vibesensor.dsp.fft_analysis import SpectralAnalysisComputer
 from vibesensor.dsp.vibration_strength import VibrationStrengthMetrics
 from vibesensor.dsp.window_spectrum import WindowSpectrum
-from vibesensor.recording.raw_capture import RawRunCapture
+from vibesensor.recording.raw_capture import RawCaptureSensorData, RawRunCapture
 from vibesensor.recording.raw_capture_quality import (
     RawCaptureLossPolicyAssessment,
     assess_raw_capture_loss_policy,
@@ -24,13 +29,13 @@ from vibesensor.recording.raw_capture_timeline import (
     RawWindowSegment,
     assemble_raw_window_samples,
     build_raw_sensor_timeline,
+    contiguous_raw_window_starts,
     raw_timeline_has_unverified_sync,
     raw_timeline_is_legacy,
     resolve_raw_window_end_time,
 )
 from vibesensor.recording.run_schema import RunMetadata
 from vibesensor.recording.sensor_frame import SensorFrame
-from vibesensor.recording.strength_metrics_codec import strength_metrics_from_mapping
 from vibesensor.summary.run_context_warning import (
     WARNING_CODE_RAW_CAPTURE_LOSS_POLICY,
     WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE,
@@ -55,7 +60,19 @@ type RawCaptureMode = Literal["raw_backed", "partial_raw_backed", "summary_only"
 
 # Raw windows whose strengths are taken together: enough to share the per-call
 # cost of the strength pipeline, few enough to hold little memory.
-_WINDOWS_PER_BATCH = 16
+_WINDOWS_PER_BATCH = 128
+# Raw windows whose spectra the replay's FFT thread computes at once
+# (``combined_spectra``). On the Pi 3 A+ larger chunks, or more threads,
+# gain nothing and hold more memory (docs/multithreading_performance.md).
+_WINDOWS_PER_FFT = 64
+# The most a chunk's windows may span, as the bytes of the strided view of
+# every window there, to be gathered in one step: well within what numpy
+# allows a view on a 32-bit system (the Pi's).
+_MAX_GATHER_VIEW_BYTES = 1 << 30
+# Threads computing the spectra, and chunks queued for them: enough to keep
+# them busy.
+_FFT_WORKERS = 1
+_FFT_CHUNKS_AHEAD = 2
 
 
 @dataclass(frozen=True, slots=True)
@@ -128,15 +145,47 @@ class _ResolvedWindow:
 
 
 @dataclass(frozen=True, slots=True)
+class _WindowRequest:
+    """A sample whose raw window is looked for, and when that window ends."""
+
+    sample: SensorFrame
+    sample_rate_hz: int
+    # On the sensor's clock (``_requested_end_us``); None without a sample time.
+    requested_end_us: float | None
+    # The coverage reason the window has when complete.
+    reason: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class _RawWindow:
+    """A complete raw window, its spectrum still to be computed.
+
+    Where its samples start in the sensor's raw buffer, or (-1) the ``(N, 3)``
+    counts assembled from its segments where they do not follow on there.
+    """
+
+    request: _WindowRequest
+    raw_start: int
+    samples_i16: npt.NDArray[np.int16] | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class _WindowSpectra:
+    """Each window's spectrum as a row (``None``: no analysis bins), its last and mean reading."""
+
+    spectra: npt.NDArray[np.float32] | None
+    last_xyz: list[tuple[float, float, float]]
+    mean_xyz: list[tuple[float, float, float]]
+
+
+@dataclass(frozen=True, slots=True)
 class _PendingWindow:
     """A complete raw window's spectrum, its strength still to be taken (``_rebuilt_samples``)."""
 
-    sample: SensorFrame
+    request: _WindowRequest
     spectrum: WindowSpectrum
-    sample_rate_hz: int
     last_xyz: tuple[float, float, float]
     mean_xyz: tuple[float, float, float]
-    reason: str | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -319,136 +368,166 @@ def _assemble_raw_replay_result(
     )
 
 
-def _prepare_window(
+def _window_request(
     *,
     sample: SensorFrame,
     timeline: RawSensorTimeline | None,
-    raw_capture: RawRunCapture,
-    fft_computer: SpectralAnalysisComputer,
-    fft_n: int,
-    accel_scale_g_per_lsb: float | None,
-) -> tuple[SensorFrame, RawReplayWindowCoverage] | _PendingWindow:
-    """The raw window behind *sample*, or the sample as it is with why it has none."""
-    if timeline is None:
-        return (
-            sample,
-            RawReplayWindowCoverage(
-                client_id=sample.client_id,
-                t_s=sample.t_s,
-                coverage_state="missing",
-                raw_backed=False,
-                reason="sensor_missing",
-            ),
-        )
-    sensor_data = raw_capture.sensor_data(sample.client_id)
-    if sensor_data is None:
-        return (
-            sample,
-            RawReplayWindowCoverage(
-                client_id=sample.client_id,
-                t_s=sample.t_s,
-                coverage_state="missing",
-                raw_backed=False,
-                reason="sensor_missing",
-            ),
-        )
+    sensor_data: RawCaptureSensorData | None,
+) -> tuple[SensorFrame, RawReplayWindowCoverage] | _WindowRequest:
+    """When *sample*'s raw window ends, or the sample as it is with why it has none."""
+    if timeline is None or sensor_data is None:
+        return _uncovered(sample, "missing", "sensor_missing")
     sensor_manifest = sensor_data.manifest
     sample_rate_hz = int(sensor_manifest.sample_rate_hz or timeline.sample_rate_hz or 0)
     if sample_rate_hz <= 0:
-        return (
-            sample,
-            RawReplayWindowCoverage(
-                client_id=sample.client_id,
-                t_s=sample.t_s,
-                coverage_state="missing",
-                raw_backed=False,
-                reason="sample_rate_missing",
-            ),
-        )
+        return _uncovered(sample, "missing", "sample_rate_missing")
     requested_sample_rate_hz = int(sample.sample_rate_hz or 0)
     sample_rate_mismatch = (
         requested_sample_rate_hz > 0 and requested_sample_rate_hz != sample_rate_hz
     )
     if sample_rate_mismatch and sensor_manifest.sample_rate_unverified:
-        return (
-            sample,
-            RawReplayWindowCoverage(
-                client_id=sample.client_id,
-                t_s=sample.t_s,
-                coverage_state="missing",
-                raw_backed=False,
-                reason="sample_rate_mismatch",
-            ),
-        )
+        return _uncovered(sample, "missing", "sample_rate_mismatch")
+    requested_end_us, timing_source = _requested_end_us(timeline=timeline, sample=sample)
+    return _WindowRequest(
+        sample=sample,
+        sample_rate_hz=sample_rate_hz,
+        requested_end_us=requested_end_us,
+        reason=(
+            "sample_rate_mismatch"
+            if sample_rate_mismatch
+            else ("timing_fallback" if timing_source == "legacy_t_s" else None)
+        ),
+    )
+
+
+def _uncovered(
+    sample: SensorFrame, coverage_state: RawReplayCoverageState, reason: str | None
+) -> tuple[SensorFrame, RawReplayWindowCoverage]:
+    """*sample* as it is, without a complete raw window, and why."""
+    return (
+        sample,
+        RawReplayWindowCoverage(
+            client_id=sample.client_id,
+            t_s=sample.t_s,
+            coverage_state=coverage_state,
+            raw_backed=False,
+            reason=reason,
+        ),
+    )
+
+
+def _segmented_window(
+    *,
+    request: _WindowRequest,
+    timeline: RawSensorTimeline,
+    sensor_data: RawCaptureSensorData,
+    fft_n: int,
+) -> tuple[SensorFrame, RawReplayWindowCoverage] | _RawWindow:
+    """*request*'s window, one resolved on its own: incomplete, or in pieces in the raw buffer."""
+    sample = request.sample
     window = _resolve_window(timeline=timeline, sample=sample, fft_n=fft_n)
     if window.coverage_state != "complete" or not window.segments:
         coverage_reason = (
             "timing_fallback" if window.timing_source == "legacy_t_s" else window.reason
         )
-        return (
-            sample,
-            RawReplayWindowCoverage(
-                client_id=sample.client_id,
-                t_s=sample.t_s,
-                coverage_state=window.coverage_state,
-                raw_backed=False,
-                reason=coverage_reason,
-            ),
-        )
+        return _uncovered(sample, window.coverage_state, coverage_reason)
     window_i16 = assemble_raw_window_samples(sensor_data=sensor_data, segments=window.segments)
     if window_i16.shape[0] != fft_n:
-        return (
+        return _uncovered(sample, "partial", "window_truncated")
+    return _RawWindow(request=request, raw_start=-1, samples_i16=window_i16)
+
+
+def _window_spectra(
+    windows: Sequence[_RawWindow],
+    sensor_data: RawCaptureSensorData,
+    fft_computer: SpectralAnalysisComputer,
+    fft_n: int,
+    accel_scale_g_per_lsb: float | None,
+) -> _WindowSpectra:
+    """The spectra of one sensor's raw *windows*, all at once (``combined_spectra``).
+
+    Each window is laid out as the live tick's FFT block, three axes each
+    contiguous, so each spectrum is the one the live tick computes for it.
+    """
+    # Always _WINDOWS_PER_FFT blocks, a short chunk's last ones zero: every
+    # chunk goes through the one FFT plan, rather than one more held per size.
+    padded = np.zeros((max(len(windows), _WINDOWS_PER_FFT), 3, fft_n), dtype=np.float32)
+    blocks = padded[: len(windows)]
+    raw_samples = sensor_data.samples_i16
+    # Counts to g as the live tick has them, in one step: int16 to float32 is
+    # exact, then the same float32 product.
+    scale = (
+        np.float32(accel_scale_g_per_lsb)
+        if accel_scale_g_per_lsb is not None and accel_scale_g_per_lsb > 0
+        else None
+    )
+    raw_starts = [window.raw_start for window in windows]
+    first = min(raw_starts)
+    span = max(raw_starts) - first + 1
+    if first >= 0 and span * 3 * fft_n * raw_samples.itemsize <= _MAX_GATHER_VIEW_BYTES:
+        # One slice of the raw buffer each, gathered in one step (each step
+        # this thread takes waits for the GIL while the replay runs Python).
+        counts = as_strided(
+            raw_samples[first:],
+            shape=(span, 3, fft_n),
+            strides=(raw_samples.strides[0], raw_samples.strides[1], raw_samples.strides[0]),
+            writeable=False,
+        )[np.array(raw_starts, dtype=np.intp) - first]
+        if scale is None:
+            blocks[...] = counts
+        else:
+            np.multiply(counts, scale, out=blocks)
+    else:
+        for block, window in zip(blocks, windows, strict=True):
+            window_counts = (
+                raw_samples[window.raw_start : window.raw_start + fft_n].T
+                if window.samples_i16 is None
+                else window.samples_i16.T
+            )
+            if scale is None:
+                block[...] = window_counts
+            else:
+                np.multiply(window_counts, scale, out=block)
+    last_xyz = [tuple(last) for last in blocks[:, :, -1].tolist()]
+    means = np.mean(padded, axis=2, keepdims=True)
+    mean_xyz = [tuple(mean) for mean in means[: len(windows), :, 0].tolist()]
+    spectra = fft_computer.combined_spectra(padded, windows[0].request.sample_rate_hz, means=means)
+    if spectra is not None:
+        spectra = spectra[: len(windows)]
+    return _WindowSpectra(
+        spectra=spectra,
+        last_xyz=cast("list[tuple[float, float, float]]", last_xyz),
+        mean_xyz=cast("list[tuple[float, float, float]]", mean_xyz),
+    )
+
+
+def _fft_unusable_window(
+    window: _RawWindow,
+    last_xyz: tuple[float, float, float],
+    mean_xyz: tuple[float, float, float],
+) -> tuple[SensorFrame, RawReplayWindowCoverage]:
+    """*window*'s sample where its sample rate leaves the spectrum no analysis bins."""
+    sample = window.request.sample
+    return (
+        replace(
             sample,
-            RawReplayWindowCoverage(
-                client_id=sample.client_id,
-                t_s=sample.t_s,
-                coverage_state="partial",
-                raw_backed=False,
-                reason="window_truncated",
-            ),
-        )
-    # (3, N) with each axis contiguous, as the live tick's FFT block: the FFT's
-    # per-axis passes then read the same layout, at a fraction of the strided cost.
-    fft_block = np.array(window_i16.T, dtype=np.float32, order="C")
-    if accel_scale_g_per_lsb is not None and accel_scale_g_per_lsb > 0:
-        fft_block *= np.float32(accel_scale_g_per_lsb)
-    spectrum = fft_computer.combined_spectrum(fft_block, sample_rate_hz)
-    last_xyz = (float(fft_block[0, -1]), float(fft_block[1, -1]), float(fft_block[2, -1]))
-    mean = fft_block.sum(axis=1) / fft_n
-    mean_xyz = (float(mean[0]), float(mean[1]), float(mean[2]))
-    if spectrum is None:
-        return (
-            replace(
-                sample,
-                accel_x_g=last_xyz[0],
-                accel_y_g=last_xyz[1],
-                accel_z_g=last_xyz[2],
-                dominant_freq_hz=None,
-                top_peaks=(),
-                vibration_strength_db=None,
-                strength_bucket=None,
-                strength_peak_amp_g=None,
-                strength_floor_amp_g=None,
-            ),
-            RawReplayWindowCoverage(
-                client_id=sample.client_id,
-                t_s=sample.t_s,
-                coverage_state="complete",
-                raw_backed=False,
-                reason="fft_no_valid_bins",
-                mean_xyz=mean_xyz,
-            ),
-        )
-    return _PendingWindow(
-        sample=sample,
-        spectrum=spectrum,
-        sample_rate_hz=sample_rate_hz,
-        last_xyz=last_xyz,
-        mean_xyz=mean_xyz,
-        reason=(
-            "sample_rate_mismatch"
-            if sample_rate_mismatch
-            else ("timing_fallback" if window.timing_source == "legacy_t_s" else None)
+            accel_x_g=last_xyz[0],
+            accel_y_g=last_xyz[1],
+            accel_z_g=last_xyz[2],
+            dominant_freq_hz=None,
+            top_peaks=(),
+            vibration_strength_db=None,
+            strength_bucket=None,
+            strength_peak_amp_g=None,
+            strength_floor_amp_g=None,
+        ),
+        RawReplayWindowCoverage(
+            client_id=sample.client_id,
+            t_s=sample.t_s,
+            coverage_state="complete",
+            raw_backed=False,
+            reason="fft_no_valid_bins",
+            mean_xyz=mean_xyz,
         ),
     )
 
@@ -456,22 +535,41 @@ def _prepare_window(
 def _finish_window(
     window: _PendingWindow, strength_metrics: VibrationStrengthMetrics
 ) -> tuple[SensorFrame, RawReplayWindowCoverage]:
-    """*window*'s sample rebuilt from its raw window's spectrum and *strength_metrics*."""
-    sample, last_xyz = window.sample, window.last_xyz
-    domain_strength = strength_metrics_from_mapping(strength_metrics)
-    top_peaks = tuple(peak for peak in domain_strength.top_peaks if peak.is_valid)
+    """*window*'s sample rebuilt from its raw window's spectrum and *strength_metrics*.
+
+    The metrics as ``strength_metrics_from_mapping`` takes them, read directly:
+    they are this replay's own, of known types.
+    """
+    sample, last_xyz = window.request.sample, window.last_xyz
+    peaks = strength_metrics["top_peaks"]
+    top_peaks = tuple(
+        StrengthPeak(
+            hz=peak["hz"],
+            amp=peak["amp"],
+            vibration_strength_db=_finite_or_none(peak["vibration_strength_db"]),
+            strength_bucket=peak["strength_bucket"] or None,
+            local_floor_amp_g=_finite_or_none(peak.get("local_floor_amp_g")),
+        )
+        for peak in peaks
+        if isfinite(peak["hz"]) and isfinite(peak["amp"]) and peak["hz"] > 0 and peak["amp"] > 0
+    )
+    dominant_hz = peaks[0]["hz"] if peaks else None
     return (
         replace(
             sample,
             accel_x_g=last_xyz[0],
             accel_y_g=last_xyz[1],
             accel_z_g=last_xyz[2],
-            dominant_freq_hz=domain_strength.dominant_hz,
+            dominant_freq_hz=(
+                dominant_hz
+                if dominant_hz is not None and isfinite(dominant_hz) and dominant_hz > 0
+                else None
+            ),
             top_peaks=top_peaks,
-            vibration_strength_db=domain_strength.vibration_strength_db,
-            strength_bucket=domain_strength.strength_bucket,
-            strength_peak_amp_g=domain_strength.peak_amp_g,
-            strength_floor_amp_g=domain_strength.noise_floor_amp_g,
+            vibration_strength_db=_finite_or_none(strength_metrics["vibration_strength_db"]),
+            strength_bucket=strength_metrics["strength_bucket"] or None,
+            strength_peak_amp_g=_finite_or_none(strength_metrics["peak_amp_g"]),
+            strength_floor_amp_g=_finite_or_none(strength_metrics["noise_floor_amp_g"]),
             spectrum=window.spectrum,
         ),
         RawReplayWindowCoverage(
@@ -479,10 +577,14 @@ def _finish_window(
             t_s=sample.t_s,
             coverage_state="complete",
             raw_backed=True,
-            reason=window.reason,
+            reason=window.request.reason,
             mean_xyz=window.mean_xyz,
         ),
     )
+
+
+def _finite_or_none(value: float | None) -> float | None:
+    return value if value is not None and isfinite(value) else None
 
 
 def _raw_capture_mode(
@@ -619,12 +721,22 @@ def _rebuilt_samples(
 ) -> tuple[list[SensorFrame], list[RawReplayWindowCoverage]]:
     """Each sample rebuilt from its raw window, and its window's coverage, in order.
 
-    The windows' strengths are taken ``_WINDOWS_PER_BATCH`` at a time: together
-    they cost a fraction of one at a time.
+    Sensor by sensor, the windows are found in the raw capture all at once
+    (``contiguous_raw_window_starts``; one at a time only where a window is
+    incomplete or in pieces). Their spectra are computed ``_WINDOWS_PER_FFT``
+    at a time on one FFT thread (``combined_spectra``, most of whose work runs
+    with the GIL released), while this thread takes the finished spectra's
+    strengths ``_WINDOWS_PER_BATCH`` at a time. Each result is the one the
+    window has on its own.
     """
     frames = list(samples)
     coverages: list[RawReplayWindowCoverage | None] = [None] * len(samples)
+    # Each sample rate's spectra, kept together as the rows of one array
+    # (``WindowSpectrum.rows``), and how many rows are filled. Rows are taken
+    # in turn, so only those filled take up memory.
+    kept: dict[int, tuple[npt.NDArray[np.float32], list[int]]] = {}
     pending: dict[int, list[tuple[int, _PendingWindow]]] = defaultdict(list)
+    in_flight: deque[tuple[list[tuple[int, _RawWindow]], Future[_WindowSpectra]]] = deque()
 
     def finish(windows: list[tuple[int, _PendingWindow]], sample_rate_hz: int) -> None:
         strength_metrics = context.fft_computer.combined_strength_metrics(
@@ -634,22 +746,114 @@ def _rebuilt_samples(
             frames[index], coverages[index] = _finish_window(window, window_metrics)
         windows.clear()
 
+    def take_oldest() -> None:
+        chunk, future = in_flight.popleft()
+        computed = future.result()
+        sample_rate_hz = chunk[0][1].request.sample_rate_hz
+        freq_hz = context.fft_computer.freq_slice(sample_rate_hz)
+        if computed.spectra is not None:
+            rows, filled = kept.setdefault(
+                sample_rate_hz,
+                (np.empty((len(samples), freq_hz.size), dtype=np.float32), [0]),
+            )
+            first = filled[0]
+            rows[first : first + len(chunk)] = computed.spectra
+            filled[0] += len(chunk)
+        windows = pending[sample_rate_hz]
+        for position, (index, window) in enumerate(chunk):
+            last_xyz, mean_xyz = computed.last_xyz[position], computed.mean_xyz[position]
+            if computed.spectra is None:
+                frames[index], coverages[index] = _fft_unusable_window(window, last_xyz, mean_xyz)
+                continue
+            windows.append(
+                (
+                    index,
+                    _PendingWindow(
+                        request=window.request,
+                        spectrum=WindowSpectrum(
+                            freq_hz=freq_hz,
+                            amp_g=rows[first + position],
+                            rows=rows,
+                            row=first + position,
+                        ),
+                        last_xyz=last_xyz,
+                        mean_xyz=mean_xyz,
+                    ),
+                )
+            )
+            if len(windows) >= _WINDOWS_PER_BATCH:
+                finish(windows, sample_rate_hz)
+
+    requests: dict[str, list[tuple[int, _WindowRequest]]] = defaultdict(list)
     for index, sample in enumerate(samples):
-        prepared = _prepare_window(
+        request = _window_request(
             sample=sample,
             timeline=context.timelines.get(sample.client_id),
-            raw_capture=raw_capture,
-            fft_computer=context.fft_computer,
-            fft_n=context.fft_n,
-            accel_scale_g_per_lsb=context.accel_scale_g_per_lsb,
+            sensor_data=raw_capture.sensor_data(sample.client_id),
         )
-        if not isinstance(prepared, _PendingWindow):
-            frames[index], coverages[index] = prepared
-            continue
-        windows = pending[prepared.sample_rate_hz]
-        windows.append((index, prepared))
-        if len(windows) >= _WINDOWS_PER_BATCH:
-            finish(windows, prepared.sample_rate_hz)
+        if isinstance(request, _WindowRequest):
+            requests[sample.client_id].append((index, request))
+        else:
+            frames[index], coverages[index] = request
+
+    with ThreadPoolExecutor(max_workers=_FFT_WORKERS, thread_name_prefix="raw-replay-fft") as pool:
+
+        def submit(chunk: list[tuple[int, _RawWindow]], sensor_data: RawCaptureSensorData) -> None:
+            in_flight.append(
+                (
+                    chunk,
+                    pool.submit(
+                        _window_spectra,
+                        [window for _index, window in chunk],
+                        sensor_data,
+                        context.fft_computer,
+                        context.fft_n,
+                        context.accel_scale_g_per_lsb,
+                    ),
+                )
+            )
+            while len(in_flight) > _FFT_CHUNKS_AHEAD:
+                take_oldest()
+
+        for client_id, sensor_requests in requests.items():
+            timeline = context.timelines[client_id]
+            sensor_data = cast("RawCaptureSensorData", raw_capture.sensor_data(client_id))
+            raw_starts = contiguous_raw_window_starts(
+                timeline=timeline,
+                requested_end_us=np.array(
+                    [
+                        np.nan if request.requested_end_us is None else request.requested_end_us
+                        for _index, request in sensor_requests
+                    ],
+                    dtype=np.float64,
+                ),
+                sample_count=context.fft_n,
+            )
+            chunk: list[tuple[int, _RawWindow]] = []
+            for (index, request), raw_start in zip(
+                sensor_requests, raw_starts.tolist(), strict=True
+            ):
+                window = (
+                    _RawWindow(request=request, raw_start=raw_start)
+                    if raw_start >= 0
+                    else _segmented_window(
+                        request=request,
+                        timeline=timeline,
+                        sensor_data=sensor_data,
+                        fft_n=context.fft_n,
+                    )
+                )
+                if not isinstance(window, _RawWindow):
+                    frames[index], coverages[index] = window
+                    continue
+                chunk.append((index, window))
+                if len(chunk) >= _WINDOWS_PER_FFT:
+                    submit(chunk, sensor_data)
+                    chunk = []
+            if chunk:
+                submit(chunk, sensor_data)
+        while in_flight:
+            take_oldest()
     for sample_rate_hz, windows in pending.items():
         if windows:
             finish(windows, sample_rate_hz)

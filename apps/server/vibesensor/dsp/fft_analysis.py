@@ -42,6 +42,7 @@ __all__ = [
     "SpectrumByAxis",
     "broadband_energy_ratio",
     "combined_spectrum",
+    "combined_spectra",
     "combined_strength_metrics",
     "compute_fft_spectrum",
     "fft_frequency_slice",
@@ -413,6 +414,63 @@ def combined_spectrum(
     )
 
 
+def combined_spectra(
+    blocks: npt.NDArray[np.float32],
+    *,
+    fft_window: FloatArray,
+    fft_scale: float,
+    valid_idx: IntIndexArray,
+    means: FloatArray | None = None,
+) -> FloatArray:
+    """Each ``(3, N)`` block's combined spectrum amplitude, bit for bit ``combined_spectrum``'s.
+
+    Of the block in C order, as live hands it over: the mean's summation
+    order, and so its last bit, follows the memory layout.
+
+    *blocks* is ``(k, 3, N)`` and is overwritten; *means* is its
+    ``np.mean(blocks, axis=2, keepdims=True)`` where the caller has it. The k
+    blocks' 3k axes go through one FFT plan and every step runs over all of
+    them at once: a fraction of the per-call cost of one block at a time, and
+    most of the work runs with the GIL released, beside a thread running
+    Python (post-stop raw replay).
+    Returns ``(k, valid_idx.size)``; *valid_idx* must be a contiguous run.
+    """
+    if blocks.ndim != 3 or blocks.shape[1] != len(AXES):
+        raise ValueError(f"blocks must have shape (k, 3, N), got {blocks.shape}")
+    count, fft_n = blocks.shape[0], fft_window.shape[0]
+    if blocks.shape[2] != fft_n:
+        raise ValueError(
+            f"blocks column count {blocks.shape[2]} does not match fft_window length {fft_n}",
+        )
+    if valid_idx.size == 0 or count == 0:
+        return np.empty((count, valid_idx.size), dtype=np.float32)
+    first, stop = int(valid_idx[0]), int(valid_idx[-1]) + 1
+    if stop - first != valid_idx.size:
+        raise ValueError("valid_idx must be a contiguous run of bins")
+    blocks -= np.mean(blocks, axis=2, keepdims=True) if means is None else means
+    plan = _get_rfft_plan(count * len(AXES), fft_n)
+    np.multiply(blocks.reshape(count * len(AXES), fft_n), fft_window, out=plan.input_array)
+    plan()
+    # The steps of ``_amplitude_spectra`` and ``_combined_amp``, on the analysis
+    # bins only, in place where they can be.
+    amp: FloatArray = np.abs(plan.output_array[:, first:stop])
+    amp *= fft_scale
+    if first == 0:
+        amp[:, 0] *= 0.5
+    if (fft_n % 2) == 0 and stop == plan.output_array.shape[1] and plan.output_array.shape[1] > 1:
+        amp[:, -1] *= 0.5
+    axes = amp.reshape(count, len(AXES), stop - first).astype(np.float64)
+    if not np.isfinite(axes).all():
+        axes = np.where(np.isfinite(axes), axes, 0.0)
+    np.square(axes, out=axes)
+    # The axes summed in order, as ``np.sum`` over that axis.
+    combined = axes[:, 0]
+    combined += axes[:, 1]
+    combined += axes[:, 2]
+    combined /= float(len(AXES))
+    return np.sqrt(combined, out=combined).astype(np.float32)
+
+
 def combined_strength_metrics(
     spectra: Sequence[WindowSpectrum],
     *,
@@ -546,6 +604,34 @@ class SpectralAnalysisComputer:
             freq_slice=freq_slice,
             valid_idx=valid_idx,
         )
+
+    def combined_spectra(
+        self,
+        blocks: npt.NDArray[np.float32],
+        sample_rate_hz: int,
+        *,
+        means: FloatArray | None = None,
+    ) -> FloatArray | None:
+        """``combined_spectrum`` of each ``(3, N)`` block of *blocks* (overwritten), as rows.
+
+        Their bins are ``freq_slice(sample_rate_hz)``; ``None`` when there are
+        none. *means* as for ``combined_spectra``.
+        """
+        freq_slice, valid_idx, _strength_range_mask = self._fft_cache_entry(sample_rate_hz)
+        if freq_slice.size == 0:
+            return None
+        return combined_spectra(
+            blocks,
+            fft_window=self.fft_window,
+            fft_scale=self.fft_scale,
+            valid_idx=valid_idx,
+            means=means,
+        )
+
+    def freq_slice(self, sample_rate_hz: int) -> FloatArray:
+        """The analysis bins' frequencies at *sample_rate_hz*."""
+        freq_slice, _valid_idx, _strength_range_mask = self._fft_cache_entry(sample_rate_hz)
+        return freq_slice
 
     def combined_strength_metrics(
         self,
