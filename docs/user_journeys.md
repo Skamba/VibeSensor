@@ -518,6 +518,12 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
     one-line `dashboard.logging.keep_awake_hint` unless a wake lock holds the
     screen; its *How?* disclosure (`dashboard.logging.keep_awake_detail`) says
     to set auto-lock to Never.
+- **While driving:** Live names the strongest sensor by mg averaged over 5 s,
+  the report's ranking, and says "About equal at n sensors" when the next is
+  within 1.15x, as the report calls that a tie; a healthy car on a real road
+  mostly reads about equal at the wheels. A peak in an order band is not a
+  finding: the report reads each order over the drive ("The live view and the
+  report" in [metrics.md](metrics.md)).
 - **Guided drive (optional):** a tire warm-up, then four steps posted to
   `/api/recording/guided-phase` (`dashboard.guided.*` strings).
   0. Warm-up, before recording (`#guidedWarmUp`,
@@ -583,8 +589,8 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
 - **Tell (target):**
   - The sweep and hold steps say "in top gear (or D) — engine checks assume top
     gear unless an OBD-II adapter measures RPM" (owner decision).
-  - The live band labels read "Engine 1× (est., top gear)", and use measured
-    RPM when OBD supplies it.
+  - The live band labels read "E1 · Engine 1× (est., top gear)", led by the
+    report's order code, and use measured RPM when OBD supplies it.
   - For EVs the coast-down step is skipped: the motor cannot be decoupled,
     and regenerative braking makes a lift-off coast no cleaner.
   - The live bands use fresh measured OBD-II RPM for the engine, and a

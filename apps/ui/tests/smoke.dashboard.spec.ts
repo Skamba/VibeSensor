@@ -583,11 +583,13 @@ test("journey: sensor cards show the location, or the name of an unplaced sensor
           [SENSOR_ID]: {
             freq: [1, 2],
             combined_spectrum_amp_g: [0.1, 0.2],
-            strength_metrics: strength(7),
+            peak_mg: 300,
+            strength_metrics: strength(25),
           },
           b: {
             freq: [1, 2],
             combined_spectrum_amp_g: [0.1, 0.2],
+            peak_mg: 750,
             strength_metrics: strength(18),
           },
         },
@@ -603,7 +605,7 @@ test("journey: sensor cards show the location, or the name of an unplaced sensor
   await expect(cards.nth(1)).toContainText("Rear Right · unplaced");
   await expect(cards.nth(1)).toHaveAttribute("data-strongest", "true");
   await expect(page.locator("#liveStrongestSignal [data-value]")).toHaveText(
-    "Rear Right · unplaced · 18 dB above floor",
+    "Rear Right · unplaced · 750 mg (18 dB above floor)",
   );
   await expect(page.locator("#liveConnectedSensors [data-value]")).toHaveText(
     "2 / 2",

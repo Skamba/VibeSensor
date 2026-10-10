@@ -70,6 +70,7 @@ function areSpectrumClientDataEqual(
   right: SpectrumClientData,
 ): boolean {
   return (
+    left.peak_mg === right.peak_mg &&
     areNumberArraysEqual(left.freq, right.freq) &&
     areNumberArraysEqual(left.combined, right.combined) &&
     areStrengthMetricsEqual(left.strength_metrics, right.strength_metrics)

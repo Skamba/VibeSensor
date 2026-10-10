@@ -196,7 +196,10 @@ diagnosis.
 
 `build_order_bands()` emits the live band payloads for the families present,
 with `tolerance = tolerance_hz / center_hz`, so the UI draws
-`[center_hz * (1 - tolerance), center_hz * (1 + tolerance)]`:
+`[center_hz * (1 - tolerance), center_hz * (1 + tolerance)]`, and with
+`code`, the report's workshop label for the order (`workshop_order_code` in
+`domain/finding.py`: T1, P1, E2, `P1/E1` for the merged band), which the
+spectrum shows before the band's name:
 
 - `wheel_1x`
 - `wheel_2x`

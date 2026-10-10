@@ -12,3 +12,6 @@ KMH_TO_MPS: Final[float] = 1.0 / MPS_TO_KMH
 
 SECONDS_PER_MINUTE: Final[float] = 60.0
 """Hz-to-RPM conversion factor (RPM = Hz × 60)."""
+
+G_TO_MG: Final[float] = 1000.0
+"""Multiply an acceleration in g by this to get milli-g (mg)."""

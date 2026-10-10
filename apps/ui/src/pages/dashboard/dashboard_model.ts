@@ -15,6 +15,7 @@ import {
 } from "../../config";
 import { fmt, kmhInUnit, type SpeedUnit, speedUnitKey } from "../../format";
 import type { KeepAwakeMode } from "../../keep_awake";
+import { nearTieDominanceThreshold } from "../../constants";
 import type {
   AdaptedClient,
   SpectrumFrameData,
@@ -292,25 +293,89 @@ export function freshness(
   };
 }
 
-/** The connected sensor with the highest vibration level right now. */
-export function strongestSensor(
-  clients: readonly AdaptedClient[],
+/** How long the strongest signal averages each sensor's level over (ms). */
+export const STRONGEST_AVERAGE_MS = 5_000;
+
+/** One live frame's level per sensor: its strongest peak in mg and that peak's dB above floor. */
+export interface LevelFrame {
+  atMs: number;
+  levels: Readonly<Record<string, { mg: number; db: number }>>;
+}
+
+/** *history* plus the frame *spectra* brought at *nowMs*, less frames past the average. */
+export function withLevelFrame(
+  history: readonly LevelFrame[],
   spectra: SpectrumFrameData,
-): { client: AdaptedClient; db: number } | null {
-  let best: { client: AdaptedClient; db: number } | null = null;
-  for (const client of clients) {
-    const db =
-      spectra.clients[client.id]?.strength_metrics?.vibration_strength_db;
+  nowMs: number,
+): LevelFrame[] {
+  const levels: Record<string, { mg: number; db: number }> = {};
+  for (const [id, data] of Object.entries(spectra.clients)) {
+    const db = data.strength_metrics?.vibration_strength_db;
     if (
-      client.connected &&
+      Number.isFinite(data.peak_mg) &&
       typeof db === "number" &&
-      Number.isFinite(db) &&
-      (!best || db > best.db)
+      Number.isFinite(db)
     ) {
-      best = { client, db };
+      levels[id] = { mg: data.peak_mg, db };
     }
   }
-  return best;
+  return [
+    ...history.filter((frame) => frame.atMs > nowMs - STRONGEST_AVERAGE_MS),
+    { atMs: nowMs, levels },
+  ];
+}
+
+export interface StrongestSignal {
+  /** The sensor that stands out; null when others are about as strong. */
+  client: AdaptedClient | null;
+  /** The sensors about as strong as the strongest, itself included. */
+  tied: number;
+  mg: number;
+  db: number;
+}
+
+/**
+ * The connected sensor with the highest vibration level over the last few seconds.
+ *
+ * Sensors rank by mg, as the report ranks locations, and one stands out only
+ * past the ratio the report's location scoring calls a tie: the road rings
+ * every wheel alike, and a healthy car's strongest wheel is chance. Each
+ * sensor's level is averaged in power over `STRONGEST_AVERAGE_MS`, its dB
+ * above floor as a mean.
+ */
+export function strongestSensor(
+  clients: readonly AdaptedClient[],
+  history: readonly LevelFrame[],
+): StrongestSignal | null {
+  const rows: Array<{ client: AdaptedClient; mg: number; db: number }> = [];
+  for (const client of clients) {
+    if (!client.connected) {
+      continue;
+    }
+    const levels = history.flatMap((frame) => frame.levels[client.id] ?? []);
+    if (levels.length === 0) {
+      continue;
+    }
+    const power =
+      levels.reduce((sum, level) => sum + level.mg * level.mg, 0) /
+      levels.length;
+    const db = levels.reduce((sum, level) => sum + level.db, 0) / levels.length;
+    rows.push({ client, mg: Math.sqrt(power), db });
+  }
+  rows.sort((left, right) => right.mg - left.mg);
+  const top = rows[0];
+  if (!top) {
+    return null;
+  }
+  const tied = rows.filter(
+    (row) => row.mg * nearTieDominanceThreshold > top.mg,
+  ).length;
+  return {
+    client: tied > 1 ? null : top.client,
+    tied,
+    mg: top.mg,
+    db: top.db,
+  };
 }
 
 export function activeCarText(

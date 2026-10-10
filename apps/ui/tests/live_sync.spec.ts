@@ -17,6 +17,7 @@ function frame(db: number, fingerprint?: string): SpectrumFrameData {
       s1: {
         freq: [1, 2, 3],
         combined: [0.01, 0.02, 0.03],
+        peak_mg: 112,
         strength_metrics: {
           vibration_strength_db: db,
           peak_amp_g: 0,

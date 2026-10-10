@@ -115,6 +115,7 @@ export function demoPayload(): Record<string, unknown> {
     {
       combined_spectrum_amp_g: number[];
       freq: number[];
+      peak_mg: number;
       strength_metrics: {
         noise_floor_amp_g: number;
         peak_amp_g: number;
@@ -130,11 +131,11 @@ export function demoPayload(): Record<string, unknown> {
     }
   > = {};
   const peakConfigs = [
-    { hz: 12.3, amp: 0.032, db: 15.1, bucket: "l2" },
-    { hz: 12.1, amp: 0.025, db: 14.0, bucket: "l2" },
-    { hz: 12.5, amp: 0.018, db: 12.6, bucket: "l2" },
-    { hz: 12.2, amp: 0.045, db: 16.5, bucket: "l2" },
-    { hz: 36.8, amp: 0.012, db: 10.8, bucket: "l2" },
+    { hz: 12.3, amp: 0.032, mg: 120, db: 15.1, bucket: "l2" },
+    { hz: 12.1, amp: 0.025, mg: 94, db: 14.0, bucket: "l2" },
+    { hz: 12.5, amp: 0.018, mg: 67, db: 12.6, bucket: "l2" },
+    { hz: 12.2, amp: 0.045, mg: 168, db: 16.5, bucket: "l2" },
+    { hz: 36.8, amp: 0.012, mg: 45, db: 10.8, bucket: "l2" },
   ];
   demoClients.forEach((client, idx) => {
     const pk = peakConfigs[idx];
@@ -142,6 +143,7 @@ export function demoPayload(): Record<string, unknown> {
     demoSpectra[client.id] = {
       freq: freqArr,
       combined_spectrum_amp_g: combined,
+      peak_mg: pk.mg,
       strength_metrics: {
         vibration_strength_db: pk.db,
         peak_amp_g: pk.amp,
@@ -183,10 +185,10 @@ export function demoPayload(): Record<string, unknown> {
         reason: null,
       },
       order_bands: [
-        { key: "wheel_1x", center_hz: 12.3, tolerance: 0.098 },
-        { key: "wheel_2x", center_hz: 24.6, tolerance: 0.098 },
-        { key: "driveshaft_1x", center_hz: 24.6, tolerance: 0.08 },
-        { key: "engine_1x", center_hz: 36.8, tolerance: 0.08 },
+        { key: "wheel_1x", code: "T1", center_hz: 12.3, tolerance: 0.098 },
+        { key: "wheel_2x", code: "T2", center_hz: 24.6, tolerance: 0.098 },
+        { key: "driveshaft_1x", code: "P1", center_hz: 24.6, tolerance: 0.08 },
+        { key: "engine_1x", code: "E1", center_hz: 36.8, tolerance: 0.08 },
       ],
     },
     spectra: { clients: demoSpectra },

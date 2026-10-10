@@ -15,6 +15,7 @@ LOCATIONS_PATH = DOMAIN_ROOT / "locations.py"
 ANALYSIS_SETTINGS_PATH = DOMAIN_ROOT / "analysis_settings.py"
 DSP_CONSTANTS_PATH = SERVER_ROOT / "dsp" / "constants.py"
 VIBRATION_STRENGTH_PATH = SERVER_ROOT / "dsp" / "vibration_strength.py"
+LOCATION_SCORING_PATH = SERVER_ROOT / "analysis" / "location_scoring.py"
 
 
 def _is_string_dict(value: object) -> TypeGuard[dict[str, str]]:
@@ -128,6 +129,15 @@ def render_ui_shared_constants_module() -> str:
         + _render_export("defaultAnalysisSettings", analysis_settings)
         + "\n"
         + _render_export("defaultLiveAnalysisConfig", live_analysis_config)
+        + "\n"
+        # Live calls one sensor the strongest only past the ratio the report's
+        # location scoring calls a tie.
+        + _render_export(
+            "nearTieDominanceThreshold",
+            _load_number_constant(
+                LOCATION_SCORING_PATH, "NEAR_TIE_DOMINANCE_THRESHOLD"
+            ),
+        )
     )
 
 

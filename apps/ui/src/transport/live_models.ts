@@ -12,6 +12,8 @@ export type StrengthMetrics = StrengthMetricsPayload;
 export interface SpectrumClientData {
   freq: number[];
   strength_metrics: StrengthMetrics;
+  /** The dominant peak in mg on the report's scale (a tone's peak, the axes as a vector). */
+  peak_mg: number;
   combined: number[];
 }
 

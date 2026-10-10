@@ -15,7 +15,7 @@ import {
   speedUnit,
 } from "../../app_store";
 import { reportClock } from "../../clock_report";
-import { fmt, formatIntLocale, formatSpeed } from "../../format";
+import { fmt, formatIntLocale, formatMg, formatSpeed } from "../../format";
 import { lang, t } from "../../i18n";
 import { keepAwakeMode, startKeepAwake, stopKeepAwake } from "../../keep_awake";
 import {
@@ -44,6 +44,7 @@ import {
   gpsFixWaitS,
   gpsReceiverMissing,
 } from "../../speed_source";
+import type { AdaptedClient } from "../../transport/live_models";
 import {
   actionBarModel,
   activeCarText,
@@ -62,8 +63,11 @@ import {
   setupModel,
   speedText,
   stopConfirmation,
+  type LevelFrame,
+  type StrongestSignal,
   strongestSensor,
   type SummaryAction,
+  withLevelFrame,
   withLoggingError,
 } from "./dashboard_model";
 import { capabilityModel } from "./readiness";
@@ -452,9 +456,39 @@ export const guidedTest = computed(() =>
   ),
 );
 
+/** The last few seconds of each sensor's level, for the strongest signal. */
+const levelHistory = signal<LevelFrame[]>([]);
+effect(() => {
+  const frame = spectra.value;
+  levelHistory.value = withLevelFrame(levelHistory.peek(), frame, Date.now());
+});
+
+/** The strongest signal: one sensor that stands out, else how many are about equal. */
+function strongestText(
+  strongest: StrongestSignal | null,
+  label: (client: AdaptedClient) => string,
+): string {
+  if (!strongest) {
+    return t("dashboard.strongest_signal_none");
+  }
+  const level = {
+    mg: formatMg(strongest.mg),
+    value: formatInt(strongest.db),
+  };
+  return strongest.client
+    ? t("dashboard.strongest_signal_value", {
+        sensor: label(strongest.client),
+        ...level,
+      })
+    : t("dashboard.strongest_signal_tie", {
+        count: formatInt(strongest.tied),
+        ...level,
+      });
+}
+
 export const overview = computed(() => {
   const list = clients.value;
-  const strongest = strongestSensor(list, spectra.value);
+  const strongest = strongestSensor(list, levelHistory.value);
   const label = (client: (typeof list)[number]) =>
     sensorLabel(client, locationOf(client), t);
   return {
@@ -467,17 +501,12 @@ export const overview = computed(() => {
       t,
       formatInt,
     ),
-    strongestText: strongest
-      ? t("dashboard.strongest_signal_value", {
-          sensor: label(strongest.client),
-          value: formatInt(strongest.db),
-        })
-      : t("dashboard.strongest_signal_none"),
+    strongestText: strongestText(strongest, label),
     sensors: list.map((client) => ({
       id: client.id,
       label: label(client),
       connected: Boolean(client.connected),
-      strongest: strongest?.client.id === client.id,
+      strongest: strongest?.client?.id === client.id,
     })),
   };
 });

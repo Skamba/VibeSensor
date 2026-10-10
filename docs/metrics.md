@@ -573,6 +573,47 @@ The following fields were removed to eliminate ambiguity. They are no longer wri
 - `severity_db` — renamed to `vibration_strength_db` in live event payloads
 - `top_strength_peaks` — renamed to `top_peaks`
 
+## The live view and the report
+
+The live view shows the same numbers the report gives, on the same scales,
+but over the last few seconds instead of the whole drive:
+
+- **mg.** Each sensor's spectrum carries `peak_mg`, its dominant peak's band
+  RMS on the report's scale (`peak_amp_g / tone_line_level_g(1, bin_hz) *
+  1000`, `build_spectrum_payload` in `apps/server/vibesensor/live/payload.py`):
+  a steady tone reads its vector peak live as in the report (checked in
+  `tests/live/test_processing_extended.py`). The chart draws each bin's
+  amplitude times `sqrt(3)` (`AXES_AS_VECTOR` in `apps/ui/src/spectrum.ts`), so
+  a tone's peak on the chart and its hover read the same mg; a broad hump
+  reads lower on the chart than in `peak_mg`, whose band RMS spans it.
+- **Strongest signal.** The overview ranks connected sensors by mg, the
+  report's ranking, not by dB above each sensor's own floor (a quiet cabin
+  sensor has a low floor and once read strongest on a healthy car while the
+  report put it at 0.07x the wheels). It averages each sensor's mg in power
+  over the last 5 s (`STRONGEST_AVERAGE_MS` in
+  `apps/ui/src/pages/dashboard/dashboard_model.ts`) and, when the next sensor
+  is within `NEAR_TIE_DOMINANCE_THRESHOLD` (1.15x, generated into
+  `apps/ui/src/constants.ts`), says "About equal at n sensors" rather than
+  naming one, as the report's location scoring calls that a tie. On simulated
+  drives on a generated road a healthy car ties in 36-37 of 38 frames at 50,
+  100 and 130 km/h, and a front-left wheel imbalance at 80-120 km/h names the
+  front-left wheel in every frame; ranked per frame by dB, the strongest
+  sensor changed from one frame to the next.
+- **Order labels.** Each live order band carries the report's workshop label
+  (`code`: T1, T2, P1, E1, E1.5, or `P1/E1` for the merged band;
+  `workshop_order_code` in `apps/server/vibesensor/domain/finding.py`), and the
+  spectrum shows it first ("T1 · Wheel 1x").
+- **dB.** The live dB is the dominant peak over the band's overall P20 floor,
+  as the report's no-fault amplitude table gives it. A fault's table reads the
+  order's line over the floor beside it, so a wheel imbalance that reads
+  34 dB live can read 6 dB there; compare the mg, not the dB.
+
+What the live view cannot say: which order a peak belongs to. A healthy
+wheel's wheel-hop hump (about 12 Hz) is the strongest peak on a real road and
+falls inside the Wheel 1x or Wheel 2x band at some speeds, so a peak in a band
+is not a finding; the report reads each order at its line across the drive
+(see "Order-tracked reads" in `docs/order_tracking.md`).
+
 ## WebSocket / API Payloads
 
 The `spectrum_payload` endpoint includes:
@@ -586,6 +627,7 @@ The `spectrum_payload` endpoint includes:
     "top_peaks": [
       {"hz": 32.5, "amp": 0.041, "vibration_strength_db": 22.3, "strength_bucket": "l3"}
     ]
-  }
+  },
+  "peak_mg": 153.6
 }
 ```

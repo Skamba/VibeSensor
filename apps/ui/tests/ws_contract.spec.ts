@@ -160,12 +160,14 @@ describe("shared freq optimization", () => {
         clients: {
           sensor1: {
             combined_spectrum_amp_g: [0.01, 0.02, 0.03],
+            peak_mg: 100,
             strength_metrics: makeStrengthMetrics({
               vibration_strength_db: 12,
             }),
           },
           sensor2: {
             combined_spectrum_amp_g: [0.04, 0.05, 0.06],
+            peak_mg: 100,
             strength_metrics: makeStrengthMetrics({ vibration_strength_db: 8 }),
           },
         },
@@ -189,6 +191,7 @@ describe("shared freq optimization", () => {
           sensor1: {
             freq: [15, 25, 35],
             combined_spectrum_amp_g: [0.01, 0.02, 0.03],
+            peak_mg: 100,
             strength_metrics: makeStrengthMetrics({
               vibration_strength_db: 12,
             }),
@@ -210,6 +213,7 @@ describe("shared freq optimization", () => {
           sensor1: {
             freq: [10, 20, 30],
             combined_spectrum_amp_g: [0.01, 0.02, 0.03],
+            peak_mg: 100,
             strength_metrics: makeStrengthMetrics({
               vibration_strength_db: 12,
             }),
@@ -229,6 +233,7 @@ describe("shared freq optimization", () => {
         clients: {
           sensor1: {
             combined_spectrum_amp_g: [0.01, 0.02, 0.03],
+            peak_mg: 100,
             strength_metrics: makeStrengthMetrics({
               vibration_strength_db: 12,
             }),
@@ -249,6 +254,7 @@ describe("shared freq optimization", () => {
           sensor1: {
             freq: [10, 20],
             combined_spectrum_amp_g: [0.01, 0.02, 0.03],
+            peak_mg: 100,
             strength_metrics: makeStrengthMetrics({
               vibration_strength_db: 12,
             }),
@@ -269,6 +275,7 @@ describe("shared freq optimization", () => {
           good: {
             freq: [10, 20],
             combined_spectrum_amp_g: [0.01, 0.02],
+            peak_mg: 100,
             strength_metrics: makeStrengthMetrics({ vibration_strength_db: 5 }),
           },
         },
@@ -288,6 +295,7 @@ describe("shared freq optimization", () => {
         clients: {
           sensor1: {
             combined_spectrum_amp_g: [0.01, 0.02, 0.03],
+            peak_mg: 100,
             strength_metrics: makeStrengthMetrics({
               vibration_strength_db: 12,
             }),
@@ -295,6 +303,7 @@ describe("shared freq optimization", () => {
           sensor2: {
             freq: [15, 25, 35],
             combined_spectrum_amp_g: [0.04, 0.05, 0.06],
+            peak_mg: 100,
             strength_metrics: makeStrengthMetrics({ vibration_strength_db: 8 }),
           },
         },
@@ -328,7 +337,9 @@ describe("shared freq optimization", () => {
       wheel: { rpm: 738, mode: "calculated", reason: null },
       driveshaft: { rpm: 1476, mode: "calculated", reason: null },
       engine: { rpm: 2208, mode: "calculated", reason: null },
-      order_bands: [{ key: "wheel_1x", center_hz: 12.3, tolerance: 0.08 }],
+      order_bands: [
+        { key: "wheel_1x", code: "T1", center_hz: 12.3, tolerance: 0.08 },
+      ],
     };
 
     const adapted = adaptServerPayload({
@@ -353,6 +364,7 @@ describe("shared freq optimization", () => {
         clients: {
           sensor1: {
             combined_spectrum_amp_g: [0.01, 0.02, 0.03],
+            peak_mg: 100,
             strength_metrics: strengthMetrics,
           },
         },

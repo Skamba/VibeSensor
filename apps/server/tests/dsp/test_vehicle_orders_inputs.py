@@ -74,7 +74,35 @@ def test_the_engine_bands_are_the_engines_orders_with_the_firing_order_marked() 
 
     assert "engine_2x" not in bands
     assert bands["engine_3x"]["center_hz"] == pytest.approx(120.0)
+    # Each band carries the report's workshop label, so live and report name it alike.
+    assert {key: band["code"] for key, band in bands.items()} == {
+        "wheel_1x": "T1",
+        "wheel_2x": "T2",
+        "engine_1x": "E1",
+        "engine_3x": "E3",
+    }
     assert bands["engine_3x"].get("firing") is True
     assert "firing" not in bands["engine_1x"]
-    half = {band["key"] for band in build_order_bands(orders, EngineProfile("inline", 3).orders)}
-    assert {"engine_1x", "engine_1_5x"} <= half
+    half = {
+        band["key"]: band["code"]
+        for band in build_order_bands(orders, EngineProfile("inline", 3).orders)
+    }
+    assert half["engine_1_5x"] == "E1.5"
+
+
+def test_a_propshaft_turning_with_the_engine_is_one_band_labelled_with_both_orders() -> None:
+    bands = build_order_bands(
+        {"wheel_hz": 10.0, "drive_hz": 30.0, "engine_hz": 30.2, "engine_uncertainty_pct": 0.0}
+    )
+
+    assert [(band["key"], band["code"]) for band in bands] == [
+        ("wheel_1x", "T1"),
+        ("wheel_2x", "T2"),
+        ("driveshaft_engine_1x", "P1/E1"),
+        ("engine_2x", "E2"),
+    ]
+    split = build_order_bands({"drive_hz": 30.0, "engine_hz": 40.0})
+    assert [(band["key"], band["code"]) for band in split][:2] == [
+        ("driveshaft_1x", "P1"),
+        ("engine_1x", "E1"),
+    ]
