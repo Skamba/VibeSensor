@@ -650,6 +650,16 @@ the way the report decides it (`apps/server/vibesensor/live/order_hearing.py`):
   report's `heard_cells` rule, from the same functions and thresholds
   (`apps/server/vibesensor/dsp/line_significance.py`). A swept line that passes
   a body mode stands clear only in the bin where it passed it.
+- **Fixed tones.** As the report, a sensor's reads skip a fixed tone that
+  rings there (a blower, a pump, a mount buzz) and its leak, by the report's
+  rule (`apps/server/vibesensor/dsp/fixed_tones.py`, "Fixed tones" in
+  docs/order_tracking.md). Each new spectrum's ranked peaks are noted; the
+  latest 10 per speed bin (`TONE_SPECTRA_PER_BIN`) place the tones over the
+  drive so far, and a tone's ringing is judged over the last 10 s of spectra.
+  One sensor's tones are placed per read, in turn. Reads taken before a tone
+  was found ringing are dropped. A tone shows as fixed only once the drive
+  has covered 1.5x in speed: an order that crosses it before that can still
+  be heard there for a few seconds.
 - **Two verdicts in a row** (`HEARD_VERDICTS`). The report gives one verdict
   per drive; one every second blinks on the floor's chance every few drives, so
   an order shows once two verdicts in a row, each on a new read, hear it.
@@ -663,9 +673,15 @@ On simulated drives on a generated road (seeds 1-3) no healthy drive at 50,
 100, 130 km/h, a 50-115 km/h sweep, with a wheel-hop hump or a residual
 imbalance heard any order, nor did the report; a front-left imbalance at
 80-120 km/h was heard as T1 at the front-left wheel, an engine E2 fault as E2,
-a propshaft fault as P1 at the rear wheels, as the report heard them. With
-five sensors the reads and verdicts cost about 0.5 ms once a second on x86 (at
-most about 1.3 ms), about 6 % of the processing tick's time.
+a propshaft fault as P1 at the rear wheels, as the report heard them. With a
+fixed 25 Hz tone at every sensor of a healthy car sweeping 50-130 km/h the
+report hears no order; without the fixed tones the live view heard E1, P1 and
+T2 at the trunk for up to 17 % of the drive, with them only P1 for 6 %, where
+its line crosses the tone at about 62 km/h, before the drive has covered the
+1.5x in speed that places the tone (none after a lead-in from 20 km/h). With
+five sensors the reads, verdicts and tones cost about 1.2 ms a second on x86
+(at most about 4 ms in one call), noting peaks on every payload and reading
+once a second.
 
 ## WebSocket / API Payloads
 

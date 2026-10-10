@@ -12,6 +12,7 @@ docs/order_tracking.md.
 
 from __future__ import annotations
 
+from collections import defaultdict
 from collections.abc import Sequence
 from itertools import pairwise
 from math import ceil, cos, pi, sin, sqrt
@@ -27,6 +28,8 @@ __all__ = [
     "deviations",
     "independent_share",
     "normalized",
+    "present_level",
+    "presence_block_s",
     "scatter",
     "stands_out",
 ]
@@ -51,6 +54,9 @@ _MEDIAN_SPREAD = 1.2533
 MIN_SCATTER_READS = 5
 # A sensor with fewer independent reads than this places no level, heard or not.
 MIN_INDEPENDENT_READS = 2.0
+# An intermittent order is placed over the stretches it is there: its reads
+# are judged in blocks of this many window lengths (5.1 s at 2.56 s).
+_PRESENCE_BLOCK_WINDOWS = 2.0
 # A window's control reads sit this many of its line read's reaches either
 # side of the line: clear of the line's band and flanks, close enough to read
 # the same stretch of floor.
@@ -71,6 +77,43 @@ def normalized(excess: Sequence[float], flanks: Sequence[float]) -> list[float]:
 def clear(excess: Sequence[float], flanks: Sequence[float]) -> bool:
     """Whether the reads' middle stands ``HEARD_OVER_FLOOR`` (6 dB) over the floor beside them."""
     return median(excess) >= (HEARD_OVER_FLOOR * HEARD_OVER_FLOOR - 1.0) * median(flanks) > 0
+
+
+def presence_block_s(window_s: float) -> float:
+    """How long the blocks are that ``present_level`` judges reads in (s)."""
+    return _PRESENCE_BLOCK_WINDOWS * window_s
+
+
+def present_level(
+    excess: Sequence[float], flanks: Sequence[float], t_s: Sequence[float], block_s: float
+) -> tuple[float, int]:
+    """The middle read where the line is there, and how many reads place it.
+
+    The reads (each at its time *t_s*, NaN where unknown) are split into
+    blocks *block_s* long; a block where the line stands clear (``clear``) is a
+    stretch it is there. The middle read over those blocks, weighed by their
+    reads; all the reads' middle where no block is clear. An order there for
+    half the drive (a misfire that comes and goes) reads its level while there,
+    not half of it.
+    """
+    whole = (median(excess), len(excess))
+    if block_s <= 0:
+        return whole
+    blocks: dict[int, list[int]] = defaultdict(list)
+    for index, t in enumerate(t_s):
+        if t == t:
+            blocks[int(t // block_s)].append(index)
+    there = [
+        (median(block), len(indices))
+        for indices in blocks.values()
+        if len(indices) >= MIN_SCATTER_READS
+        for block in ([excess[index] for index in indices],)
+        if clear(block, [flanks[index] for index in indices])
+    ]
+    if not there:
+        return whole
+    reads = sum(count for _middle, count in there)
+    return sum(middle * count for middle, count in there) / reads, reads
 
 
 def scatter(distances: Sequence[float]) -> float:

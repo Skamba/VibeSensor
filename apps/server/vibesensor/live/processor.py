@@ -231,7 +231,7 @@ class SignalProcessor:
             )
 
     def latest_spectra(self, client_ids: list[str]) -> dict[str, LiveSpectrum]:
-        """Each of *client_ids*' latest combined spectrum, for the live order reads."""
+        """Each of *client_ids*' latest combined spectrum and peaks, for the live order reads."""
         spectra: dict[str, LiveSpectrum] = {}
         with self._lock:
             for client_id in client_ids:
@@ -239,10 +239,18 @@ class SignalProcessor:
                 combined = buf.latest_spectrum.get("combined") if buf is not None else None
                 if buf is None or combined is None or buf.compute_sample_rate_hz <= 0:
                     continue
+                strength = buf.latest_strength_metrics
                 spectra[client_id] = LiveSpectrum(
                     generation=buf.spectrum_generation,
                     spectrum=WindowSpectrum(freq_hz=combined["freq"], amp_g=combined["amp"]),
                     window_s=self._config.fft_n / buf.compute_sample_rate_hz,
+                    # The ranked peaks a recorded sample keeps, for the fixed tones.
+                    peaks=tuple(
+                        (peak["hz"], peak["amp"])
+                        for peak in strength["top_peaks"][:8]
+                        if peak["hz"] > 0 and peak["amp"] > 0
+                    ),
+                    floor_amp_g=strength["noise_floor_amp_g"],
                 )
         return spectra
 
