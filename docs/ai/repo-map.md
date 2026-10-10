@@ -4,7 +4,7 @@ This file is the repo map, not a workflow or policy guide. On-demand navigation 
 
 ## Primary entry points
 
-- Backend app/runtime: `apps/server/vibesensor/app/bootstrap.py`, `apps/server/vibesensor/app/composition.py`
+- Backend app/runtime: `apps/server/vibesensor/app/serve.py` (the `vibesensor-server` Granian supervisor), `apps/server/vibesensor/app/bootstrap.py`, `apps/server/vibesensor/app/composition.py`
 - Backend HTTP assembly: `apps/server/vibesensor/web/router.py`
 - Backend CLIs: `apps/server/vibesensor/cli/`
 - UI app/shell: `apps/ui/src/main.tsx`, `apps/ui/src/app.tsx`, `apps/ui/src/app_store.ts`

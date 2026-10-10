@@ -36,7 +36,7 @@ def _run_with_restored_root_logging(callable_obj) -> None:
 
 
 def _run_main_for_platform(monkeypatch, *, platform: str) -> dict[str, object]:
-    from vibesensor.app import bootstrap as app_module
+    from vibesensor.app import serve as app_module
 
     recorded: dict[str, object] = {}
     monkeypatch.setattr(

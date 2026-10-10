@@ -60,12 +60,32 @@ import importlib
 
 package = importlib.import_module("vibesensor.app")
 bootstrap = importlib.import_module("vibesensor.app.bootstrap")
-from vibesensor.app.bootstrap import create_app, create_app_from_env, main
+serve = importlib.import_module("vibesensor.app.serve")
+from vibesensor.app.bootstrap import create_app, create_app_from_env
+from vibesensor.app.serve import main
 
-_ = (package, bootstrap, create_app, create_app_from_env, main)
+_ = (package, bootstrap, serve, create_app, create_app_from_env, main)
         """
     )
     assert result.stdout.strip() == "ok"
+
+
+def test_server_supervisor_leaves_the_app_to_the_worker() -> None:
+    """The ``vibesensor-server`` process only supervises the Granian worker.
+
+    Granian forks the worker, so anything the supervisor imports stays resident
+    in it as a second copy once the worker touches those pages (~40 MB on the Pi).
+    """
+    result = _run_import_probe(
+        """
+import sys
+from vibesensor.app.serve import main
+
+app_modules = ("vibesensor.app.bootstrap", "vibesensor.app.composition", "numpy", "fastapi")
+print(sorted(m for m in app_modules if m in sys.modules))
+        """
+    )
+    assert result.stdout.strip().splitlines() == ["[]", "ok"]
 
 
 _SLOW_IMPORTS = (

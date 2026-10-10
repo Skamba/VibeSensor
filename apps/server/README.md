@@ -88,7 +88,11 @@ truth.
 
 Backend startup is explicit rather than ambient:
 
-1. `vibesensor.app.bootstrap` resolves config and builds the runtime/container.
+1. `vibesensor-server` (`vibesensor.app.serve`) starts Granian, whose worker
+   process calls `vibesensor.app.bootstrap:create_app_from_env` to resolve config
+   and build the runtime/container. The supervisor process itself never imports
+   the app: Granian forks the worker, and whatever the supervisor had imported
+   would stay resident there as a second copy (about 40 MB on the Pi).
 2. `LifecycleManager.start()` runs lightweight startup validation, opens the UDP
    receiver, starts the control plane, and then launches the supervised
    processing, WebSocket, metrics, GPS, and update-recovery tasks in a declared
@@ -226,8 +230,8 @@ and debug workflows:
 - `VIBESENSOR_SERVE_STATIC=0`: disable mounting bundled UI static files for
   API-only runs, backend tests, or release validation helpers.
 
-Importing `vibesensor.app` or `vibesensor.app.bootstrap` is now side-effect
-free. Config loading, runtime construction, SQLite opening, and static-asset
+Importing `vibesensor.app`, `vibesensor.app.bootstrap` or `vibesensor.app.serve`
+is side-effect free. Config loading, runtime construction, SQLite opening, and static-asset
 validation happen only when callers explicitly invoke `create_app(...)` or the
 CLI startup path.
 

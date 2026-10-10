@@ -12,6 +12,8 @@ from types import SimpleNamespace
 
 import pytest
 
+from vibesensor.common.process_settings import CONFIG_PATH_ENV
+
 
 def _runtime_app(port: int):
     return SimpleNamespace(
@@ -49,7 +51,7 @@ def _run_with_restored_root_logging(callable_obj: Callable[[], None]) -> None:
 
 def _run_main(monkeypatch, *, port: int, fail_port: int | None = None) -> list[int]:
     """Shared harness: patch app_module, call ``main()``, return recorded port calls."""
-    from vibesensor.app import bootstrap as app_module
+    from vibesensor.app import serve as app_module
 
     monkeypatch.setattr(
         app_module.argparse.ArgumentParser,
@@ -107,7 +109,7 @@ def test_create_app_from_env_uses_exported_config_path(monkeypatch) -> None:
 
 
 def test_main_reload_uses_factory_target(monkeypatch, tmp_path) -> None:
-    from vibesensor.app import bootstrap as app_module
+    from vibesensor.app import serve as app_module
 
     config_path = tmp_path / "config.dev.yaml"
     monkeypatch.setattr(
@@ -140,4 +142,4 @@ def test_main_reload_uses_factory_target(monkeypatch, tmp_path) -> None:
     assert kwargs["port"] == 8000
     assert kwargs["reload"] is True
     assert kwargs["factory"] is True
-    assert os.environ[app_module._CONFIG_PATH_ENV] == str(config_path.resolve())
+    assert os.environ[CONFIG_PATH_ENV] == str(config_path.resolve())
