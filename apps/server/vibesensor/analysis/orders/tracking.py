@@ -32,6 +32,8 @@ from vibesensor.dsp.line_significance import (
     deviations,
     independent_share,
     normalized,
+    presence_block_s,
+    present_level,
     scatter,
     stands_out,
 )
@@ -50,9 +52,6 @@ _MAX_RATE_SPAN_S = 2.0
 # is the order's (``heard_phases``), and a phase holds a few of the drive's
 # windows: two standard errors (one-sided 2.3 %).
 _PHASE_STANDARD_ERRORS = 2.0
-# An intermittent order is placed over the stretches it is there: each cell's
-# reads are judged in blocks of this many window lengths (5.1 s at 2.56 s).
-_PRESENCE_BLOCK_WINDOWS = 2.0
 _BRAKING_PHASE = DrivingPhase.BRAKING.value
 
 
@@ -122,31 +121,9 @@ class _Cell:
     def present(self, block_s: float) -> tuple[float, int]:
         """The middle read where the order is there, and how many reads place it.
 
-        The cell's reads are split into blocks *block_s* long; a block where
-        the line stands clear (``clear``) is a stretch the order is there.
-        The middle read over those blocks, weighed by their reads; the whole
-        cell's middle read where no block is clear. An order there for half the
-        drive (a misfire that comes and goes) reads its level while there, not
-        half of it.
+        Over blocks *block_s* long (``present_level``).
         """
-        whole = (median(self.excess), self.windows)
-        if block_s <= 0:
-            return whole
-        blocks: dict[int, list[int]] = defaultdict(list)
-        for index, t_s in enumerate(self.t):
-            if t_s == t_s:
-                blocks[int(t_s // block_s)].append(index)
-        there = [
-            (median(excess), len(indices))
-            for indices in blocks.values()
-            if len(indices) >= MIN_SCATTER_READS
-            for excess in ([self.excess[index] for index in indices],)
-            if clear(excess, [self.flanks[index] for index in indices])
-        ]
-        if not there:
-            return whole
-        reads = sum(count for _middle, count in there)
-        return sum(middle * count for middle, count in there) / reads, reads
+        return present_level(self.excess, self.flanks, self.t, block_s)
 
 
 @dataclass(frozen=True, slots=True)
@@ -278,7 +255,7 @@ class TrackedCells:
 
     @property
     def _block_s(self) -> float:
-        return _PRESENCE_BLOCK_WINDOWS * self.window_s
+        return presence_block_s(self.window_s)
 
     def heard_cells(self) -> dict[tuple[str, str, str], SensorOrderLevel]:
         """The order's own level, over the floor beside its line, in each cell where it is heard.

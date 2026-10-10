@@ -650,6 +650,16 @@ the way the report decides it (`apps/server/vibesensor/live/order_hearing.py`):
   report's `heard_cells` rule, from the same functions and thresholds
   (`apps/server/vibesensor/dsp/line_significance.py`). A swept line that passes
   a body mode stands clear only in the bin where it passed it.
+- **Fixed tones.** As the report, a sensor's reads skip a fixed tone that
+  rings there (a blower, a pump, a mount buzz) and its leak, by the report's
+  rule (`apps/server/vibesensor/dsp/fixed_tones.py`, "Fixed tones" in
+  docs/order_tracking.md). Each new spectrum's ranked peaks are noted; the
+  latest 10 per speed bin (`TONE_SPECTRA_PER_BIN`) place the tones over the
+  drive so far, and a tone's ringing is judged over the last 10 s of spectra.
+  One sensor's tones are placed per read, in turn. Reads taken before a tone
+  was found ringing are dropped. A tone shows as fixed only once the drive
+  has covered 1.5x in speed: an order that crosses it before that can still
+  be heard there for a few seconds.
 - **Two verdicts in a row** (`HEARD_VERDICTS`). The report gives one verdict
   per drive; one every second blinks on the floor's chance every few drives, so
   an order shows once two verdicts in a row, each on a new read, hear it.

@@ -37,7 +37,6 @@ from vibesensor.analysis.constants import (
     SPEED_BIN_WIDTH_KMH,
 )
 from vibesensor.analysis.math_utils import _corr_abs_clamped, _ramp
-from vibesensor.analysis.orders.fixed_tones import RingingTone
 from vibesensor.analysis.orders.physics import OrderHypothesis
 from vibesensor.analysis.orders.settings import ORDER_CONFIDENCE_SETTINGS
 from vibesensor.analysis.orders.tracking import (
@@ -50,6 +49,7 @@ from vibesensor.domain.driving_segment import DrivingPhase
 from vibesensor.domain.finding import speed_bin_label
 from vibesensor.domain.order_match import OrderMatchObservation, SensorOrderLevel
 from vibesensor.dsp.constants import FFT_N, SAMPLE_RATE_HZ
+from vibesensor.dsp.fixed_tones import RingingTone
 from vibesensor.dsp.line_significance import CONTROL_REACHES
 from vibesensor.dsp.order_bands import order_peak_tolerance_hz, order_peak_tolerances_hz
 from vibesensor.dsp.window_spectrum import (

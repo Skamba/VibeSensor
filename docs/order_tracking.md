@@ -312,8 +312,10 @@ crossing at a speed the drive lingers at (a city drive's 45 km/h) reads as an
 order of its own. The tracking slope (step 4) catches a crossing only when
 the crossing is most of the order's evidence.
 
-`orders/fixed_tones.py:without_fixed_tones()` finds each sensor's fixed tones
-on the moving spectra and drops the peaks within a tone's width (0.5 Hz or
+The rule is in `apps/server/vibesensor/dsp/fixed_tones.py`, shared with the
+live view's "Orders heard" (see "The live view and the report" in
+docs/metrics.md). `orders/fixed_tones.py:without_fixed_tones()` finds each
+sensor's fixed tones on the moving spectra (`sensor_fixed_tones()`) and drops the peaks within a tone's width (0.5 Hz or
 2 %, whichever is wider) from that sensor's spectra before the speed-following
 orders are matched:
 
@@ -333,7 +335,7 @@ The order-tracked reads skip only the fixed tones that **ring as a line**
 (`ringing_tones()`): each run of the car's fixed tones within a tone's width
 of each other is read as a line over its span in every spectrum of each
 sensor, and judged as an order is (three standard errors, "Order-tracked
-reads" below). A broad resonance the peak picker also holds fixed (the
+reads" below; `dsp/fixed_tones.py:ringing()`). A broad resonance the peak picker also holds fixed (the
 wheel-hop hump) reads no level over the floor that follows its curve, so an
 order crossing it is still read. A ringing tone reaches past its span by its
 main lobe (two bins), or as far as a Hann window's sidelobes leak its power

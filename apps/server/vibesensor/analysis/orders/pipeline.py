@@ -21,7 +21,6 @@ from vibesensor.analysis.orders.finding_builder import (
     assemble_order_finding,
 )
 from vibesensor.analysis.orders.fixed_tones import (
-    RingingTone,
     fixed_tones,
     ringing_tones,
     without_fixed_tones,
@@ -56,6 +55,7 @@ from vibesensor.analysis.orders.tracking import window_duration_s
 from vibesensor.domain.finding import Finding as DomainFinding
 from vibesensor.domain.finding_types import VibrationSource
 from vibesensor.domain.order_match import frequency_tracking_slope, trend_moves
+from vibesensor.dsp.fixed_tones import RingingTone
 from vibesensor.dsp.order_bands import ORDER_TOLERANCE_REL
 from vibesensor.recording.run_schema import RunMetadata
 

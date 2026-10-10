@@ -11,6 +11,7 @@ from __future__ import annotations
 import numpy as np
 
 from vibesensor.dsp.fft_analysis import SpectralAnalysisComputer
+from vibesensor.dsp.vibration_strength import compute_vibration_strength_db
 from vibesensor.live.order_hearing import READ_INTERVAL_S, LiveSpectrum, OrderHearing
 from vibesensor.live.payload_types import OrderBandPayload
 
@@ -129,3 +130,63 @@ def test_reads_wait_for_the_interval_and_a_new_spectrum() -> None:
     assert hearing.heard_at("wheel_1x") == ["front-left"]
     hearing.update(30.0, 100.0, bands, {})
     assert hearing.heard_at("wheel_1x") == []
+
+
+def _peaked(live: LiveSpectrum) -> LiveSpectrum:
+    """The spectrum with its ranked peaks and floor, as the live processor hands it over."""
+    metrics = compute_vibration_strength_db(
+        freq_hz=live.spectrum.freq_hz,
+        combined_spectrum_amp_g_values=live.spectrum.amp_g,
+        top_n=8,
+    )
+    return LiveSpectrum(
+        generation=live.generation,
+        spectrum=live.spectrum,
+        window_s=live.window_s,
+        peaks=tuple((peak["hz"], peak["amp"]) for peak in metrics["top_peaks"]),
+        floor_amp_g=metrics["noise_floor_amp_g"],
+    )
+
+
+def _sweep(
+    seed: int, signal_at, *, peaks: bool = True, step_s: float = 0.5, steps: int = 120
+) -> list[bool]:
+    """Sweep 50 -> 130 km/h; whether the speed-swept 1x driveshaft band is heard at each step.
+
+    The band's line sits at 25 Hz at 80 km/h. *signal_at(speed_kmh)* is the
+    sensor's signal at each step.
+    """
+    rng = np.random.default_rng(seed)
+    hearing = OrderHearing()
+    heard = []
+    for step in range(steps):
+        speed_kmh = 50.0 + 80.0 * step / (steps - 1)
+        live = _spectrum(step, rng, signal_at(rng, speed_kmh))
+        hearing.update(
+            step * step_s,
+            speed_kmh,
+            [_band("driveshaft_1x", 25.0 * speed_kmh / 80.0)],
+            {"rear-left": _peaked(live) if peaks else live},
+        )
+        heard.append(bool(hearing.heard_at("driveshaft_1x")))
+    return heard
+
+
+def test_an_order_is_not_heard_where_its_line_crosses_a_ringing_fixed_tone() -> None:
+    # A blower or mount buzz at 25 Hz whatever the speed: the order's line
+    # sweeps across it near 80 km/h and would borrow its level.
+    def buzz(_rng: np.random.Generator, _speed_kmh: float) -> np.ndarray:
+        return _tone(25.0, 0.01)
+
+    assert not any(_sweep(3, buzz))
+    # Without the peaks that place the tone, the crossing is heard as the order.
+    assert any(_sweep(3, buzz, peaks=False))
+
+
+def test_an_order_on_a_fixed_broad_hump_is_still_heard() -> None:
+    # A wheel-hop hump stays at 14 Hz whatever the speed, as a fixed tone does,
+    # but rings as no line: the driveshaft line sweeping over it is heard.
+    def hump_and_order(rng: np.random.Generator, speed_kmh: float) -> np.ndarray:
+        return _hump(rng, 14.0, 3.0, 0.02) + _tone(25.0 * speed_kmh / 80.0, 0.02)
+
+    assert sum(_sweep(4, hump_and_order)) > 60

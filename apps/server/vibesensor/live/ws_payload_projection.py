@@ -97,13 +97,12 @@ class LiveWsPayloadProjector:
         )
         bands = rotational_speeds["order_bands"] or []
         now_s = time.monotonic()
-        if self._order_hearing.due(now_s):
-            self._order_hearing.update(
-                now_s,
-                None if speed_mps is None else speed_mps * MPS_TO_KMH,
-                bands,
-                self._processor.latest_spectra(fresh_ids) if bands else {},
-            )
+        self._order_hearing.update(
+            now_s,
+            None if speed_mps is None else speed_mps * MPS_TO_KMH,
+            bands,
+            self._processor.latest_spectra(fresh_ids) if bands else {},
+        )
         for band in bands:
             heard_at = self._order_hearing.heard_at(band["key"])
             if heard_at:
