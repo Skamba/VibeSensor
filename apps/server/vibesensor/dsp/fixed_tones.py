@@ -101,7 +101,9 @@ def sensor_fixed_tones(spectra: Sequence[tuple[int, Sequence[float]]]) -> list[f
     """
     bin_of = [speed_bin for speed_bin, _peaks in spectra]
     counts = Counter(bin_of)
-    judged = {speed_bin for speed_bin, count in counts.items() if count >= _MIN_SPECTRA_PER_BIN}
+    judged = sorted(
+        speed_bin for speed_bin, count in counts.items() if count >= _MIN_SPECTRA_PER_BIN
+    )
     at_hz: dict[float, set[int]] = defaultdict(set)
     for index, (_speed_bin, peaks) in enumerate(spectra):
         for hz in peaks:
@@ -121,11 +123,11 @@ def sensor_fixed_tones(spectra: Sequence[tuple[int, Sequence[float]]]) -> list[f
         )
         if len(holding) < 2:
             continue
-        held = sorted(holding)
-        if held[-1] - held[0] < min_bins:
+        lowest, highest = min(holding), max(holding)
+        if highest - lowest < min_bins:
             continue
-        between = [speed_bin for speed_bin in judged if held[0] <= speed_bin <= held[-1]]
-        if len(held) >= _HELD_BINS * len(between):
+        between = bisect_right(judged, highest) - bisect_left(judged, lowest)
+        if len(holding) >= _HELD_BINS * between:
             fixed.append(hz)
     return fixed
 
