@@ -68,6 +68,18 @@ path caps the loop's duty cycle at 50%. Even at a 5–10× slower Raspberry Pi
   the order lines) are capped by the FFT's small share once it is batched
   (about 3-4 s of the Pi's total), well under the 15 % a change to the
   analysis must earn.
+- Loading the run and storing its analysis are I/O and decode work, cut
+  without changing a byte of the stored analysis: sample rows are decoded a
+  column per batch, with msgspec decoding each row's peaks JSON straight into
+  `StrengthPeak` (the light selection pass decodes only the peak amplitudes);
+  the summary is written with a msgspec encoder rather than first copied into
+  plain Python values; and the ~7 MB summary is no longer deep-copied when it
+  is built, stored or read back. On the Pi this took the load from ~13.7 s to
+  ~4.5 s, the summary + store steps from ~8.9 s to ~2.5 s and the whole
+  post-analysis from 97 s to 79 s, peak memory 5 MB lower. What did not
+  help: decoding every row's peaks as one JSON array (slower than per row),
+  and decoding into a msgspec `Struct` then converting (2× slower than
+  decoding into the dataclass).
 - The UDP ingest path is single-threaded: it is I/O-bound, very fast (buffer
   append under a brief lock), and the bounded async queue provides backpressure
   with explicit drop logging.
@@ -77,7 +89,7 @@ path caps the loop's duty cycle at 50%. Even at a 5–10× slower Raspberry Pi
 | Host | CPU time | Peak RSS |
 |------|----------|----------|
 | x86 dev host | ~7.5 s | ~227 MB |
-| Raspberry Pi 3 A+ (`nice -n 10`) | ~99 s | ~152 MB |
+| Raspberry Pi 3 A+ (`nice -n 10`) | ~79 s | ~150 MB |
 
 ## Benchmarks
 

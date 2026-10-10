@@ -21,7 +21,6 @@ def summarize_sensor_frames(
     samples: Sequence[SensorFrame],
     lang: str | None = None,
     file_name: str = "run",
-    include_samples: bool = True,
 ) -> AnalysisSummary:
     """Analyze typed run data and serialize the summary payload the way the app does."""
     run = build_diagnostics_run_input(metadata, samples, file_name=file_name)
@@ -29,7 +28,6 @@ def summarize_sensor_frames(
         run,
         file_name=file_name,
         lang=lang,
-        include_samples=include_samples,
     ).summarize()
     return analysis_result_to_summary(result)
 
@@ -40,7 +38,6 @@ def summarize_mappings(
     *,
     lang: str | None = None,
     file_name: str = "run",
-    include_samples: bool = True,
 ) -> AnalysisSummary:
     """Decode JSON-shaped metadata and sample rows, then run the production summary."""
     return summarize_sensor_frames(
@@ -48,7 +45,6 @@ def summarize_mappings(
         sensor_frames_from_mappings(samples),
         lang=lang,
         file_name=file_name,
-        include_samples=include_samples,
     )
 
 

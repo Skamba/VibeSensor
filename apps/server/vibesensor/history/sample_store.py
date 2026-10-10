@@ -23,8 +23,14 @@ from vibesensor.recording.sensor_frame_fields import (
     sensor_frame_from_row_payload,
     sensor_frame_to_row_payload,
     sensor_frame_top_peak_amp_from_row_value,
+    sensor_frames_from_canonical_rows,
+    storage_float_column,
+    storage_top_peak_amp_column,
 )
-from vibesensor.recording.sensor_frame_values import strict_optional_float
+from vibesensor.recording.sensor_frame_values import (
+    SensorFrameDecodeError,
+    strict_optional_float,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -51,6 +57,26 @@ def sample_to_v2_row(run_id: str, item: SensorFrame) -> tuple[object, ...]:
     """Convert a typed SensorFrame to a row tuple for ``samples_v2``."""
     row = sensor_frame_to_row_values(item)
     return (run_id, *row[1:])
+
+
+def v2_rows_to_sensor_frames(rows: Sequence[tuple[object, ...]]) -> tuple[list[SensorFrame], int]:
+    """Decode ``samples_v2`` rows in order; returns the frames and how many rows were corrupt.
+
+    A batch of well-formed rows is decoded column by column; otherwise each row
+    is decoded on its own and a corrupt one is skipped and logged.
+    """
+    frames = sensor_frames_from_canonical_rows(rows, row_offset=_V2_COL_OFFSET)
+    if frames is not None:
+        return frames, 0
+    frames = []
+    skipped = 0
+    for row in rows:
+        try:
+            frames.append(v2_row_to_sensor_frame(row))
+        except SensorFrameDecodeError as exc:
+            skipped += 1
+            LOGGER.warning("Skipping corrupt v2 sample row id=%s: %s", row[0], exc)
+    return frames, skipped
 
 
 def v2_row_to_sensor_frame(row: tuple[object, ...]) -> SensorFrame:
@@ -129,6 +155,56 @@ class SampleSelectionColumns:
             strength_peak_amp_g=np.concatenate([part.strength_peak_amp_g for part in parts]),
             top_peak_amp_g=np.concatenate([part.top_peak_amp_g for part in parts]),
         )
+
+
+def selection_columns_from_rows(
+    rows: Sequence[Sequence[object]],
+) -> tuple[SampleSelectionColumns, int]:
+    """Decode ``SELECTION_SELECT_SQL_COLS`` rows; returns the columns and the corrupt-row count.
+
+    A batch of well-formed rows is decoded column by column; otherwise each row
+    is decoded on its own and a corrupt one is skipped and logged.
+    """
+    columns = _canonical_selection_columns(rows)
+    if columns is not None:
+        return columns, 0
+    decoded: list[tuple[int, float, float, float, float]] = []
+    skipped = 0
+    for row in rows:
+        try:
+            decoded.append(selection_row_values(row))
+        except SensorFrameDecodeError as exc:
+            skipped += 1
+            LOGGER.warning("Skipping corrupt v2 sample row id=%s: %s", row[0], exc)
+    return SampleSelectionColumns.from_rows(decoded), skipped
+
+
+def _canonical_selection_columns(
+    rows: Sequence[Sequence[object]],
+) -> SampleSelectionColumns | None:
+    if not rows:
+        return SampleSelectionColumns.from_rows([])
+    if any(len(row) < 5 for row in rows):
+        return None
+    row_ids, *stored = list(zip(*rows, strict=False))[:5]
+    if not set(map(type, row_ids)) <= {int}:
+        return None
+    floats: list[Float64Array] = []
+    for values in stored[:3]:
+        decoded = storage_float_column(values)
+        if decoded is None:
+            return None
+        floats.append(np.array(decoded, dtype=np.float64))
+    top_peak_amps = storage_top_peak_amp_column(stored[3])
+    if top_peak_amps is None:
+        return None
+    return SampleSelectionColumns(
+        row_id=np.array(row_ids, dtype=np.int64),
+        t_s=floats[0],
+        vibration_strength_db=floats[1],
+        strength_peak_amp_g=floats[2],
+        top_peak_amp_g=np.array(top_peak_amps, dtype=np.float64),
+    )
 
 
 def selection_row_values(row: Sequence[object]) -> tuple[int, float, float, float, float]:

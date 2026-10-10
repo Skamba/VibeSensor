@@ -15,6 +15,7 @@ from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
 from vibesensor.history.projection import (
     project_analysis_summary,
 )
+from vibesensor.recording.sensor_frame_mapping import sensor_frame_from_mapping
 from vibesensor.summary.analysis_metadata import report_analysis_metadata_from_mapping
 from vibesensor.summary.builder import build_analysis_summary
 from vibesensor.summary.fallback_reasons import derive_report_fallback_reasons
@@ -36,7 +37,11 @@ def test_build_analysis_summary_exposes_stable_public_entrypoint() -> None:
     summary = build_analysis_summary(
         file_name="run.csv",
         run_id="run-1",
-        samples=[{"t_s": 0.0, "speed_kmh": 32.0, "vibration_strength_db": 14.0}],
+        samples=[
+            sensor_frame_from_mapping(
+                {"t_s": 0.0, "speed_kmh": 32.0, "vibration_strength_db": 14.0}
+            )
+        ],
         duration_s=12.5,
         language="en",
         metadata={"end_time_utc": "2026-01-01T00:00:00Z"},

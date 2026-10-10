@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 
-from vibesensor.common.json_types import JsonObject
 from vibesensor.common.json_utils import as_float_or_none as _as_float
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
-from vibesensor.dsp.statistics_utils import _outlier_summary, _percent_missing
+from vibesensor.dsp.statistics_utils import _outlier_summary
+from vibesensor.recording.sensor_frame import SensorFrame
 from vibesensor.summary.data_quality_contracts import (
     DataQualityResponse as DataQualityPayload,
 )
@@ -30,6 +30,14 @@ def _int_value(stats: AccelStatisticsLike, key: str) -> int | None:
     return int(value) if isinstance(value, (int, float)) else None
 
 
+def _percent_missing(samples: Sequence[SensorFrame], field: str) -> float:
+    """Return the percentage of samples without a value for *field*."""
+    if not samples:
+        return 100.0
+    missing = sum(1 for sample in samples if getattr(sample, field) is None)
+    return (missing / len(samples)) * 100.0
+
+
 def _outlier_summary_payload(values: list[float]) -> OutlierSummaryPayload:
     summary = _outlier_summary(values)
     return {
@@ -42,7 +50,7 @@ def _outlier_summary_payload(values: list[float]) -> OutlierSummaryPayload:
 
 
 def build_data_quality_dict(
-    samples: Sequence[JsonObject],
+    samples: Sequence[SensorFrame],
     speed_values: list[float],
     speed_stats: SpeedProfileSummary,
     speed_non_null_pct: float,
@@ -51,14 +59,13 @@ def build_data_quality_dict(
 ) -> DataQualityPayload:
     """Build the ``data_quality`` sub-dict for the persisted run summary."""
 
-    sample_rows = list(samples)
     return {
         "required_missing_pct": {
-            "t_s": _percent_missing(sample_rows, "t_s"),
-            "speed_kmh": _percent_missing(sample_rows, "speed_kmh"),
-            "accel_x": _percent_missing(sample_rows, "accel_x_g"),
-            "accel_y": _percent_missing(sample_rows, "accel_y_g"),
-            "accel_z": _percent_missing(sample_rows, "accel_z_g"),
+            "t_s": _percent_missing(samples, "t_s"),
+            "speed_kmh": _percent_missing(samples, "speed_kmh"),
+            "accel_x": _percent_missing(samples, "accel_x_g"),
+            "accel_y": _percent_missing(samples, "accel_y_g"),
+            "accel_z": _percent_missing(samples, "accel_z_g"),
         },
         "speed_coverage": {
             "non_null_pct": speed_non_null_pct,

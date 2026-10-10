@@ -9,7 +9,6 @@ from vibesensor.analysis.mount_tilt import loose_mount_warnings
 from vibesensor.common.time_utils import utc_now_iso
 from vibesensor.domain.finding import Finding as DomainFinding
 from vibesensor.recording.run_metadata import run_metadata_to_json_object
-from vibesensor.recording.sensor_frame_mapping import sensor_frames_to_json_objects
 from vibesensor.summary.builder import build_analysis_summary
 from vibesensor.summary.contracts import AnalysisSummary
 from vibesensor.summary.data_quality_payload import AccelStatisticsLike
@@ -49,7 +48,7 @@ def analysis_result_to_summary(result: AnalysisResult) -> AnalysisSummary:
     summary = build_analysis_summary(
         file_name=result.file_name,
         run_id=result.prepared.run_id,
-        samples=sensor_frames_to_json_objects(result.samples),
+        samples=result.samples,
         duration_s=result.prepared.duration_s,
         language=result.language,
         metadata=metadata,
@@ -94,6 +93,4 @@ def analysis_result_to_summary(result: AnalysisResult) -> AnalysisSummary:
     report_date = metadata.get("end_time_utc")
     summary["report_date"] = report_date if isinstance(report_date, str) else utc_now_iso()
     summary["plots"] = {"peaks_table": serialize_peak_table(result.peaks_table)}
-    if not result.include_samples:
-        summary.pop("samples", None)
     return summary

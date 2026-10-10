@@ -129,6 +129,27 @@ def test_strength_codecs_decode_expected_fields(decoder, payload, extract, expec
         pytest.param({"hz": "bad"}, {"hz": 0.0, "amp": 0.0}, id="invalid-hz"),
         pytest.param({"amp": float("inf")}, {"hz": 0.0, "amp": 0.0}, id="infinite-amp"),
         pytest.param({"strength_bucket": ""}, {"strength_bucket": None}, id="empty-bucket"),
+        pytest.param(
+            {"hz": 42.0, "amp": float("inf"), "strength_bucket": "l2"},
+            {"hz": 42.0, "amp": 0.0, "strength_bucket": "l2"},
+            id="float-peak-infinite-amp",
+        ),
+        pytest.param(
+            {"hz": 42.0, "amp": 0.3, "vibration_strength_db": float("nan")},
+            {"amp": 0.3, "vibration_strength_db": None},
+            id="float-peak-nan-db",
+        ),
+        pytest.param(
+            {"hz": 42.0, "amp": 0.3, "local_floor_amp_g": float("-inf")},
+            {"local_floor_amp_g": None},
+            id="float-peak-infinite-floor",
+        ),
+        pytest.param(
+            {"hz": 42.0, "amp": 0.3, "strength_bucket": " l2 "},
+            {"strength_bucket": "l2"},
+            id="float-peak-untrimmed-bucket",
+        ),
+        pytest.param({"hz": 42, "amp": 0.3}, {"hz": 42.0, "amp": 0.3}, id="integer-hz"),
     ],
 )
 def test_strength_peak_from_mapping_sanitizes_invalid_inputs(

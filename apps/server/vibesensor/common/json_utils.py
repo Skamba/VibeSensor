@@ -9,7 +9,6 @@ from __future__ import annotations
 import json
 import logging
 import math
-from collections.abc import Sequence
 from typing import cast
 
 import msgspec
@@ -30,12 +29,10 @@ __all__ = [
     "i18n_ref",
     "json_text_dumps",
     "payload_object_from_json",
-    "payload_objects_from_json",
     "payload_value_from_json",
     "safe_json_dumps",
     "safe_json_loads",
     "sanitize_for_json",
-    "sanitize_value",
 ]
 
 
@@ -80,16 +77,23 @@ def payload_object_from_json(value: JsonObject) -> JsonSchemaObject:
     )
 
 
-def payload_objects_from_json(values: Sequence[JsonObject]) -> list[JsonSchemaObject]:
-    """Project a sequence of JSON objects into the bounded schema-safe payload list shape."""
-    return [payload_object_from_json(value) for value in values]
-
-
 LOGGER = logging.getLogger(__name__)
 
 
 _JSON_ENCODER = msgspec.json.Encoder()
 _SORTED_JSON_ENCODER = msgspec.json.Encoder(order="sorted")
+
+
+def _numpy_as_python(value: object) -> object:
+    """``enc_hook`` for :func:`safe_json_dumps`: numpy arrays and scalars as Python values."""
+    if hasattr(value, "tolist") and hasattr(value, "ndim"):
+        return value.tolist()
+    if hasattr(value, "item"):
+        return value.item()
+    raise NotImplementedError
+
+
+_SAFE_JSON_ENCODER = msgspec.json.Encoder(enc_hook=_numpy_as_python)
 
 
 def json_text_dumps(
@@ -165,22 +169,15 @@ def sanitize_for_json(obj: object, *, _max_depth: int = 128) -> tuple[object, bo
     return cleaned, found_non_finite
 
 
-def sanitize_value(value: object) -> object:
-    """Sanitise *value* for JSON, discarding the non-finite flag.
-
-    Convenience wrapper around :func:`sanitize_for_json` for callers that
-    only need the cleaned value (e.g. database serialisation).
-    """
-    cleaned, _ = sanitize_for_json(value)
-    return cleaned
-
-
 def safe_json_dumps(value: object) -> str:
-    """Sanitise *value* and serialise to a compact JSON string.
+    """Serialise *value* to compact JSON text, numpy values and non-finite floats included.
 
-    Combines :func:`sanitize_value` with :func:`json_text_dumps`.
+    The text :func:`json_text_dumps` writes for ``sanitize_for_json(value)``:
+    numpy arrays and scalars encode as their Python values and non-finite
+    floats as ``null``, without first copying *value* (a long drive's
+    analysis is millions of values).
     """
-    return json_text_dumps(sanitize_value(value))
+    return _SAFE_JSON_ENCODER.encode(value).decode("utf-8")
 
 
 def safe_json_loads(value: str | None, *, context: str) -> JsonValue | None:

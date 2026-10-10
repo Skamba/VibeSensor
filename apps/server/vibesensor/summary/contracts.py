@@ -225,7 +225,6 @@ class AnalysisSummaryCoreResponse(TypedDict, total=False):
     sensor_intensity_by_location: Required[list[LocationIntensitySummaryResponse]]
     run_suitability: Required[list[RunSuitabilityCheck]]
     data_quality: Required[DataQualityResponse]
-    samples: list[PayloadObject]
     plots: PlotDataResult | None
     analysis_metadata: PayloadObject
 

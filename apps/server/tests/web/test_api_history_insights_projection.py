@@ -65,7 +65,7 @@ def test_history_insights_does_not_mutate_db_analysis() -> None:
 def test_history_insights_complete_response_includes_status_and_run_id() -> None:
     metadata = make_metadata()
     samples = [sample(i) for i in range(5)]
-    analysis = summarize_mappings(metadata, samples, lang="en", include_samples=False)
+    analysis = summarize_mappings(metadata, samples, lang="en")
     analysis.pop("status", None)
     analysis.pop("run_id", None)
     app, _ = make_app_and_state(
@@ -83,7 +83,7 @@ def test_history_insights_complete_response_includes_status_and_run_id() -> None
 def test_history_insights_preserves_analysis_case_id() -> None:
     metadata = make_metadata()
     samples = [sample(i) for i in range(5)]
-    analysis = summarize_mappings(metadata, samples, lang="en", include_samples=False)
+    analysis = summarize_mappings(metadata, samples, lang="en")
     analysis["case_id"] = "case-123"
     app, _ = make_app_and_state(
         language="en", metadata=metadata, samples=samples, analysis=analysis
@@ -118,7 +118,7 @@ def test_history_insights_localizes_and_adds_run_context_warnings() -> None:
         incomplete_for_order_analysis=True,
     )
     samples = [sample(i) for i in range(5)]
-    analysis = summarize_mappings(metadata, samples, lang="en", include_samples=False)
+    analysis = summarize_mappings(metadata, samples, lang="en")
 
     app, state = make_app_and_state(
         language="en",
@@ -209,7 +209,7 @@ def test_history_insights_lead_with_the_pdfs_run_suitability_warnings(
 ) -> None:
     metadata = make_metadata()
     samples = [sample(i) for i in range(5)]
-    analysis = summarize_mappings(metadata, samples, lang="en", include_samples=False)
+    analysis = summarize_mappings(metadata, samples, lang="en")
     analysis["run_suitability"] = _PI_RUN_SUITABILITY
     analysis["warnings"] = [_REPLAY_INCOMPLETE]
     app, _ = make_app_and_state(
@@ -238,7 +238,7 @@ def test_history_insights_lead_with_the_pdfs_run_suitability_warnings(
 def test_history_insights_word_an_evs_speed_check_for_its_motor() -> None:
     metadata = make_metadata()
     samples = [sample(i) for i in range(5)]
-    analysis = summarize_mappings(metadata, samples, lang="en", include_samples=False)
+    analysis = summarize_mappings(metadata, samples, lang="en")
     analysis["run_suitability"] = _PI_RUN_SUITABILITY
     analysis["diagnosis"]["conditions"]["fuel_type"] = "EV"
     app, _ = make_app_and_state(
@@ -268,7 +268,7 @@ def test_history_insights_name_the_speed_to_record_above_in_the_users_unit(
 ) -> None:
     metadata = make_metadata()
     samples = [sample(i) for i in range(5)]
-    analysis = summarize_mappings(metadata, samples, lang="en", include_samples=False)
+    analysis = summarize_mappings(metadata, samples, lang="en")
     analysis["run_suitability"] = [
         {
             "check_key": "SUITABILITY_CHECK_SPEED_VARIATION",
@@ -295,7 +295,7 @@ def test_history_insights_open_with_the_pdfs_page_one(lang: str, speed_unit: str
     """History shows the PDF's owner page as the server words it, never its own."""
     metadata = make_metadata()
     samples = [sample(i) for i in range(5)]
-    analysis = summarize_mappings(metadata, samples, lang="en", include_samples=False)
+    analysis = summarize_mappings(metadata, samples, lang="en")
     _, state = make_app_and_state(metadata=metadata, samples=samples, analysis=analysis)
     state.run_service = ProjectedHistoryRunService(
         HistoryRunService(state.history_db), speed_unit=lambda: speed_unit

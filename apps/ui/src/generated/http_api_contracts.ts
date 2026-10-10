@@ -107,7 +107,6 @@ export interface components {
             run_id: string;
             run_noise_baseline_db: number | null;
             run_suitability: components["schemas"]["RunSuitabilityCheck"][];
-            samples?: components["schemas"]["PayloadObject"][];
             sensor_count_used: number;
             sensor_intensity_by_location: components["schemas"]["LocationIntensitySummaryResponse"][];
             sensor_locations: string[];
@@ -795,7 +794,6 @@ export interface components {
             run_id: string;
             run_noise_baseline_db: number | null;
             run_suitability: components["schemas"]["RunSuitabilityCheck"][];
-            samples?: components["schemas"]["PayloadObject"][];
             sensor_count_used: number;
             sensor_intensity_by_location: components["schemas"]["LocationIntensitySummaryResponse"][];
             sensor_locations: string[];

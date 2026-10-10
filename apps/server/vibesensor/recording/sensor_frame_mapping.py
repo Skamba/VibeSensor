@@ -17,7 +17,6 @@ __all__ = [
     "sensor_frame_from_mapping",
     "sensor_frame_to_json_object",
     "sensor_frames_from_mappings",
-    "sensor_frames_to_json_objects",
 ]
 
 
@@ -46,9 +45,3 @@ def sensor_frame_to_json_object(frame: SensorFrame) -> JsonObject:
     """Encode one typed sample for an explicit JSON boundary."""
 
     return sensor_frame_to_mapping_payload(frame)
-
-
-def sensor_frames_to_json_objects(samples: Sequence[SensorFrame]) -> list[JsonObject]:
-    """Serialize typed sensor frames only at an explicit JSON boundary."""
-
-    return [sensor_frame_to_json_object(sample) for sample in samples]

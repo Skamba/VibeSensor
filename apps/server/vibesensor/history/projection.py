@@ -175,7 +175,7 @@ def _history_run_fallback_reasons(run: StoredHistoryRun) -> tuple[str, ...]:
         elif run.lifecycle is not None and run.lifecycle.post_analysis == "degraded":
             reasons.append("analysis_failed")
     else:
-        analysis_metadata = run.analysis.to_json_object().get("analysis_metadata")
+        analysis_metadata = run.analysis.get("analysis_metadata")
         if isinstance(analysis_metadata, dict):
             reasons.extend(
                 derive_report_fallback_reasons(

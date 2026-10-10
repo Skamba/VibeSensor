@@ -117,7 +117,6 @@ def _coerce_analysis(
             for row in samples
         ],
         lang=metadata.language or "en",
-        include_samples=False,
     )
     baseline.update(analysis)
     return make_persisted_analysis(cast(AnalysisSummary, baseline))
@@ -429,7 +428,6 @@ def _build_app_router_and_state(
         metadata,
         samples,
         lang=language,
-        include_samples=False,
     )
     state = FakeState(
         FakeHistoryDB(metadata, samples, analysis), FakeLiveWs(), pdf_renderer=pdf_renderer
