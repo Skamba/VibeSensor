@@ -44,8 +44,8 @@ from vibesensor.history.sample_store import (
     V2_SELECT_SQL_COLS,
     SampleSelectionColumns,
     sample_to_v2_row,
-    selection_row_values,
-    v2_row_to_sensor_frame,
+    selection_columns_from_rows,
+    v2_rows_to_sensor_frames,
 )
 from vibesensor.recording.raw_capture import (
     RawCaptureChunk,
@@ -57,7 +57,6 @@ from vibesensor.recording.raw_capture import (
 from vibesensor.recording.run_metadata import run_metadata_to_json_object
 from vibesensor.recording.run_schema import RunMetadata
 from vibesensor.recording.sensor_frame import SensorFrame
-from vibesensor.recording.sensor_frame_values import SensorFrameDecodeError
 from vibesensor.settings.settings_snapshot import SettingsSnapshotPayload
 from vibesensor.settings.snapshot_codec import (
     settings_snapshot_from_json,
@@ -841,7 +840,7 @@ class HistoryDB:
                     " WHERE run_id = ? AND id > ? ORDER BY id LIMIT ?",
                     (run_id, last_id, size),
                 )
-                rows = [tuple(row) for row in cur.fetchall()]
+                rows = cur.fetchall()
             if not rows:
                 if total_skipped:
                     LOGGER.warning(
@@ -851,13 +850,8 @@ class HistoryDB:
                     )
                 return
             last_id = int(rows[-1][0])
-            batch: list[SensorFrame] = []
-            for row in rows:
-                try:
-                    batch.append(v2_row_to_sensor_frame(row))
-                except SensorFrameDecodeError as exc:
-                    total_skipped += 1
-                    LOGGER.warning("Skipping corrupt v2 sample row id=%s: %s", row[0], exc)
+            batch, skipped = v2_rows_to_sensor_frames(rows)
+            total_skipped += skipped
             if batch:
                 yield batch
 
@@ -887,14 +881,9 @@ class HistoryDB:
             if not rows:
                 break
             last_id = int(rows[-1][0])
-            decoded: list[tuple[int, float, float, float, float]] = []
-            for row in rows:
-                try:
-                    decoded.append(selection_row_values(row))
-                except SensorFrameDecodeError as exc:
-                    skipped += 1
-                    LOGGER.warning("Skipping corrupt v2 sample row id=%s: %s", row[0], exc)
-            parts.append(SampleSelectionColumns.from_rows(decoded))
+            columns, batch_skipped = selection_columns_from_rows(rows)
+            skipped += batch_skipped
+            parts.append(columns)
         if skipped:
             LOGGER.warning(
                 "run_id=%s: skipped %d corrupt v2 sample row(s) in total", run_id, skipped
@@ -922,12 +911,8 @@ class HistoryDB:
                     f" WHERE run_id = ? AND id IN ({placeholders}) ORDER BY id",
                     (run_id, *batch_ids),
                 )
-                rows = [tuple(row) for row in cur.fetchall()]
-            for row in rows:
-                try:
-                    frames.append(v2_row_to_sensor_frame(row))
-                except SensorFrameDecodeError as exc:
-                    LOGGER.warning("Skipping corrupt v2 sample row id=%s: %s", row[0], exc)
+                rows = cur.fetchall()
+            frames.extend(v2_rows_to_sensor_frames(rows)[0])
         return frames
 
     # -- settings snapshot ----------------------------------------------------

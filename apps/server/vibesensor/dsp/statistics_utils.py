@@ -4,16 +4,7 @@ from __future__ import annotations
 
 from typing import TypedDict
 
-from vibesensor.common.json_types import JsonObject
 from vibesensor.dsp.vibration_strength import percentile
-
-
-def _percent_missing(samples: list[JsonObject], key: str) -> float:
-    """Return the percentage of samples whose *key* is missing or blank."""
-    if not samples:
-        return 100.0
-    missing = sum(1 for sample in samples if sample.get(key) in (None, ""))
-    return (missing / len(samples)) * 100.0
 
 
 def _mean_variance(values: list[float]) -> tuple[float | None, float | None]:

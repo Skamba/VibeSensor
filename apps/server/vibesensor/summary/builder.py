@@ -12,7 +12,6 @@ from vibesensor.common.json_utils import as_float_or_none as _as_float
 from vibesensor.common.json_utils import (
     i18n_ref,
     payload_object_from_json,
-    payload_objects_from_json,
     payload_value_from_json,
 )
 from vibesensor.common.time_utils import format_duration_mm_ss
@@ -25,6 +24,7 @@ from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.dsp.vibration_strength import compute_db
 from vibesensor.recording.run_suitability_codec import run_suitability_payload
+from vibesensor.recording.sensor_frame import SensorFrame
 from vibesensor.summary.contracts import (
     AnalysisSummary,
     PayloadObject,
@@ -69,7 +69,7 @@ class AnalysisSummaryBuildContext:
 
     file_name: str
     run_id: str
-    samples: Sequence[JsonObject]
+    samples: Sequence[SensorFrame]
     duration_s: float
     language: str
     metadata: JsonObject
@@ -101,7 +101,7 @@ def build_analysis_summary(
     *,
     file_name: str,
     run_id: str,
-    samples: Sequence[JsonObject],
+    samples: Sequence[SensorFrame],
     duration_s: float,
     language: str,
     metadata: JsonObject,
@@ -170,10 +170,6 @@ def _json_object(value: JsonObject) -> PayloadObject:
 
 def _json_object_or_none(value: JsonObject | None) -> PayloadObject | None:
     return None if value is None else _json_object(value)
-
-
-def _json_objects(values: Sequence[JsonObject]) -> list[PayloadObject]:
-    return payload_objects_from_json(values)
 
 
 def _json_value(value: JsonValue | None) -> PayloadValue:
@@ -328,7 +324,6 @@ def build_summary_payload(context: AnalysisSummaryBuildContext) -> AnalysisSumma
             context.sensor_intensity_by_location
         ),
         "run_suitability": run_suitability_payload(context.run_suitability),
-        "samples": _json_objects(context.samples),
         "data_quality": build_data_quality_dict(
             context.samples,
             context.speed_values,

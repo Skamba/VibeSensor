@@ -8,7 +8,6 @@ from math import ceil
 from typing import TYPE_CHECKING
 
 from vibesensor.analysis.post_analysis_input import PostAnalysisRunInput
-from vibesensor.analysis.run_analysis_projection import build_sensor_analysis
 from vibesensor.analysis.summary_payload import analysis_result_to_summary
 from vibesensor.common.json_types import JsonArray, JsonObject
 from vibesensor.common.json_utils import i18n_ref, payload_object_from_json
@@ -20,9 +19,6 @@ from vibesensor.summary.contracts import RunSuitabilityCheck
 from vibesensor.summary.fallback_reasons import (
     REPORT_FALLBACK_REASONS_METADATA_KEY,
     derive_report_fallback_reasons,
-)
-from vibesensor.summary.location_intensity_payload import (
-    serialize_location_intensity_rows,
 )
 from vibesensor.summary.persisted_analysis import PersistedAnalysis
 from vibesensor.summary.run_context_warning import (
@@ -92,23 +88,8 @@ def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
         run.diagnostics_run,
         lang=run.language,
         file_name=run.run_id,
-        include_samples=False,
     ).summarize()
     summary_payload = analysis_result_to_summary(result)
-    prepared = getattr(result, "prepared", None)
-    if prepared is not None and hasattr(prepared, "per_sample_phases"):
-        sensor_locations, connected_locations, sensor_intensity = build_sensor_analysis(
-            samples=run.samples,
-            language=run.language,
-            per_sample_phases=list(prepared.per_sample_phases),
-            metadata=run.context,
-        )
-        summary_payload["sensor_locations"] = sensor_locations
-        summary_payload["sensor_locations_connected_throughout"] = sorted(connected_locations)
-        summary_payload["sensor_count_used"] = len(sensor_locations)
-        summary_payload["sensor_intensity_by_location"] = serialize_location_intensity_rows(
-            sensor_intensity,
-        )
     summary_payload["case_id"] = result.diagnostic_case.case_id
     replay = run.raw_replay
     if result.run_suitability is not None and any(
@@ -304,7 +285,9 @@ def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
             explanation=explanation,
         )
 
-    return PersistedAnalysis.from_json_object(summary_payload)
+    # Built here and held nowhere else: no copy needed (a deep copy of a long
+    # drive's summary takes seconds on the Pi).
+    return PersistedAnalysis(payload=summary_payload)
 
 
 def _set_initial_report_fallback_reasons(analysis_metadata: JsonObject) -> None:

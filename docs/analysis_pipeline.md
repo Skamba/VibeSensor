@@ -170,7 +170,8 @@ During `execute_post_analysis()`, `PostAnalysisWorker`:
 3. Stores the summary via `history_db.store_analysis()` as a versioned
    persistence envelope.
 
-History readers unwrap the envelope back to the summary shape and stay
+History readers unwrap the envelope back to the summary shape without copying
+it (a reader that changes the summary copies it first) and stay
 persistence-only; they never re-run diagnostics. Analyses stored under an
 older persisted-analysis schema version are re-analysed on startup (see
 `docs/history_db_schema.md`).

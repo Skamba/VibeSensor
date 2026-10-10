@@ -25,7 +25,10 @@ application settings and client names in a single SQLite file located at
 - `db_schema.py`: schema DDL, `SCHEMA_VERSION`, open-time schema enforcement, quick check, and
   incompatible-schema backup/run-summary export.
 - `db_projection.py`: row-to-record projection for history list/detail reads.
-- `sample_store.py`: row-serialization helpers for `samples_v2`.
+- `sample_store.py`: row-serialization helpers for `samples_v2`. Reads decode a batch of rows
+  a column at a time (msgspec decodes each row's `top_peaks` JSON straight into `StrengthPeak`);
+  if any value in the batch is unusual (wrong type, non-finite, malformed peaks) the batch is
+  decoded row by row instead, so results and corrupt-row warnings match the per-row path.
 - `raw_capture_store.py`: file-backed raw waveform sidecars next to the DB file.
 
 ## Tables

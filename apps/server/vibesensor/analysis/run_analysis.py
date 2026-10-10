@@ -24,7 +24,6 @@ class RunAnalysis:
         "_run",
         "_file_name",
         "_language",
-        "_include_samples",
         "_prepared",
         "_accel_stats",
     )
@@ -35,12 +34,10 @@ class RunAnalysis:
         *,
         file_name: str = "run",
         lang: str | None = None,
-        include_samples: bool = True,
     ) -> None:
         self._run = run
         self._file_name = file_name
         self._language = normalize_lang(lang)
-        self._include_samples = include_samples
 
         _validate_required_strength_metrics(self._run.samples)
         self._prepared = prepare_run_data(self._run.context, self._run.samples)
@@ -57,7 +54,6 @@ class RunAnalysis:
             samples=self._run.samples,
             file_name=self._file_name,
             language=self._language,
-            include_samples=self._include_samples,
             prepared=self._prepared,
             accel_stats=self._accel_stats,
             window_means=self._run.window_means,

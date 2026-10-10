@@ -102,7 +102,6 @@ def build_analysis_result(
         metadata=metadata,
         samples=context.samples,
         language=context.language,
-        include_samples=context.include_samples,
         prepared=context.prepared,
         accel_stats=context.accel_stats,
         reference_complete=context.reference_complete,

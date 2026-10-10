@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from typing import cast
 
 from vibesensor.common.json_types import JsonArray, JsonObject, JsonValue, is_json_array
@@ -18,6 +18,8 @@ from vibesensor.recording.sensor_frame_values import (
     strict_optional_int,
 )
 from vibesensor.recording.strength_metrics_codec import (
+    stored_strength_peak_amps,
+    stored_strength_peaks,
     strength_peak_payloads,
     strength_peaks_from_sequence,
 )
@@ -27,6 +29,9 @@ __all__ = [
     "sensor_frame_top_peak_amp_from_row_value",
     "sensor_frame_from_mapping_payload",
     "sensor_frame_from_row_payload",
+    "sensor_frames_from_canonical_rows",
+    "storage_float_column",
+    "storage_top_peak_amp_column",
     "sensor_frame_to_mapping_payload",
     "sensor_frame_to_row_payload",
 ]
@@ -38,6 +43,12 @@ _VIBRATION_STRENGTH_DB_KEY = "vibration_strength_db"
 _STRENGTH_BUCKET_KEY = "strength_bucket"
 _TOP_PEAKS_KEY = "top_peaks"
 _ISFINITE = math.isfinite
+_INF = math.inf
+# Integers a float carries exactly; the general row decode goes through float.
+_EXACT_INT_LIMIT = 2**53
+_NONE_TYPE = type(None)
+_FLOAT_COLUMN_TYPES = frozenset({float, _NONE_TYPE})
+_INT_COLUMN_TYPES = frozenset({int, _NONE_TYPE})
 
 
 @dataclass(frozen=True, slots=True)
@@ -75,6 +86,9 @@ class SensorFrameScalarValues:
 type _MappingScalarDecoder = Callable[[object, bool, str], object]
 type _RowScalarDecoder = Callable[[object, str], object]
 type _RowScalarProjector = Callable[[object], object]
+# Decodes one stored column of a batch of rows, or returns None when a value is
+# not of the column's stored type (the batch is then decoded row by row).
+type _ColumnDecoder = Callable[[Sequence[object]], Sequence[object] | None]
 
 
 @dataclass(frozen=True, slots=True)
@@ -83,6 +97,7 @@ class _SensorFrameScalarFieldSpec:
     decode_mapping: _MappingScalarDecoder
     decode_row: _RowScalarDecoder
     project_row: _RowScalarProjector
+    decode_column: _ColumnDecoder
 
 
 def _identity_row_projector(value: object) -> object:
@@ -95,6 +110,31 @@ def _float_row_projector(value: object) -> object:
 
 def _bool_row_projector(value: object) -> object:
     return _bool_to_sqlite(cast(bool | None, value))
+
+
+def storage_float_column(values: Sequence[object]) -> list[float | None] | None:
+    """A stored float column as ``strict_optional_float`` decodes it, or None.
+
+    None when a value is neither a float nor NULL; non-finite floats become None.
+    """
+    if not set(map(type, values)) <= _FLOAT_COLUMN_TYPES:
+        return None
+    floats = cast("Sequence[float | None]", values)
+    return [value if value is not None and -_INF < value < _INF else None for value in floats]
+
+
+def _storage_int_column(values: Sequence[object]) -> list[int | None] | None:
+    """A stored integer column as ``strict_optional_int`` decodes it, or None."""
+    if not set(map(type, values)) <= _INT_COLUMN_TYPES:
+        return None
+    present = [cast(int, value) for value in values if value is not None]
+    if present and (min(present) < -_EXACT_INT_LIMIT or max(present) > _EXACT_INT_LIMIT):
+        return None
+    return cast(list[int | None], list(values))
+
+
+def _text_column(values: Sequence[object]) -> list[object]:
+    return [value if type(value) is str else _text_value(value) for value in values]
 
 
 def _decode_mapping_float(
@@ -135,6 +175,7 @@ def _text_field(name: str) -> _SensorFrameScalarFieldSpec:
         decode_mapping=decode_mapping,
         decode_row=decode_row,
         project_row=_identity_row_projector,
+        decode_column=_text_column,
     )
 
 
@@ -150,6 +191,7 @@ def _float_field(name: str) -> _SensorFrameScalarFieldSpec:
         decode_mapping=decode_mapping,
         decode_row=decode_row,
         project_row=_float_row_projector,
+        decode_column=storage_float_column,
     )
 
 
@@ -165,6 +207,7 @@ def _int_field(name: str) -> _SensorFrameScalarFieldSpec:
         decode_mapping=decode_mapping,
         decode_row=decode_row,
         project_row=_identity_row_projector,
+        decode_column=_storage_int_column,
     )
 
 
@@ -175,11 +218,16 @@ def _default_zero_int_field(name: str) -> _SensorFrameScalarFieldSpec:
     def decode_row(value: object, source: str) -> object:
         return strict_optional_int(value, field=name, source=source) or 0
 
+    def decode_column(values: Sequence[object]) -> list[object] | None:
+        decoded = _storage_int_column(values)
+        return None if decoded is None else [value or 0 for value in decoded]
+
     return _SensorFrameScalarFieldSpec(
         name=name,
         decode_mapping=decode_mapping,
         decode_row=decode_row,
         project_row=_identity_row_projector,
+        decode_column=decode_column,
     )
 
 
@@ -190,11 +238,16 @@ def _bool_field(name: str) -> _SensorFrameScalarFieldSpec:
     def decode_row(value: object, source: str) -> object:
         return _decode_optional_bool(value, strict=True, source=source, field=name)
 
+    def decode_column(values: Sequence[object]) -> list[object] | None:
+        decoded = _storage_int_column(values)
+        return None if decoded is None else [None if v is None else v != 0 for v in decoded]
+
     return _SensorFrameScalarFieldSpec(
         name=name,
         decode_mapping=decode_mapping,
         decode_row=decode_row,
         project_row=_bool_row_projector,
+        decode_column=decode_column,
     )
 
 
@@ -207,11 +260,15 @@ def _strength_bucket_field(name: str) -> _SensorFrameScalarFieldSpec:
         del source
         return _strength_bucket(value)
 
+    def decode_column(values: Sequence[object]) -> list[object]:
+        return [_strength_bucket(value) for value in values]
+
     return _SensorFrameScalarFieldSpec(
         name=name,
         decode_mapping=decode_mapping,
         decode_row=decode_row,
         project_row=_identity_row_projector,
+        decode_column=decode_column,
     )
 
 
@@ -253,6 +310,12 @@ _TOP_PEAKS_COLUMN_INDEX = len(_SENSOR_FRAME_SCALAR_FIELDS)
 _SENSOR_FRAME_SCALAR_VALUES_FACTORY: Callable[..., SensorFrameScalarValues] = (
     SensorFrameScalarValues
 )
+# SensorFrame's positional argument order, by stored column index.
+_SENSOR_FRAME_ARG_COLUMNS: tuple[int, ...] = tuple(
+    SENSOR_FRAME_FIELD_NAMES.index(field.name)
+    for field in fields(SensorFrame)
+    if field.name in SENSOR_FRAME_FIELD_NAMES
+)
 
 
 def sensor_frame_from_mapping_payload(
@@ -267,10 +330,12 @@ def sensor_frame_from_mapping_payload(
             strict=strict,
             source=source,
         ),
-        top_peaks=_top_peaks_from_mapping_value(
-            record.get(_TOP_PEAKS_KEY),
-            strict=strict,
-            source=source,
+        top_peaks=_strength_peaks(
+            _top_peaks_from_mapping_value(
+                record.get(_TOP_PEAKS_KEY),
+                strict=strict,
+                source=source,
+            )
         ),
     )
 
@@ -300,8 +365,44 @@ def sensor_frame_from_row_payload(
     values = row[row_offset:expected_end]
     return _build_sensor_frame(
         _scalars_from_row(values, source=source),
-        top_peaks=_top_peaks_from_row_value(values[_TOP_PEAKS_COLUMN_INDEX], source=source),
+        top_peaks=_strength_peaks(
+            _top_peaks_from_row_value(values[_TOP_PEAKS_COLUMN_INDEX], source=source)
+        ),
     )
+
+
+def sensor_frames_from_canonical_rows(
+    rows: Sequence[Sequence[object]],
+    *,
+    row_offset: int = 0,
+) -> list[SensorFrame] | None:
+    """Decode a batch of storage rows column by column, or None.
+
+    The frames ``sensor_frame_from_row_payload`` decodes from each row, built a
+    column at a time. None when a value is not of its column's stored type or a
+    ``top_peaks`` value is not a well-formed peak list: decode those rows one
+    at a time, which coerces or rejects such values.
+    """
+    if not rows:
+        return []
+    expected_end = row_offset + len(SENSOR_FRAME_FIELD_NAMES)
+    if any(len(row) < expected_end for row in rows):
+        return None
+    stored = list(zip(*rows, strict=False))[row_offset:expected_end]
+    columns: list[Sequence[object]] = []
+    for spec, values in zip(_SENSOR_FRAME_SCALAR_FIELDS, stored, strict=False):
+        decoded = spec.decode_column(values)
+        if decoded is None:
+            return None
+        columns.append(decoded)
+    top_peaks = _storage_top_peaks_column(stored[_TOP_PEAKS_COLUMN_INDEX])
+    if top_peaks is None:
+        return None
+    columns.append(top_peaks)
+    return [
+        SensorFrame(*args)
+        for args in zip(*(columns[index] for index in _SENSOR_FRAME_ARG_COLUMNS), strict=True)
+    ]
 
 
 def sensor_frame_to_row_payload(frame: SensorFrame) -> tuple[object, ...]:
@@ -336,11 +437,50 @@ def sensor_frame_top_peak_amp_from_row_value(
     return largest
 
 
+def _storage_top_peaks_column(
+    values: Sequence[object],
+) -> list[tuple[StrengthPeak, ...]] | None:
+    """Each stored ``top_peaks`` value's kept peaks, or None if one is not well-formed."""
+    top_peaks: list[tuple[StrengthPeak, ...]] = []
+    for value in values:
+        if value is None or value == "":
+            top_peaks.append(())
+            continue
+        if type(value) is not str:
+            return None
+        peaks = stored_strength_peaks(value, max_items=_MAX_TOP_PEAKS)
+        if peaks is None:
+            return None
+        top_peaks.append(peaks)
+    return top_peaks
+
+
+def storage_top_peak_amp_column(values: Sequence[object]) -> list[float | None] | None:
+    """``sensor_frame_top_peak_amp_from_row_value`` of each stored ``top_peaks`` value, or None.
+
+    None when a value is not a well-formed peak list: decode those rows one at a time.
+    """
+    largest: list[float | None] = []
+    for value in values:
+        if value is None or value == "":
+            largest.append(None)
+            continue
+        if type(value) is not str:
+            return None
+        amps = stored_strength_peak_amps(value, max_items=_MAX_TOP_PEAKS)
+        if amps is None:
+            return None
+        largest.append(max(amps, default=None))
+    return largest
+
+
 def _strength_peaks(top_peaks: object) -> tuple[StrengthPeak, ...]:
     return strength_peaks_from_sequence(top_peaks, max_items=_MAX_TOP_PEAKS)
 
 
-def _build_sensor_frame(values: SensorFrameScalarValues, *, top_peaks: object) -> SensorFrame:
+def _build_sensor_frame(
+    values: SensorFrameScalarValues, *, top_peaks: tuple[StrengthPeak, ...]
+) -> SensorFrame:
     return SensorFrame(
         run_id=values.run_id,
         timestamp_utc=values.timestamp_utc,
@@ -364,7 +504,7 @@ def _build_sensor_frame(values: SensorFrameScalarValues, *, top_peaks: object) -
         accel_z_g=values.accel_z_g,
         dominant_freq_hz=values.dominant_freq_hz,
         dominant_axis=values.dominant_axis,
-        top_peaks=_strength_peaks(top_peaks),
+        top_peaks=top_peaks,
         vibration_strength_db=values.vibration_strength_db,
         strength_bucket=values.strength_bucket,
         strength_peak_amp_g=values.strength_peak_amp_g,

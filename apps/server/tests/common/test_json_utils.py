@@ -15,12 +15,10 @@ from vibesensor.common.json_utils import (
     deep_merge,
     json_text_dumps,
     payload_object_from_json,
-    payload_objects_from_json,
     payload_value_from_json,
     safe_json_dumps,
     safe_json_loads,
     sanitize_for_json,
-    sanitize_value,
 )
 
 
@@ -191,28 +189,6 @@ class TestSanitizeForJson:
         assert any("nesting depth" in r.message for r in caplog.records)
 
 
-# ── sanitize_value ───────────────────────────────────────────────────────────
-
-
-class TestSanitizeValue:
-    """Tests for the convenience :func:`sanitize_value` wrapper."""
-
-    def test_returns_only_value(self) -> None:
-        result = sanitize_value({"a": float("nan"), "b": 1})
-        assert result == {"a": None, "b": 1}
-
-    def test_numpy_scalar_converted(self) -> None:
-        assert sanitize_value(np.float64(2.5)) == 2.5
-        assert isinstance(sanitize_value(np.float64(2.5)), float)
-
-    def test_numpy_nan_scalar_to_none(self) -> None:
-        assert sanitize_value(np.float64(float("nan"))) is None
-
-    def test_numpy_array_converted(self) -> None:
-        result = sanitize_value(np.array([1.0, 2.0, float("nan")]))
-        assert result == [1.0, 2.0, None]
-
-
 # ── safe_json_dumps ──────────────────────────────────────────────────────────
 
 
@@ -338,7 +314,6 @@ def test_payload_helpers_project_nested_json_objects() -> None:
 
     assert payload_value_from_json(value) == value
     assert payload_object_from_json(values[1]) == values[1]
-    assert payload_objects_from_json(values) == values
 
 
 class TestAsFloatOrNone:

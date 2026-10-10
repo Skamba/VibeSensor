@@ -29,7 +29,6 @@ class AnalysisResult:
     metadata: RunMetadata
     samples: tuple[Sample, ...]
     language: str
-    include_samples: bool
     prepared: PreparedRunData
     accel_stats: AccelStatistics
     reference_complete: bool

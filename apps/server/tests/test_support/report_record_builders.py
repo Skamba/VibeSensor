@@ -265,7 +265,6 @@ def summarize_records(
     records: list[dict],
     *,
     lang: str | None = None,
-    include_samples: bool = True,
 ) -> AnalysisSummary:
     """Analyse run-log style records (metadata, samples, optional run end) in memory."""
     metadata = next(record for record in records if record.get("record_type") == "run_metadata")
@@ -280,5 +279,4 @@ def summarize_records(
             for sample in samples
         ],
         lang=lang,
-        include_samples=include_samples,
     )
