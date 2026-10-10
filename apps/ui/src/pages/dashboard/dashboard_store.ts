@@ -55,6 +55,7 @@ import {
   IDLE_STATUS,
   isIdle,
   liveHealth,
+  ordersHeard,
   liveSpeedHint,
   type LoggingError,
   type PendingAction,
@@ -491,6 +492,11 @@ export const overview = computed(() => {
   const strongest = strongestSensor(list, levelHistory.value);
   const label = (client: (typeof list)[number]) =>
     sensorLabel(client, locationOf(client), t);
+  const byId = new Map(list.map((client) => [client.id, client]));
+  const sensorName = (clientId: string) => {
+    const client = byId.get(clientId);
+    return client ? label(client) : null;
+  };
   return {
     connectedText: `${formatInt(list.filter((client) => client.connected).length)} / ${formatInt(list.length)}`,
     activeCarText: activeCarText(carSelection.value, t),
@@ -502,6 +508,7 @@ export const overview = computed(() => {
       formatInt,
     ),
     strongestText: strongestText(strongest, label),
+    ordersHeard: ordersHeard(rotationalSpeeds.value, sensorName, t),
     sensors: list.map((client) => ({
       id: client.id,
       label: label(client),

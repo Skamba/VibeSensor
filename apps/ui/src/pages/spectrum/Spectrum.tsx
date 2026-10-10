@@ -30,6 +30,7 @@ function BandLegend() {
             key={band.label}
             class="legend-item legend-item--band"
             data-band-state="active"
+            data-heard={band.heardAt ? "true" : undefined}
             style={colorVar("--band-color", band.color)}
           >
             <span

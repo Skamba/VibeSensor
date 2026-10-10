@@ -38,7 +38,6 @@ from vibesensor.analysis.orders.physics import OrderHypothesis
 from vibesensor.analysis.orders.settings import ORDER_CONFIDENCE_SETTINGS
 from vibesensor.analysis.orders.tracking import (
     TrackedCells,
-    line_half_width_hz,
     window_duration_s,
 )
 from vibesensor.analysis.speed_profile_helpers import _phase_to_str
@@ -46,8 +45,9 @@ from vibesensor.domain.driving_segment import DrivingPhase
 from vibesensor.domain.finding import speed_bin_label
 from vibesensor.domain.order_match import OrderMatchObservation, SensorOrderLevel
 from vibesensor.dsp.constants import FFT_N, SAMPLE_RATE_HZ
+from vibesensor.dsp.line_significance import CONTROL_REACHES
 from vibesensor.dsp.order_bands import order_peak_tolerance_hz
-from vibesensor.dsp.window_spectrum import line_reach_hz, peak_scale_g
+from vibesensor.dsp.window_spectrum import line_half_width_hz, line_reach_hz, peak_scale_g
 from vibesensor.recording.run_schema import RunMetadata
 
 BRAKING_PHASE = DrivingPhase.BRAKING.value
@@ -55,10 +55,6 @@ GUIDED_COAST_PHASE = "guided_coast_down"
 # The cells of the rest of the drive.
 DRIVING_PHASE = ""
 ACCELERATION_PHASE = DrivingPhase.ACCELERATION.value
-# A window's control reads sit this many of its line read's reaches either
-# side of the line: clear of the line's band and flanks, close enough to read
-# the same stretch of floor.
-_CONTROL_REACHES = 2.0
 
 
 @dataclass(frozen=True)
@@ -676,7 +672,7 @@ def _line_reads(
     (``line_half_width_hz``). A window whose read reaches one of its sensor's
     ringing tones or that tone's leak (*tones*, see ``ringing_tones``) is not
     read: the tone's level is no part of the order's. Each read comes with two
-    control reads ``_CONTROL_REACHES`` of its reach either side of the line,
+    control reads ``CONTROL_REACHES`` of its reach either side of the line,
     where the order is not, which place the floor's scatter
     (``TrackedCells``). See "Order-tracked reads" in docs/order_tracking.md.
     """
@@ -724,7 +720,7 @@ def _line_reads(
         cell = (window.location, window.speed_bin or "", _cell_phase(window, sample, coasts))
         reads.cells.add(cell, line, sample.t_s)
         reads.lines[index] = _Line(cell, line_hz, half_width_hz)
-        offset = _CONTROL_REACHES * reach_hz
+        offset = CONTROL_REACHES * reach_hz
         for control_hz in (line_hz - offset, line_hz + offset):
             if control_hz < MIN_ANALYSIS_FREQ_HZ or any(
                 tone.takes_in(control_hz, reach_hz) for tone in tones

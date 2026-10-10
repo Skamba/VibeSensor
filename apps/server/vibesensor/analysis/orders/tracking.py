@@ -17,48 +17,39 @@ from __future__ import annotations
 from collections import defaultdict
 from collections.abc import Collection, Sequence
 from dataclasses import dataclass, field
-from itertools import pairwise
-from math import ceil, cos, pi, sin, sqrt
+from math import sqrt
 from statistics import median
 
 from vibesensor.analysis._types import Sample
-from vibesensor.analysis.orders.settings import ORDER_CONFIDENCE_SETTINGS
 from vibesensor.domain.driving_segment import DrivingPhase
 from vibesensor.domain.order_match import SensorOrderLevel
 from vibesensor.dsp.constants import FFT_N, SAMPLE_RATE_HZ
+from vibesensor.dsp.line_significance import (
+    MIN_INDEPENDENT_READS,
+    MIN_SCATTER_READS,
+    SENSOR_STANDARD_ERRORS,
+    clear,
+    deviations,
+    independent_share,
+    normalized,
+    scatter,
+    stands_out,
+)
 from vibesensor.dsp.window_spectrum import LineRead
 from vibesensor.recording.run_schema import RunMetadata
 
 __all__ = [
     "TrackedCells",
-    "line_half_width_hz",
     "speed_rates_kmh_per_s",
     "window_duration_s",
 ]
 
 # Speeds read further apart than this do not place the speed's rate of change.
 _MAX_RATE_SPAN_S = 2.0
-# A sensor hears an order only where the middle of its reads stands this many
-# standard errors over zero. Where the order is absent the reads scatter about
-# zero by the floor's own randomness. One drive asks this of about ten orders
-# at each of about five sensors; at three standard errors (one-sided 0.13 %)
-# about one drive in fifteen has one absent sensor hear an order.
-_SENSOR_STANDARD_ERRORS = 3.0
 # A driving phase is judged on its own only to tell where a peak near the line
 # is the order's (``heard_phases``), and a phase holds a few of the drive's
 # windows: two standard errors (one-sided 2.3 %).
 _PHASE_STANDARD_ERRORS = 2.0
-# The standard deviation of normal scatter is 1.4826 times its median absolute
-# deviation, and the median of n normal reads scatters sqrt(pi / 2) = 1.2533
-# times more than their mean (Rousseeuw & Croux, JASA 88(424), 1993).
-_MAD_TO_SD = 1.4826
-_MEDIAN_SPREAD = 1.2533
-# A cell's middle is placed by this many reads or more before its reads'
-# distances from it count towards the scatter.
-_MIN_SCATTER_WINDOWS = 5
-# A sensor with fewer independent reads than this over the drive (a sensor
-# that dropped out) places no level, heard or not.
-_MIN_INDEPENDENT_READS = 2.0
 # An intermittent order is placed over the stretches it is there: each cell's
 # reads are judged in blocks of this many window lengths (5.1 s at 2.56 s).
 _PRESENCE_BLOCK_WINDOWS = 2.0
@@ -88,31 +79,6 @@ def speed_rates_kmh_per_s(samples: Sequence[Sample]) -> list[float]:
     return rates
 
 
-def line_half_width_hz(
-    predicted_hz: float, speed_kmh: float | None, rate_kmh_per_s: float, window_s: float
-) -> float:
-    """How far an order's line sweeps either side of its centre within one window.
-
-    A speed-following order moves with the speed: braking from 100 km/h at
-    5 m/s² sweeps it 46 % over a 2.56 s window, smearing it over many bins.
-    The read takes in the whole sweep.
-    """
-    if speed_kmh is None or speed_kmh <= 0:
-        return 0.0
-    return predicted_hz * abs(rate_kmh_per_s) * window_s / (2.0 * speed_kmh)
-
-
-def _hann_overlap(shift: float) -> float:
-    """The overlap correlation of two Hann windows *shift* of their length apart.
-
-    Harris, *Proc. IEEE* 66(1), 1978: 16.7 % at half a window.
-    """
-    if shift >= 1.0:
-        return 0.0
-    turn = 2.0 * pi * shift
-    return ((1.0 - shift) * (2.0 + cos(turn)) + 3.0 * sin(turn) / (2.0 * pi)) / 3.0
-
-
 @dataclass(slots=True)
 class _Cell:
     """One sensor's reads at one speed in one driving phase.
@@ -140,24 +106,24 @@ class _Cell:
         by chance would weigh more, and the reads would stand over zero where
         the order is absent.
         """
-        return _over(self.excess, self.flanks)
+        return normalized(self.excess, self.flanks)
 
     def control_normalized(self) -> list[float]:
         """Each control read's excess over the controls' floor."""
-        return _over(self.control_excess, self.control_flanks)
+        return normalized(self.control_excess, self.control_flanks)
 
     def clear(self) -> bool:
-        """Whether the line stands ``heard_peak_over_floor`` (6 dB) over the floor beside it.
+        """Whether the line stands ``HEARD_OVER_FLOOR`` (6 dB) over the floor beside it.
 
         As a ranked peak must stand over its window's floor.
         """
-        return _clear(self.excess, self.flanks)
+        return clear(self.excess, self.flanks)
 
     def present(self, block_s: float) -> tuple[float, int]:
         """The middle read where the order is there, and how many reads place it.
 
         The cell's reads are split into blocks *block_s* long; a block where
-        the line stands clear (``_clear``) is a stretch the order is there.
+        the line stands clear (``clear``) is a stretch the order is there.
         The middle read over those blocks, weighed by their reads; the whole
         cell's middle read where no block is clear. An order there for half the
         drive (a misfire that comes and goes) reads its level while there, not
@@ -170,27 +136,17 @@ class _Cell:
         for index, t_s in enumerate(self.t):
             if t_s == t_s:
                 blocks[int(t_s // block_s)].append(index)
-        clear = [
+        there = [
             (median(excess), len(indices))
             for indices in blocks.values()
-            if len(indices) >= _MIN_SCATTER_WINDOWS
+            if len(indices) >= MIN_SCATTER_READS
             for excess in ([self.excess[index] for index in indices],)
-            if _clear(excess, [self.flanks[index] for index in indices])
+            if clear(excess, [self.flanks[index] for index in indices])
         ]
-        if not clear:
+        if not there:
             return whole
-        reads = sum(count for _middle, count in clear)
-        return sum(middle * count for middle, count in clear) / reads, reads
-
-
-def _over(excess: Sequence[float], flanks: Sequence[float]) -> list[float]:
-    floor = median(flanks) if flanks else 0.0
-    return [read / floor for read in excess] if floor > 0 else []
-
-
-def _clear(excess: Sequence[float], flanks: Sequence[float]) -> bool:
-    over = ORDER_CONFIDENCE_SETTINGS.heard_peak_over_floor
-    return median(excess) >= (over * over - 1.0) * median(flanks) > 0
+        reads = sum(count for _middle, count in there)
+        return sum(middle * count for middle, count in there) / reads, reads
 
 
 @dataclass(frozen=True, slots=True)
@@ -203,14 +159,7 @@ class _Judge:
     def stands_out(self, cells: Sequence[_Cell], standard_errors: float) -> bool:
         """Whether the middle of the cells' reads stands *standard_errors* over zero."""
         reads = [read for cell in cells for read in cell.normalized()]
-        if not reads:
-            return False
-        independent = max(1.0, len(reads) * self.independent_share)
-        return median(reads) > standard_errors * _MEDIAN_SPREAD * self.scatter / sqrt(independent)
-
-
-def _scatter(deviations: Sequence[float]) -> float:
-    return _MAD_TO_SD * median(abs(deviation) for deviation in deviations)
+        return stands_out(reads, self.scatter, self.independent_share, standard_errors)
 
 
 def _level(
@@ -269,22 +218,8 @@ class TrackedCells:
         cell.control_flanks.append(read.flanks)
 
     def _independent_share(self, location: str) -> float:
-        """The share of a sensor's windows that count as independent reads.
-
-        Windows ``hop`` apart overlap; the power two Hann windows read of the
-        same noise correlates as the square of their overlap correlation, so
-        ``n`` windows read the noise as ``n / (1 + 2 sum_k rho(k hop)^2)``
-        independent ones would (Welch, *IEEE Trans. Audio Electroacoust.*
-        15(2), 1967): about a fifth of them 0.25 s apart in a 2.56 s window.
-        """
-        times = sorted(set(self.times.get(location, ())))
-        if len(times) < 2 or self.window_s <= 0:
-            return 1.0
-        step = median(later - earlier for earlier, later in pairwise(times)) / self.window_s
-        if step <= 0:
-            return 1.0
-        shared = sum(_hann_overlap(k * step) ** 2 for k in range(1, ceil(1.0 / step)))
-        return 1.0 / (1.0 + 2.0 * shared)
+        """The share of a sensor's windows that count as independent reads."""
+        return independent_share(self.times.get(location, ()), self.window_s)
 
     @property
     def _block_s(self) -> float:
@@ -323,7 +258,7 @@ class TrackedCells:
         heard = {
             location
             for location, cells in self._by_location().items()
-            if judges[location].stands_out(cells, _SENSOR_STANDARD_ERRORS)
+            if judges[location].stands_out(cells, SENSOR_STANDARD_ERRORS)
         }
         if self.braking_alone:
             braking = self._judges(_BRAKING_PHASE)
@@ -331,7 +266,7 @@ class TrackedCells:
                 location
                 for location, cells in self._by_location(phases=(_BRAKING_PHASE,)).items()
                 if any(cell.clear() for cell in cells)
-                and braking[location].stands_out(cells, _SENSOR_STANDARD_ERRORS)
+                and braking[location].stands_out(cells, SENSOR_STANDARD_ERRORS)
             }
         return heard
 
@@ -364,7 +299,7 @@ class TrackedCells:
 
         The scatter is that of the control reads beside the line, where the
         order is not: the median distance of a control read from its own
-        cell's middle (scaled to a standard deviation, ``_MAD_TO_SD``), over
+        cell's middle (scaled to a standard deviation, ``scatter``), over
         the cells of a few control reads or more, else from the middle of all
         the sensor's control reads. A strong order's own beat with the floor
         does not widen it, so a faint order beside a strong one is judged by
@@ -377,11 +312,11 @@ class TrackedCells:
         """
         judges = {}
         for location, cells in self._by_location(phases=() if phase is None else (phase,)).items():
-            deviations = _deviations(
-                [cell.control_normalized() for cell in cells], _MIN_SCATTER_WINDOWS
-            ) or _deviations([cell.normalized() for cell in cells], 1)
+            distances = deviations(
+                [cell.control_normalized() for cell in cells], MIN_SCATTER_READS
+            ) or deviations([cell.normalized() for cell in cells], 1)
             judges[location] = _Judge(
-                scatter=_scatter(deviations or [0.0]),
+                scatter=scatter(distances or [0.0]),
                 independent_share=self._independent_share(location),
             )
         return judges
@@ -406,31 +341,11 @@ class TrackedCells:
             _level(
                 location,
                 cells,
-                heard=judges[location].stands_out(cells, _SENSOR_STANDARD_ERRORS),
+                heard=judges[location].stands_out(cells, SENSOR_STANDARD_ERRORS),
                 block_s=self._block_s,
             )
             for location, cells in self._by_location(speeds, phases).items()
             if sum(cell.windows for cell in drive[location]) * judges[location].independent_share
-            >= _MIN_INDEPENDENT_READS
+            >= MIN_INDEPENDENT_READS
         ]
         return tuple(sorted(levels, key=lambda level: (-level.level_g, level.location)))
-
-
-def _deviations(cells: Sequence[Sequence[float]], min_pooled: int) -> list[float]:
-    """Each read's distance from its cell's middle, over the cells of a few reads or more.
-
-    From the middle of all the reads where no cell has that many, if there
-    are *min_pooled* or more.
-    """
-    deviations = [
-        read - middle
-        for reads in cells
-        if len(reads) >= _MIN_SCATTER_WINDOWS
-        for middle in (median(reads),)
-        for read in reads
-    ]
-    pooled = [read for reads in cells for read in reads]
-    if deviations or len(pooled) < max(1, min_pooled):
-        return deviations
-    middle = median(pooled)
-    return [read - middle for read in pooled]

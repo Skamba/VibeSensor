@@ -13,6 +13,7 @@ from vibesensor.dsp.constants import PEAK_BANDWIDTH_HZ
 __all__ = [
     "LineRead",
     "WindowSpectrum",
+    "line_half_width_hz",
     "line_reach_hz",
     "peak_band_bins",
     "peak_scale_g",
@@ -36,6 +37,20 @@ _HANN_ENBW_BINS = 1.5
 def peak_band_bins(bin_hz: float) -> int:
     """The bins of a peak's band: its centre bin and ``PEAK_BANDWIDTH_HZ`` either side."""
     return 2 * int(PEAK_BANDWIDTH_HZ / bin_hz + 1e-9) + 1
+
+
+def line_half_width_hz(
+    predicted_hz: float, speed_kmh: float | None, rate_kmh_per_s: float, window_s: float
+) -> float:
+    """How far an order's line sweeps either side of its centre within one window.
+
+    A speed-following order moves with the speed: braking from 100 km/h at
+    5 m/s² sweeps it 46 % over a 2.56 s window, smearing it over many bins.
+    The read takes in the whole sweep.
+    """
+    if speed_kmh is None or speed_kmh <= 0:
+        return 0.0
+    return predicted_hz * abs(rate_kmh_per_s) * window_s / (2.0 * speed_kmh)
 
 
 def line_reach_hz(half_width_hz: float, bin_hz: float) -> float:
@@ -120,21 +135,16 @@ class WindowSpectrum:
         half = int(round(half_width_hz / bin_hz)) + _MAIN_LOBE_BINS
         if centre - half < 0 or centre + half >= size:
             return None
-        # The flanks are a few bins: plain floats are faster than numpy here.
-        amp_g = self.amp_g
-        lower = [
-            amp * amp for amp in amp_g[max(0, centre - half - _FLANK_BINS) : centre - half].tolist()
-        ]
-        upper = [
-            amp * amp for amp in amp_g[centre + half + 1 : centre + half + 1 + _FLANK_BINS].tolist()
-        ]
+        # The band and its flanks are a few bins: plain floats are faster than numpy here.
+        bins = 2 * half + 1
+        first = max(0, centre - half - _FLANK_BINS)
+        power = [amp * amp for amp in self.amp_g[first : centre + half + 1 + _FLANK_BINS].tolist()]
+        lower = power[: centre - half - first]
+        upper = power[centre - half - first + bins :]
         if max(len(lower), len(upper)) < _FLANK_BINS:
             return None
         flanks = sum(lower + upper) / (len(lower) + len(upper))
-        band = float(
-            np.sum(np.square(self.amp_g[centre - half : centre + half + 1], dtype=np.float64))
-        )
-        bins = 2 * half + 1
+        band = sum(power[centre - half - first : centre - half - first + bins])
         under = bins * flanks
         if len(lower) == len(upper):
             # The floor bends under a resonance: fit a + c x^2 through the flanks

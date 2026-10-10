@@ -10,11 +10,12 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from vibesensor.analysis.orders.tracking import TrackedCells, line_half_width_hz
+from vibesensor.analysis.orders.tracking import TrackedCells
 from vibesensor.dsp.fft_analysis import SpectralAnalysisComputer
 from vibesensor.dsp.window_spectrum import (
     LineRead,
     WindowSpectrum,
+    line_half_width_hz,
     peak_scale_g,
     tone_line_level_g,
 )

@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import time
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from vibesensor.common.time_utils import utc_now_iso
+from vibesensor.common.units import MPS_TO_KMH
 from vibesensor.domain.engine_profile import engine_orders
 from vibesensor.ingest.client_payloads import snapshot_for_api
+from vibesensor.live.order_hearing import OrderHearing
 from vibesensor.live.payload_types import SCHEMA_VERSION, LiveWsPayload
 from vibesensor.live.processing_loop import STALE_DATA_AGE_S
 from vibesensor.live.rotational_speeds import (
@@ -31,6 +34,7 @@ class LiveWsPayloadProjector:
         "_bundled_firmware_version",
         "_gps_enabled",
         "_gps_monitor",
+        "_order_hearing",
         "_processor",
         "_registry",
         "_sensor_metadata_reader",
@@ -58,6 +62,7 @@ class LiveWsPayloadProjector:
         self._sensor_metadata_reader = sensor_metadata_reader
         self._settings_reader = settings_reader
         self._speed_source_reader = speed_source_reader
+        self._order_hearing = OrderHearing()
 
     def build_shared_payload(self, *, include_heavy: bool) -> LiveWsPayload:
         """Assemble the shared live payload before per-subscriber selection."""
@@ -83,19 +88,33 @@ class LiveWsPayloadProjector:
             gps_enabled=self._gps_enabled,
             resolution_source=resolution.source,
         )
+        rotational_speeds = build_rotational_speeds_payload(
+            basis_speed_source=basis,
+            speed_mps=speed_mps,
+            measured_engine_rpm=self._gps_monitor.engine_rpm,
+            analysis_settings=analysis_settings_snapshot,
+            engine_orders=engine_orders(car.engine_profile if car is not None else None),
+        )
+        bands = rotational_speeds["order_bands"] or []
+        now_s = time.monotonic()
+        if self._order_hearing.due(now_s):
+            self._order_hearing.update(
+                now_s,
+                None if speed_mps is None else speed_mps * MPS_TO_KMH,
+                bands,
+                self._processor.latest_spectra(fresh_ids) if bands else {},
+            )
+        for band in bands:
+            heard_at = self._order_hearing.heard_at(band["key"])
+            if heard_at:
+                band["heard_at"] = heard_at
         payload: LiveWsPayload = {
             "schema_version": SCHEMA_VERSION,
             "server_time": utc_now_iso(),
             "speed_mps": speed_mps,
             "clients": clients,
             "selected_client_id": None,
-            "rotational_speeds": build_rotational_speeds_payload(
-                basis_speed_source=basis,
-                speed_mps=speed_mps,
-                measured_engine_rpm=self._gps_monitor.engine_rpm,
-                analysis_settings=analysis_settings_snapshot,
-                engine_orders=engine_orders(car.engine_profile if car is not None else None),
-            ),
+            "rotational_speeds": rotational_speeds,
         }
         if include_heavy:
             payload["spectra"] = self._processor.multi_spectrum_payload(fresh_ids)

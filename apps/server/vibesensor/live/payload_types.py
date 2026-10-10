@@ -105,6 +105,10 @@ class OrderBandPayload(TypedDict):
     tolerance: float
     # The engine's firing order (E3 for a six); absent on every other band.
     firing: NotRequired[bool]
+    heard_at: NotRequired[list[str]]
+    """The client ids whose last few seconds of spectra hear the order at its
+    line, strongest first, by the report's significance rule; absent where
+    none does (``live/order_hearing.py``)."""
 
 
 class RotationalSpeedsPayload(TypedDict):
