@@ -43,7 +43,8 @@ path caps the loop's duty cycle at 50%. Even at a 5–10× slower Raspberry Pi
   windows together as arrays (an order's line reads all at once, the replay's
   windows as below), each result bit for bit the one-at-a-time result.
   Worker processes would each hold a copy of the run's samples and spectra,
-  which the Pi 3 A+ (424 MB) cannot spare while the live server runs.
+  which the Pi 3 A+ (512 MB board, ~473 MB visible to Linux with the
+  image's headless boot config) cannot spare while the live server runs.
 - The raw replay locates each sensor's windows in its raw buffer all at once
   (`contiguous_raw_window_starts`), gathers 64 at a time in one strided step,
   and computes their spectra through one FFT plan (`combined_spectra`; a
@@ -155,6 +156,43 @@ path caps the loop's duty cycle at 50%. Even at a 5–10× slower Raspberry Pi
 |------|----------|----------|
 | x86 dev host | ~5.4 s | ~223 MB |
 | Raspberry Pi 3 A+ (`nice -n 10`) | ~39 s | ~162 MB |
+
+### 64-bit, numba and free-threading (measured, not kept)
+
+Measured on the Pi 3 A+ on 2026-10-10, re-analysing the same 30-minute,
+4-sensor drive (`nice -n 10`, server idle, MemAvailable sampled every second,
+headless boot config on both images). None of these is kept: none is clearly
+faster, and all of them cost the memory that capture needs.
+
+| Variant | Post-analysis | Peak RSS | Min MemAvailable | Output |
+|---------|---------------|----------|------------------|--------|
+| armhf (32-bit), Python 3.13 (shipped) | 37.5-37.7 s | 162 MB | 213-218 MB | reference |
+| arm64 (64-bit), Python 3.13 | 36.8-39.5 s | 207-216 MB | 122-139 MB | identical |
+| arm64, Python 3.14 (GIL) | 38.0-40.6 s | 208-217 MB | 114-123 MB | identical |
+| arm64, numba 0.68, one kernel, cache warm | 41.8-42.2 s | 262-274 MB | 90-103 MB | identical |
+| arm64, numba, first run (compiles) | 51.8 s | 269 MB | 91 MB | identical |
+| arm64, free-threaded 3.14t, 1 thread | 39.0-40.8 s | 238-243 MB | 85-93 MB | float-level diffs, same verdicts |
+| arm64, free-threaded 3.14t, 2 threads | 35.4-36.6 s | 260-263 MB | 60-61 MB | as 1 thread |
+| arm64, free-threaded 3.14t, 4 threads | 39.7 s | 267 MB | 31 MB (swapping) | as 1 thread |
+
+- 64-bit gives no speed: the remaining cost is interpreter work (small
+  objects, dict lookups, calls), not wide numeric kernels, and every Python
+  object is larger, so it only costs ~50 MB peak and ~80 MB headroom.
+- numba (aarch64 wheels only; none for armv7l) costs ~72 MB to import and
+  ~28 MB more once LLVM loads, 6.2-6.6 s to load cached kernels per process
+  and ~15 s to compile them the first time. The compiled order-matching line
+  reads went from 1.5 s to 0.4 s, far less than those fixed costs, and much of
+  what remains (building per-window Python objects) cannot be compiled.
+- Free-threaded 3.14t (aarch64 wheels for numpy/scipy/msgspec; none for
+  pyFFTW, replaced by scipy.fft float32 for the test) costs ~25-30 MB on one
+  thread; order matching per hypothesis and the replay's strength batches on
+  a pool scale poorly (2 threads save ~3 s for ~50 MB, 4 threads swap).
+- The prototype code and timing scripts are kept on the unmerged branch
+  `exp64-jit` (`VS_EXP_NUMBA=1`, `VS_EXP_THREADS=N`, `tools/exp64/`).
+- The headless boot config (`gpu_mem=16`, no `vc4-kms-v3d`) that both images
+  use raised Linux-visible RAM from ~425 MB to ~473 MB and the post-analysis
+  minimum MemAvailable on armhf from 176-177 MB to 213-218 MB, at the same
+  speed.
 
 ## Benchmarks
 
