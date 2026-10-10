@@ -98,7 +98,7 @@ _SLOW_IMPORTS = (
 )
 """Modules that cost seconds to import on the Pi and are only needed later.
 
-FFT (pyfftw pulls in scipy.fft) waits for the first sensor data, httpx for an
+FFT (pyfftw) waits for the first sensor data, httpx for an
 update or firmware download, reportlab for a PDF, the car library for the car
 picker. The server must not load them before it answers ``/api/health``.
 """
@@ -132,3 +132,18 @@ def test_server_start_leaves_slow_imports_for_first_use(tmp_path: Path) -> None:
         check=True,
     )
     assert result.stdout.strip().splitlines()[-1] == "[]"
+
+
+def test_first_fft_loads_pyfftw_without_scipy() -> None:
+    """pyfftw's optional scipy interfaces (~30 MB, >1 s on the Pi) stay unloaded."""
+    result = _run_import_probe(
+        """
+import sys
+from vibesensor.dsp.fft_analysis import _get_rfft_plan
+
+_get_rfft_plan(3, 256)
+print(sorted(m for m in sys.modules if m == "scipy" or m.startswith("scipy.")))
+import scipy.fftpack  # still importable for anyone who does need it
+        """
+    )
+    assert result.stdout.strip().splitlines() == ["[]", "ok"]
