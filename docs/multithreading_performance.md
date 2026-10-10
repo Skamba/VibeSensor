@@ -87,6 +87,23 @@ path caps the loop's duty cycle at 50%. Even at a 5–10× slower Raspberry Pi
   byte-identical on that drive, the CI-seed accuracy benchmark and the
   diagnostic matrix. The line reads gather straight from the replay's
   spectra where it keeps them as rows of one array (`WindowSpectrum.rows`).
+- Each hypothesis then keeps its windows as columns (`_Windows`: predicted
+  and matched frequency, sensor, speed bin, phase, floor, amplitude), judges
+  their tracking in array operations, and counts the possible and matched
+  windows per sensor, speed bin and phase by code; only the matched windows
+  it keeps become `OrderMatchObservation`s, built once each. The wheel's
+  harmonic comb (`_wheel_harmonic_peaks`) reads only which peaks each
+  harmonic matched (`matched_peaks_for_hypothesis`), not the whole match.
+  The spectra's grouping by shared rows array is worked out once per drive
+  (`spectra_by_rows`) rather than per hypothesis, an order's reference spec
+  at given ratios is cached, a sample's location label is remembered, and
+  the peak findings check a frequency bin against the orders' frequencies
+  by bisection rather than against every one. Measured on a 30-minute,
+  4-sensor drive on the Pi: the analyze step went from 29.8 s to 21.2 s
+  (order matching from 17.7 s to 10.5 s), the whole post-analysis from
+  48 s to 40 s, peak RSS unchanged (162 MB); the analysis JSON is
+  byte-identical on that drive, the CI-seed accuracy benchmark and the
+  diagnostic matrix.
 - Tried and not kept for order matching: a pool of 3 forked processes, one
   hypothesis each, saved 21 s on the Pi but each child dirtied 30-45 MB of
   the parent's pages through reference counts (86-135 MB in all), leaving 54-100
@@ -128,7 +145,7 @@ path caps the loop's duty cycle at 50%. Even at a 5–10× slower Raspberry Pi
 | Host | CPU time | Peak RSS |
 |------|----------|----------|
 | x86 dev host | ~5.4 s | ~223 MB |
-| Raspberry Pi 3 A+ (`nice -n 10`) | ~48.5 s | ~160 MB |
+| Raspberry Pi 3 A+ (`nice -n 10`) | ~40 s | ~162 MB |
 
 ## Benchmarks
 

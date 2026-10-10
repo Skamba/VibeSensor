@@ -57,6 +57,20 @@ class OrderMatchObservation:
         if self.rel_error < 0:
             raise ValueError("rel_error must be >= 0")
 
+    def with_amp(self, amp: float) -> OrderMatchObservation:
+        """This observation at amplitude *amp*: ``dataclasses.replace``, a few times quicker."""
+        return OrderMatchObservation(
+            self.predicted_hz,
+            self.matched_hz,
+            self.rel_error,
+            amp,
+            self.location,
+            self.t_s,
+            self.speed_kmh,
+            self.phase,
+            self.heard,
+        )
+
 
 @dataclass(frozen=True, slots=True)
 class SensorOrderLevel:

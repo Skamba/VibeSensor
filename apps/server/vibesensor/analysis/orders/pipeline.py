@@ -37,6 +37,7 @@ from vibesensor.analysis.orders.matching import (
     fft_bin_hz,
     is_harmonic_of,
     match_samples_for_hypothesis,
+    matched_peaks_for_hypothesis,
     peak_table,
     reference_columns,
 )
@@ -393,7 +394,15 @@ class OrderAnalysisSession:
         return frozenset(
             (index, peak_hz)
             for hypothesis in WHEEL_HARMONIC_HYPOTHESES
-            for index, peak_hz in self._match_hypothesis(hypothesis).matched_peaks
+            for index, peak_hz in matched_peaks_for_hypothesis(
+                self._samples,
+                self._speed_following_peaks["road"],
+                self._speed_following_tones["road"],
+                hypothesis,
+                self._context,
+                self._reference_hz(hypothesis.order_label_base),
+                self._facts,
+            )
             if index in fundamental_hz
             and is_harmonic_of(peak_hz, fundamental_hz[index], int(hypothesis.order), bin_hz)
         )

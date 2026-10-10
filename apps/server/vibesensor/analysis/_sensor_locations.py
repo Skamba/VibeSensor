@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from collections.abc import Sequence
+from functools import lru_cache
 
 from vibesensor.analysis._sample_metrics import _primary_vibration_strength_db
 from vibesensor.analysis._types import Sample
@@ -38,15 +39,23 @@ def _location_label(
         if snapshot is not None:
             return _sensor_snapshot_label(snapshot, lang=lang)
     del lang
-    location_code = sample.location.strip()
+    return _sample_location_label(sample.location, sample.client_name, sample.client_id)
+
+
+# A drive's samples come from a few sensors, and each step of the analysis asks
+# for every sample's label.
+@lru_cache(maxsize=256)
+def _sample_location_label(location: str, client_name: str, client_id: str) -> str:
+    """The label of a sample with location code *location* from sensor *client_name*."""
+    location_code = location.strip()
     if location_code:
         translated = _label_for_code(location_code)
         return str(translated) if translated else location_code
 
-    client_name_raw = sample.client_name.strip()
+    client_name_raw = client_name.strip()
     if client_name_raw:
         return client_name_raw
-    client_id_raw = sample.client_id.strip()
+    client_id_raw = client_id.strip()
     if client_id_raw:
         return fallback_location_label(client_id_raw)
     return "Unknown sensor"

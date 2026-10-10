@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from bisect import bisect_left
 from collections.abc import Sequence
 
 from vibesensor.analysis._sample_metrics import _run_noise_baseline_g
@@ -159,8 +160,12 @@ class PeakFindingAnalyzer:
     ) -> list[PeakBin]:
         """Project accumulated peak-bin statistics into scored peak bins."""
         bins: list[PeakBin] = []
+        # The order frequencies nearest a bin are the ones either side of it.
+        order_hz = sorted(self._order_finding_freqs)
         for bin_center, amps in stats.bin_amps.items():
-            if any(abs(bin_center - of) < self._freq_bin_hz for of in self._order_finding_freqs):
+            at = bisect_left(order_hz, bin_center)
+            nearest = order_hz[max(0, at - 1) : at + 1]
+            if any(abs(bin_center - of) < self._freq_bin_hz for of in nearest):
                 continue
             bins.append(
                 PeakBin(
