@@ -21,9 +21,8 @@ combined_spectrum_amp_g
 from __future__ import annotations
 
 from collections.abc import Sequence
-from itertools import groupby, pairwise
+from itertools import pairwise
 from math import isfinite, log10
-from operator import itemgetter
 from statistics import median as _stdlib_median
 from typing import Final, NotRequired, TypedDict, cast
 
@@ -746,12 +745,8 @@ def compute_vibration_strength_rows(
     combined = np.where(np.isfinite(raw), np.maximum(raw, 0.0), 0.0)
     noise_bins = combined[:, 1:] if _spectrum_includes_dc_bin_aligned(freq_hz=freq) else combined
     floor_p20 = _row_quantiles(noise_bins, 0.20)
-    thresholds = np.array(
-        [
-            max(floor * PEAK_THRESHOLD_FLOOR_RATIO, floor + STRENGTH_EPSILON_MIN_G)
-            for floor in floor_p20.tolist()
-        ],
-        dtype=np.float64,
+    thresholds = np.maximum(
+        floor_p20 * PEAK_THRESHOLD_FLOOR_RATIO, floor_p20 + STRENGTH_EPSILON_MIN_G
     )
 
     scored_candidates = _candidate_peak_indexes(combined, thresholds, max(1, top_n * 2))
@@ -782,63 +777,59 @@ def compute_vibration_strength_rows(
     epsilons = np.maximum(STRENGTH_EPSILON_MIN_G, floors * STRENGTH_EPSILON_FLOOR_RATIO)
     band = np.where(np.isfinite(band_rms_values), np.maximum(band_rms_values, 0.0), 0.0)
     candidate_db = 20.0 * np.log10((band + epsilons[rows]) / (floors[rows] + epsilons[rows]))
-    candidate_buckets = _buckets_for_strength_db_aligned(candidate_db)
 
-    chosen_by_row: list[list[StrengthPeak]] = []
-    chosen_rows: list[int] = []
-    chosen_indexes: list[int] = []
-    candidates = zip(
-        rows.tolist(),
-        indexes.tolist(),
-        candidate_hz.tolist(),
-        band_rms_values.tolist(),
-        candidate_db.tolist(),
-        candidate_buckets,
-        strict=True,
-    )
-    for row, row_candidates in groupby(candidates, key=itemgetter(0)):
-        ranked: list[tuple[int, StrengthPeak]] = [
-            (
-                idx,
-                {
-                    "hz": hz,
-                    "amp": band_rms,
-                    "vibration_strength_db": db,
-                    "strength_bucket": strength_bucket,
-                },
-            )
-            for _row, idx, hz, band_rms, db, strength_bucket in row_candidates
-            if isfinite(db)
-        ]
-        ranked.sort(key=lambda item: item[1]["vibration_strength_db"], reverse=True)
-        chosen_by_row.extend([] for _row in range(len(chosen_by_row), row))
-        chosen: list[StrengthPeak] = []
-        chosen_hz: list[float] = []
-        for idx, candidate in ranked:
-            if len(chosen) >= top_n:
+    # Each row's candidates with a finite strength, strongest first; equal
+    # strengths keep their order (a stable sort, as ``list.sort``). Then, in
+    # that order, those at least ``peak_separation_hz`` from every one chosen
+    # before them, up to ``top_n``.
+    finite = np.flatnonzero(np.isfinite(candidate_db))
+    ranked = finite[np.lexsort((-candidate_db[finite], rows[finite]))]
+    chosen: list[int] = []
+    chosen_hz: list[float] = []
+    current_row = -1
+    for position, row, hz in zip(
+        ranked.tolist(), rows[ranked].tolist(), candidate_hz[ranked].tolist(), strict=True
+    ):
+        if row != current_row:
+            current_row = row
+            chosen_hz = []
+        if len(chosen_hz) >= top_n:
+            continue
+        for existing_hz in chosen_hz:
+            if abs(existing_hz - hz) < peak_separation_hz:
                 break
-            hz = candidate["hz"]
-            for existing_hz in chosen_hz:
-                if abs(existing_hz - hz) < peak_separation_hz:
-                    break
-            else:
-                chosen.append(candidate)
-                chosen_rows.append(row)
-                chosen_indexes.append(idx)
-                chosen_hz.append(hz)
-        chosen_by_row.append(chosen)
-    chosen_by_row.extend([] for _row in range(len(chosen_by_row), combined.shape[0]))
+        else:
+            chosen.append(position)
+            chosen_hz.append(hz)
 
+    picked = np.asarray(chosen, dtype=np.intp)
+    chosen_rows = rows[picked]
     local_floors = _peak_local_floors(
         freq_hz=freq,
         spectra=combined,
         floor_bins=floor_bins,
-        rows=np.asarray(chosen_rows, dtype=np.intp),
-        center_indexes=np.asarray(chosen_indexes, dtype=np.intp),
+        rows=chosen_rows,
+        center_indexes=indexes[picked],
     )
-    peaks = (peak for chosen in chosen_by_row for peak in chosen)
-    for peak, local_floor in zip(peaks, local_floors.tolist(), strict=True):
-        peak["local_floor_amp_g"] = local_floor
+    chosen_by_row: list[list[StrengthPeak]] = [[] for _row in range(combined.shape[0])]
+    for row, hz, amp, db, strength_bucket, local_floor in zip(
+        chosen_rows.tolist(),
+        candidate_hz[picked].tolist(),
+        band_rms_values[picked].tolist(),
+        candidate_db[picked].tolist(),
+        _buckets_for_strength_db_aligned(candidate_db[picked]),
+        local_floors.tolist(),
+        strict=True,
+    ):
+        chosen_by_row[row].append(
+            {
+                "hz": hz,
+                "amp": amp,
+                "vibration_strength_db": db,
+                "strength_bucket": strength_bucket,
+                "local_floor_amp_g": local_floor,
+            }
+        )
     return [
         _strength_metrics(chosen, floor_strength)
         for chosen, floor_strength in zip(chosen_by_row, floor_strengths.tolist(), strict=True)

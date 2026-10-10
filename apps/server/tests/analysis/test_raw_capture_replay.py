@@ -21,6 +21,7 @@ from test_support.raw_capture_fixtures import (
 from vibesensor.analysis import raw_capture_replay
 from vibesensor.analysis.post_analysis_input import build_post_analysis_input
 from vibesensor.analysis.post_analysis_loader import LoadedPostAnalysisRun
+from vibesensor.dsp.constants import SPECTRUM_MAX_HZ, SPECTRUM_MIN_HZ
 from vibesensor.recording.raw_capture import (
     RawCaptureChunkIndex,
     RawCaptureChunkTable,
@@ -138,15 +139,15 @@ def test_build_post_analysis_input_uses_corrected_observed_sample_rate(
         stride=1,
     )
     calls: list[int] = []
-    original_compute = raw_capture_replay.SpectralAnalysisComputer.combined_spectrum
+    original_compute = raw_capture_replay.SpectralAnalysisComputer.combined_spectra
 
-    def _counting_compute(self, fft_block, sample_rate_hz, **kwargs):
+    def _counting_compute(self, blocks, sample_rate_hz, **kwargs):
         calls.append(sample_rate_hz)
-        return original_compute(self, fft_block, sample_rate_hz, **kwargs)
+        return original_compute(self, blocks, sample_rate_hz, **kwargs)
 
     monkeypatch.setattr(
         raw_capture_replay.SpectralAnalysisComputer,
-        "combined_spectrum",
+        "combined_spectra",
         _counting_compute,
     )
 
@@ -493,3 +494,69 @@ def test_build_post_analysis_input_marks_fatal_raw_capture_loss_policy() -> None
     assert result.raw_replay.raw_capture_loss_policy_severity == "fatal"
     assert result.raw_replay.raw_capture_loss_policy_reason == "raw_capture_queue_overflow_fatal"
     assert WARNING_CODE_RAW_CAPTURE_LOSS_POLICY in warning_codes(result.raw_replay.warnings)
+
+
+@pytest.mark.parametrize("stored_in_time_order", [True, False])
+def test_each_replayed_window_is_the_live_spectrum_of_its_samples(
+    monkeypatch: pytest.MonkeyPatch, stored_in_time_order: bool
+) -> None:
+    # Windows are found and computed many at once, in one slice of the raw
+    # buffer or (chunks stored out of time order) in pieces; each must be the
+    # live tick's spectrum and strength of its own samples.
+    monkeypatch.setattr(raw_capture_replay, "_WINDOWS_PER_FFT", 4)
+    monkeypatch.setattr(raw_capture_replay, "_WINDOWS_PER_BATCH", 3)
+    rng = np.random.default_rng(5)
+    period_us = 1_000_000 // _SAMPLE_RATE_HZ
+    raw_start_offset_us = 100_000
+    waveform = (
+        rng.normal(0.0, 40.0, (640, 3))
+        + 900.0 * np.sin(2 * np.pi * 52.0 * np.arange(640) / _SAMPLE_RATE_HZ)[:, None]
+    ).astype(np.int16)
+    chunks = [
+        (_RUN_START_MONOTONIC_US + raw_start_offset_us + start * period_us, waveform[start:stop])
+        for start, stop in zip(range(0, 640, 64), range(64, 704, 64), strict=True)
+    ]
+    if not stored_in_time_order:
+        chunks = chunks[1::2] + chunks[0::2]
+    sample_ends = list(range(_FFT_N, 641, 55))
+    loaded = LoadedPostAnalysisRun(
+        run_id="run-batch",
+        metadata=post_analysis_metadata("run-batch"),
+        language="en",
+        samples=sensor_frames_from_mappings(
+            [
+                {
+                    "client_id": "sensor-a",
+                    "t_s": 0.0,
+                    "analysis_window_end_us": raw_start_offset_us + sample_end * period_us,
+                    "sample_rate_hz": _SAMPLE_RATE_HZ,
+                }
+                for sample_end in sample_ends
+            ]
+        ),
+        raw_capture=_timing_capture("run-batch", sensors=[("sensor-a", chunks)]),
+        total_summary_row_count=len(sample_ends),
+        stride=1,
+    )
+
+    result = build_post_analysis_input(loaded)
+
+    assert result.raw_backed_summary_row_count == len(sample_ends)
+    computer = raw_capture_replay.SpectralAnalysisComputer(
+        fft_n=_FFT_N, spectrum_min_hz=SPECTRUM_MIN_HZ, spectrum_max_hz=SPECTRUM_MAX_HZ
+    )
+    for sample, sample_end in zip(result.samples, sample_ends, strict=True):
+        # C order, as the live ring buffer hands it over: the mean's summation
+        # order, and so its last bit, follows the memory layout.
+        block = np.ascontiguousarray(waveform[sample_end - _FFT_N : sample_end].T, dtype=np.float32)
+        block *= np.float32(0.001)
+        live = computer.compute_fft_spectrum(block, _SAMPLE_RATE_HZ)
+        metrics = live["strength_metrics"]
+        assert sample.spectrum is not None
+        np.testing.assert_array_equal(sample.spectrum.amp_g, live["combined_amp"])
+        assert sample.vibration_strength_db == metrics["vibration_strength_db"]
+        assert sample.strength_floor_amp_g == metrics["noise_floor_amp_g"]
+        assert [(peak.hz, peak.amp) for peak in sample.top_peaks] == [
+            (peak["hz"], peak["amp"]) for peak in metrics["top_peaks"]
+        ]
+        assert sample.accel_z_g == float(block[2, -1])

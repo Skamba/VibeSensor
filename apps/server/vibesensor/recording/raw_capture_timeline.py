@@ -28,6 +28,7 @@ __all__ = [
     "RawWindowSegment",
     "assemble_raw_window_samples",
     "build_raw_sensor_timeline",
+    "contiguous_raw_window_starts",
     "raw_anchor_reason",
     "raw_timeline_has_unverified_sync",
     "raw_timeline_is_legacy",
@@ -54,6 +55,16 @@ class RawTimelineIntervals:
         """Whether any interval starts before ``end - tol`` and ends after ``start + tol``."""
         before_end = int(np.searchsorted(self.start_us, end_us - tolerance_us, side="left"))
         return before_end > 0 and bool(self.end_reach_us[before_end - 1] > start_us + tolerance_us)
+
+    def intersect_each(
+        self, *, start_us: FloatArray, end_us: FloatArray, tolerance_us: float
+    ) -> npt.NDArray[np.bool_]:
+        """``intersects`` of each ``(start_us[i], end_us[i])``, all at once."""
+        if len(self) == 0:
+            return np.zeros(end_us.shape, dtype=np.bool_)
+        before_end = np.searchsorted(self.start_us, end_us - tolerance_us, side="left")
+        reach = self.end_reach_us[np.maximum(before_end - 1, 0)]
+        return (before_end > 0) & (reach > start_us + tolerance_us)
 
 
 @dataclass(frozen=True, slots=True, eq=False)
@@ -276,6 +287,70 @@ def resolve_raw_window_end_time(
         segments=segments,
         timing_source=timing_source,
     )
+
+
+def contiguous_raw_window_starts(
+    *,
+    timeline: RawSensorTimeline,
+    requested_end_us: FloatArray,
+    sample_count: int,
+) -> IntArray:
+    """Where each window ``resolve_raw_window_end_time`` finds complete starts in the raw samples.
+
+    All windows at once, at a fraction of the cost of one call each. The raw
+    sample index each window starts at, where the window is complete and its
+    segments follow on in the raw buffer (one slice: the chunks were stored in
+    time order); -1 for the rest, which ``resolve_raw_window_end_time`` says
+    why of or splits into segments.
+    """
+    starts = np.full(requested_end_us.shape, -1, dtype=np.int64)
+    chunks = timeline.chunks
+    period_us = timeline.sample_period_us
+    if not timeline.anchored or len(chunks) == 0 or period_us <= 0 or sample_count <= 0:
+        return starts
+    # The checks of ``resolve_raw_window_end_time``, in its floating-point steps.
+    tolerance_us = timeline.timing_tolerance_us
+    end_us = requested_end_us
+    start_us = end_us - (float(sample_count) * period_us)
+    end_chunk = np.searchsorted(chunks.end_reach_us, end_us, side="left")
+    complete = (
+        (start_us >= 0)
+        & ~timeline.gap_intervals.intersect_each(
+            start_us=start_us, end_us=end_us, tolerance_us=tolerance_us
+        )
+        & ~timeline.overlap_intervals.intersect_each(
+            start_us=start_us, end_us=end_us, tolerance_us=tolerance_us
+        )
+        & (start_us >= float(chunks.start_us[0]) - tolerance_us)
+        & (end_us <= float(chunks.end_us[-1]) + tolerance_us)
+        & (end_chunk < len(chunks))
+        & (np.searchsorted(chunks.start_floor_us, end_us, side="right") > end_chunk)
+    )
+    end_chunk = np.where(complete, end_chunk, 0)
+    # ``_window_segments_for_time`` and ``_collect_window_segments``: the window
+    # ends ``relative`` samples into its end chunk (within the chunk) and takes
+    # the ``sample_count`` samples before that, in time order across chunks.
+    relative = np.where(complete, (end_us - chunks.start_us[end_chunk]) / period_us, 0.0)
+    lengths = chunks.sample_end - chunks.sample_start
+    chunk_end = np.cumsum(lengths)
+    chunk_offset = chunk_end - lengths
+    window_end = chunk_offset[end_chunk] + np.minimum(
+        np.maximum(np.rint(relative), 0.0).astype(np.int64), lengths[end_chunk]
+    )
+    window_start = window_end - sample_count
+    complete &= window_start >= 0
+    window_start = np.where(complete, window_start, 0)
+    first_chunk = np.searchsorted(chunk_end, window_start, side="right")
+    last_chunk = np.searchsorted(chunk_end, window_end - 1, side="right")
+    # Chunks before which the raw buffer jumps, counted: none within a window
+    # means one slice.
+    jumps = np.concatenate(([0], np.cumsum(chunks.sample_start[1:] != chunks.sample_end[:-1])))
+    first_chunk = np.minimum(first_chunk, len(chunks) - 1)
+    last_chunk = np.minimum(last_chunk, len(chunks) - 1)
+    complete &= jumps[last_chunk] == jumps[first_chunk]
+    raw_start = chunks.sample_start[first_chunk] + (window_start - chunk_offset[first_chunk])
+    starts[complete] = raw_start[complete]
+    return starts
 
 
 def assemble_raw_window_samples(
