@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from math import sqrt
+from math import hypot, sqrt
 
 import numpy as np
 import numpy.typing as npt
@@ -15,6 +15,7 @@ __all__ = [
     "WindowSpectrum",
     "line_reach_hz",
     "peak_band_bins",
+    "peak_scale_g",
     "tone_line_level_g",
 ]
 
@@ -40,6 +41,18 @@ def peak_band_bins(bin_hz: float) -> int:
 def line_reach_hz(half_width_hz: float, bin_hz: float) -> float:
     """How far either side of a line's centre its read takes in: the band and the flanks past it."""
     return half_width_hz + (_MAIN_LOBE_BINS + _FLANK_BINS) * bin_hz
+
+
+def peak_scale_g(level_g: float, floor_g: float) -> float:
+    """The band RMS a ranked peak of an order at *level_g* reads on a floor *floor_g*.
+
+    A line read is the order alone (``LineRead.excess``); a peak's band holds
+    the floor under it as well, so in power the two add. A finding's strength
+    (dB over its window's floor) and its 8 dB negligible edge are on a peak's
+    scale: an order read at its line at 2.3 times the floor stands 8 dB over
+    it as a peak, 7.2 dB as its level alone.
+    """
+    return hypot(level_g, floor_g)
 
 
 def tone_line_level_g(peak_g: float, bin_hz: float, *, axes: int = 3) -> float:

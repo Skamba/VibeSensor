@@ -14,7 +14,11 @@ def group_matches_by_speed_bin(
     *,
     relevant_speed_bins: Collection[str] | None = None,
 ) -> dict[str, list[OrderMatchObservation]]:
-    """Group typed order matches into speed bins used for localization."""
+    """Group typed order matches into speed bins used for localization.
+
+    A match at no amplitude (a quiet sensor's, ``scoring._at_tracked_levels``)
+    is kept: it counts its sensor among those the order matched in its bin.
+    """
     allowed_bins = {
         str(bin_label).strip()
         for bin_label in (relevant_speed_bins or [])
@@ -24,7 +28,7 @@ def group_matches_by_speed_bin(
     for match in matches:
         speed = match.speed_kmh
         location = match.location.strip()
-        if speed is None or speed <= 0 or match.amp <= 0 or not location:
+        if speed is None or speed <= 0 or match.amp < 0 or not location:
             continue
         speed_bin = speed_bin_label(speed)
         if allowed_bins and speed_bin not in allowed_bins:

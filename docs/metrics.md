@@ -287,7 +287,12 @@ over an edge moves the score a few hundredths rather than doubling it. Only the
 finding's own amplitude counts: the quiet sensors elsewhere on the car do not
 cap a fault that is loud at its own corner. That amplitude is the mean of the
 order's heard matches (see "Heard matches" in `docs/order_tracking.md`), not
-an average with the floor-level noise the matcher picks up elsewhere. The score itself stays internal
+an average with the floor-level noise the matcher picks up elsewhere. The
+edges are on a ranked peak's scale, which holds the floor under the peak as
+well as the order: a match placed by the order's own level read at its line
+is put on that scale by adding the window's floor in power (`peak_scale_g`,
+"What the reads decide" in `docs/order_tracking.md`), so an order 2.3 times
+the floor reaches the 8 dB edge whether a peak or its line read places it. The score itself stays internal
 (ranking); no percentage is shown in the UI or the PDF.
 
 Where the vibration sits feeds the score of an order-tracked finding
@@ -302,7 +307,11 @@ the source:
   per-location match rates already pin the order to one corner
   (`apply_localization_override`), the hotspot counts as separated at any
   dominance and takes none of this penalty, so a clearer corner never scores
-  lower.
+  lower. With order-tracked reads a sensor that does not hear the order is
+  quiet, below every sensor that does, so a corner heard alone is clearly
+  dominant; a wheel order no wheel sensor hears is scored as with no wheel
+  sensor fitted, where it is heard ("What the reads decide" in
+  `docs/order_tracking.md`).
 - **Engine and driveline** orders are diagnosed as a zone (engine bay, axle,
   centre tunnel), so the same order on the left and right is expected. When
   such an order shows no dominant corner and its own evidence is established,

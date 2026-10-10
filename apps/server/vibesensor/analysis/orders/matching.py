@@ -47,7 +47,7 @@ from vibesensor.domain.finding import speed_bin_label
 from vibesensor.domain.order_match import OrderMatchObservation, SensorOrderLevel
 from vibesensor.dsp.constants import FFT_N, SAMPLE_RATE_HZ
 from vibesensor.dsp.order_bands import order_peak_tolerance_hz
-from vibesensor.dsp.window_spectrum import line_reach_hz
+from vibesensor.dsp.window_spectrum import line_reach_hz, peak_scale_g
 from vibesensor.recording.run_schema import RunMetadata
 
 BRAKING_PHASE = DrivingPhase.BRAKING.value
@@ -761,8 +761,9 @@ def _tracked(
     """Each window's verdict on the order: from its tracked read where it has one.
 
     A window read at the order's line matches, and hears, the order where its
-    cell hears it (``TrackedCells.heard_cells``), at that cell's level,
-    whether or not the order ranked among the window's peaks. Where its cell
+    cell hears it (``TrackedCells.heard_cells``), at that cell's level on a
+    ranked peak's scale over the window's floor (``peak_scale_g``), whether
+    or not the order ranked among the window's peaks. Where its cell
     does not, its ranked peak near the line still matches where the order is
     heard in that driving phase at some sensor (*hearing*, ``TrackedCells.heard_phases``),
     and the window does not match where it is not. Its frequency is its ranked
@@ -816,7 +817,7 @@ def _tracked(
                     predicted_hz=window.predicted_hz,
                     matched_hz=matched_hz,
                     rel_error=abs(matched_hz - window.predicted_hz) / window.predicted_hz,
-                    amp=cell.level_g,
+                    amp=peak_scale_g(cell.level_g, window.floor),
                     location=window.location,
                     phase=window.phase_key,
                 ),

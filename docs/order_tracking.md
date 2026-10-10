@@ -543,8 +543,9 @@ there are none), the coast-down test left out:
   the whole cell would put it under the floor's).
 - The level is the root of the read-weighted mean of those cells' reads
   where the sensor's reads over them stand three standard errors out, else 0
-  (`level_g`). `read_g` keeps the root either way: it places the order
-  between sensors none of which hears it (location scoring, below).
+  (`level_g`). `read_g` keeps the root either way: it places the order at a
+  sensor whose matches hear it but whose reads do not stand out (location
+  scoring, below).
 - A sensor with fewer than 2 independent reads over the whole drive
   (`_MIN_INDEPENDENT_READS`, a sensor that dropped out) has no level at all:
   a level of 0 there would place the order at another sensor.
@@ -574,9 +575,18 @@ spectra, each window's match comes from its read, and every metric under
 "Heard matches" reads those matches as before:
 
 - A window in a cell that hears the order **matches** it, clear and heard, at
-  the cell's level, whether or not the order ranked among the window's 8
-  peaks. Its frequency is its ranked peak's where one sits within the line's
-  tolerance and sweep, else the line's. An order under the wheel-hop hump is
+  the cell's level on a ranked peak's scale, whether or not the order ranked
+  among the window's 8 peaks. A peak's band holds the floor under it as well
+  as the order, so the match's amplitude is the level and the window's floor
+  added in power (`peak_scale_g()` in `dsp/window_spectrum.py`): the
+  finding's strength (dB over its windows' floors) and its 8 dB negligible
+  edge ("Confidence levels" in [metrics.md](metrics.md)) are on that scale.
+  An order whose level is 2.3 times the floor stands 8 dB over it as a peak
+  and 7.2 dB as its level alone; read as its level alone, an inline-4's E2 at
+  20 g (physical limit drives, idealised floor) sat about 0.7 dB under its
+  peaks, just over the edge, and was found on 7 of 20 runs (20 on its peak's
+  scale). Its frequency is its ranked peak's where one sits within the
+  line's tolerance and sweep, else the line's. An order under the wheel-hop hump is
   matched where its own line stands out, not where the hump's peaks let it
   rank.
 - A window in a cell that does not hear it keeps its ranked peak's match only
@@ -600,9 +610,29 @@ spectra, each window's match comes from its read, and every metric under
 Three rules follow the reads into the existing scoring:
 
 - **Location** (`scoring._at_tracked_levels()`): the matched points are placed
-  by their sensor's tracked level (`level_g`, else `read_g`) instead of their
-  peaks' amplitudes, where some sensor hears the order and every matched
-  sensor has a level: the peaks are the order plus the hump under it.
+  by their sensor's tracked level (`level_g`) instead of their peaks'
+  amplitudes, where some sensor's level stands out and every matched sensor
+  has a level: the peaks are the order plus the hump under it.
+  - A sensor whose matches hear the order (`heard_locations`, "Heard
+    matches") but whose reads do not stand out is placed by its read
+    (`read_g`): a front-left imbalance on the wheel-hop hump, 220 mg of floor
+    beside its line, clear of its windows' floors but not of its reads'
+    scatter.
+  - A sensor that does not hear the order is **quiet**: its read is the
+    floor's scatter, which under the hump at a wheel is louder than a faint
+    order heard at the trunk. It ranks below every sensor that hears the
+    order, whether or not it matched in that speed bin
+    (`score_locations_in_bin(quiet_locations=...)`), so a sensor that hears
+    the order alone is located there, clearly (dominance
+    `QUIET_SECOND_DOMINANCE`, 10, over a quiet second). The sensors an
+    order could be spread over (the weak-separation threshold and the
+    localisation's location count) are those it matched in the bin, quiet
+    or not, as before, and at least the two compared: a quiet sensor with
+    no match there is only the quieter second.
+  - A wheel order is put at a wheel only where a wheel sensor places it.
+    Where none does it is located where it is heard and scored as one with
+    no wheel sensor fitted (`no_wheel_sensors`: localisation at most 0.30,
+    weakly separated, `apply_localization_override` does not pin it).
 - **Heard match rate** (`OrderMatchAccumulator.heard_match_rate`): where the
   order is heard only in its braking cells, over the heard sensors' braking
   windows (`_phase_heard_rate()`) where that rate is the higher one; the
@@ -616,28 +646,41 @@ Three rules follow the reads into the existing scoring:
   matches as the speed-band rescue.
 
 **Results.** The accuracy benchmark (seeds 1-6, CI rule: seed 1 passes and 4
-of seeds 2-6), main against this design:
+of seeds 2-6), main before the reads decided the matches, the first design
+(tracked), and the design above (quiet sensors, the peak scale):
 
-| | main | tracked |
-|---|---|---|
-| CI configuration (cases on their `IdealisedFloor` stay there) | 222/224 | 222/224 |
-| healthy runs there given a fault / a weak guess (of 318) | 2 / 0 | 1 / 0 |
-| fault runs whose report text and amplitude table name different locations | 15 of 968 (8 on seed 1) | 3 of 964 (0) |
-| every case on the ISO 8608 road | 158/224 | 177/224 |
-| healthy runs there given a fault / a weak guess (of 318) | 22 / 35 | 3 / 3 |
-| fault runs there whose report text and amplitude table disagree | 24 of 820 (10 on seed 1) | 12 of 808 (0) |
-| physical fault amplitudes (`tools/dev/physical_fault_tally.py`), cases where main has them | 117/224 | 119/224 |
-| physical fault amplitudes, the 13 cases below on the road | 100/224 | 112/224 |
+| | main | tracked | now |
+|---|---|---|---|
+| CI configuration (cases on their `IdealisedFloor` stay there) | 222/224 | 222/224 | 222/224 |
+| healthy runs there given a fault / a weak guess (of 318) | 2 / 0 | 1 / 0 | 1 / 0 |
+| fault runs whose report text and amplitude table name different locations | 15 of 968 (8 on seed 1) | 3 of 964 (0) | 3 of 964 (0) |
+| every case on the ISO 8608 road | 158/224 | 177/224 | 177/224 |
+| healthy runs there given a fault / a weak guess (of 318) | 22 / 35 | 3 / 3 | 3 / 3 |
+| fault runs there whose report text and amplitude table disagree | 24 of 820 (10 on seed 1) | 12 of 808 (0) | 12 of 809 (0) |
+| physical fault amplitudes (`tools/dev/physical_fault_tally.py`), cases where main has them | 117/224 | 119/224 | not rerun |
+| physical fault amplitudes, the 13 cases below on the road | 100/224 | 112/224 | 126/224 |
 
 The physical-amplitude limit drives (`physical_fault_tally.py limits`,
 steady speeds, 1200 runs): main finds the fault on 796 and names a wrong
-source or corner on 37 as a fault and 35 as a weak guess; this design finds
-it on 765 and names a wrong one on 18 and 0. A front-left imbalance at a
-steady 50 km/h on the road (under the read limit, below) was a wheel fault
-at all four wheels or the rear-left at every size on main; it is no fault
-now. Lost: an inline-4's E2 at 20 g on the idealised floor (found on 7 of 20
-runs, main 19): its strength is now the order's own level, about 0.7 dB under
-its peaks', at 8.3 dB just past the 8 dB strength edge.
+source or corner on 37 as a fault and 35 as a weak guess; the tracked design
+finds it on 765 and names a wrong one on 18 and 0, this one on 834 and 8 and
+0. A front-left imbalance at a steady 50 km/h on the road (under the read
+limit, below) was a wheel fault at all four wheels or the rear-left at every
+size on main; it is no fault now.
+
+The quiet sensors and the peak scale gain, at physical amplitudes, the engine
+cases on the road (9 to 19 of 22: the engine sweeps, the inline-3 and
+inline-4 firing sweeps, the guided engine tests, the engine coast-down) and
+the faint-engine front-wheels sweep on the idealised floor (both cars), a
+driveline and a wheel-and-propshaft case, and lose none. In the limit drives
+an inline-4's E2 at 20 g on the idealised floor is found on 20 of 20 runs
+(tracked 7, main 19), and at 130 km/h in top gear, where its E1 shares a line
+with T2 heard at the trunk alone, no run names a wheel fault (tracked 12 of
+25, main 3): the tracked design read the wheel sensors' floor scatter as the
+order (two unheard wheels at 12-19 mg under a 30 mg floor, louder than the
+trunk's 6 mg) and scored the lone heard trunk at dominance 1. The 8 wrong
+sources left are an inline-4's E2 at 50 km/h, matched as T2 (a fault at the
+trunk or the rear-right wheel).
 
 13 cases moved off the idealised floor (they pass on the road for every
 car): the healthy city, residual-imbalance, seat-mode, real-traffic,
@@ -663,17 +706,10 @@ rear-right sensor, the launch flare and the guided engine test (see
   strong".
 - The levels are for the speeds the order was heard at: an order heard
   nowhere is read over the whole drive.
-- A sensor that does not hear the order is placed by its read
-  (`read_g`), which under the wheel-hop hump is the floor's scatter: at
-  130 km/h in top gear an inline-4's E2 shares its line with T2, heard only
-  at the trunk, and two unheard wheel sensors' reads (12 and 25 mg under a
-  45 mg floor) put a T2 fault at a wheel on 12 of 25 limit runs (main 3).
-  Placing such sensors at 0 instead makes a lone heard corner look spread
-  (two CI cases lost): location scoring counts only sensors with an
-  amplitude, so a sensor whose read is 0 is no quieter second sensor, and a
-  lone heard sensor scores dominance 1. A faint engine order heard at the
-  trunk alone loses its localization that way (at physical amplitudes, 3 of
-  6 seeds of the faint-engine front-wheels sweep on the second car).
+- Which sensors hear an order is decided by their matches
+  (`heard_locations`), not by their reads: a sensor whose matches do not
+  reach half the clearest sensor's share is quiet whatever its read, and one
+  that does is placed by its read even where the read is the hump's scatter.
 - A line under about 5.9 Hz has no read (the spectra start at 5.08 Hz): a
   wheel order at town speeds keeps its ranked peaks there only at a sensor
   that hears it elsewhere.
