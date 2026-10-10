@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from vibesensor.analysis.constants import CONFIDENCE_CEILING, CONFIDENCE_FLOOR
+from vibesensor.dsp.line_significance import HEARD_OVER_FLOOR
 
 
 @dataclass(frozen=True, slots=True)
@@ -109,7 +110,7 @@ ORDER_CONFIDENCE_SETTINGS = OrderConfidenceSettings(
     # A match is heard when its peak stands at least 6 dB over its window's
     # floor, at a sensor where that happens at least half as often as at the
     # sensor where it happens most (docs/order_tracking.md, "Heard matches").
-    heard_peak_over_floor=2.0,
+    heard_peak_over_floor=HEARD_OVER_FLOOR,
     heard_location_min_share=0.5,
     zone_min_error_score=0.50,
     zone_error_score_ramp=0.10,

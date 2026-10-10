@@ -1,5 +1,6 @@
 import type { FuelType } from "../../capabilities";
 import { fmt, formatMg } from "../../format";
+import { heardAtText } from "../../sensor_locations";
 import { spectrumDbToMg } from "../../spectrum";
 import { orderBandFills } from "../../theme";
 import type { RotationalSpeeds } from "../../transport/live_models";
@@ -16,6 +17,8 @@ export interface ChartBand {
   min_hz: number;
   max_hz: number;
   color: string;
+  /** Where the last few seconds' spectra hear the order, named, strongest first. */
+  heardAt?: string;
 }
 
 export interface SeriesEntry {
@@ -133,11 +136,15 @@ const EV_BAND_NAME: Record<string, string> = {
   driveshaft_engine_1x: "bands.motor_1x",
 };
 
-/** Order reference bands from the server's rotational speeds. */
+/**
+ * Order reference bands from the server's rotational speeds, each labelled
+ * with the sensors that hear its order (`sensorName` names a client id).
+ */
 export function orderBands(
   speeds: RotationalSpeeds | null,
   fuelType: FuelType,
   t: Translate,
+  sensorName: (clientId: string) => string | null = () => null,
 ): ChartBand[] {
   const electric = fuelType === "EV";
   const bands = speeds?.order_bands;
@@ -157,9 +164,15 @@ export function orderBands(
     }
     const style = BAND_STYLE[band.key];
     const engine = isEngineBand(band.key);
-    // The report's workshop label (T1, P1, E2) leads, so both name an order alike.
-    const coded = (label: string) =>
-      t("bands.with_code", { code: band.code, band: label });
+    // The report's workshop label (T1, P1, E2) leads, so both name an order
+    // alike; where the order is heard, at which sensors follows.
+    const heardAt = heardAtText(band.heard_at, sensorName);
+    const coded = (label: string) => {
+      const named = t("bands.with_code", { code: band.code, band: label });
+      return heardAt
+        ? t("bands.heard_at", { band: named, sensors: heardAt })
+        : named;
+    };
     if (electric) {
       if (engine && !EV_BAND_NAME[band.key]) {
         continue;
@@ -169,6 +182,7 @@ export function orderBands(
         min_hz: Math.max(0, center * (1 - tolerance)),
         max_hz: center * (1 + tolerance),
         color: style?.color ?? orderBandFills.wheel1,
+        ...(heardAt ? { heardAt } : {}),
       });
       continue;
     }
@@ -187,6 +201,7 @@ export function orderBands(
       color:
         style?.color ??
         (engine ? orderBandFills.engine2 : orderBandFills.wheel1),
+      ...(heardAt ? { heardAt } : {}),
     });
   }
   return output;

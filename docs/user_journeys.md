@@ -521,9 +521,12 @@ The UI renders it in `apps/ui/src/pages/dashboard/readiness.ts` and
 - **While driving:** Live names the strongest sensor by mg averaged over 5 s,
   the report's ranking, and says "About equal at n sensors" when the next is
   within 1.15x, as the report calls that a tie; a healthy car on a real road
-  mostly reads about equal at the wheels. A peak in an order band is not a
-  finding: the report reads each order over the drive ("The live view and the
-  report" in [metrics.md](metrics.md)).
+  mostly reads about equal at the wheels. A peak in an order band is not the
+  order: "Orders heard" (`#liveOrdersHeard`) names the orders the last 10 s
+  of spectra hear at their own line, by the report's rule, and where ("T1 at
+  Front Left Wheel"), else "None in the last 10 s"; a band's label in the
+  spectrum adds "heard at …". Its detail says the report decides after the
+  drive ("The live view and the report" in [metrics.md](metrics.md)).
 - **Guided drive (optional):** a tire warm-up, then four steps posted to
   `/api/recording/guided-phase` (`dashboard.guided.*` strings).
   0. Warm-up, before recording (`#guidedWarmUp`,

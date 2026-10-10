@@ -630,11 +630,37 @@ but over the last few seconds instead of the whole drive:
   amplitude table. The live dB is the strongest peak's, which a healthy
   wheel's road hump also reaches; the report's order rows are the order's.
 
-What the live view cannot say: which order a peak belongs to. A healthy
-wheel's wheel-hop hump (about 12 Hz) is the strongest peak on a real road and
-falls inside the Wheel 1x or Wheel 2x band at some speeds, so a peak in a band
-is not a finding; the report reads each order at its line across the drive
-(see "Order-tracked reads" in `docs/order_tracking.md`).
+A peak in a band is not the order: a healthy wheel's wheel-hop hump (about
+12 Hz) is the strongest peak on a real road and falls inside the Wheel 1x or
+Wheel 2x band at some speeds. So the live view says which orders are **heard**
+the way the report decides it (`apps/server/vibesensor/live/order_hearing.py`):
+
+- **Reads.** Once a second (`READ_INTERVAL_S`) each sensor's latest combined
+  spectrum is read at every order band's line, with the line's swept width and
+  two control reads beside it (`WindowSpectrum.line_read`), as the report reads
+  every window. The last 10 s of reads are kept (`READ_SPAN_S`).
+- **Rule.** A sensor hears an order where the middle of those reads stands
+  three standard errors out of the control reads' scatter and, in the current
+  10 km/h speed bin, the line stands 6 dB clear of the floor beside it: the
+  report's `heard_cells` rule, from the same functions and thresholds
+  (`apps/server/vibesensor/dsp/line_significance.py`). A swept line that passes
+  a body mode stands clear only in the bin where it passed it.
+- **Two verdicts in a row** (`HEARD_VERDICTS`). The report gives one verdict
+  per drive; one every second blinks on the floor's chance every few drives, so
+  an order shows once two verdicts in a row, each on a new read, hear it.
+- **Shown.** Each band carries `heard_at`, the client ids that hear it,
+  strongest first. The overview's "Orders heard" line names them ("T1 at Front
+  Left Wheel"), and a band's label in the spectrum adds "heard at Front Left
+  Wheel". Both say the report decides after the drive: the live view gives no
+  verdict, location or severity.
+
+On simulated drives on a generated road (seeds 1-3) no healthy drive at 50,
+100, 130 km/h, a 50-115 km/h sweep, with a wheel-hop hump or a residual
+imbalance heard any order, nor did the report; a front-left imbalance at
+80-120 km/h was heard as T1 at the front-left wheel, an engine E2 fault as E2,
+a propshaft fault as P1 at the rear wheels, as the report heard them. With
+five sensors the reads and verdicts cost about 0.5 ms once a second on x86 (at
+most about 1.3 ms), about 6 % of the processing tick's time.
 
 ## WebSocket / API Payloads
 

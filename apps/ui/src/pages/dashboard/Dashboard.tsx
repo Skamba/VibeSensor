@@ -80,6 +80,14 @@ function Overview() {
         >
           {model.strongestText}
         </Stat>
+        <Stat
+          id="liveOrdersHeard"
+          labelKey="dashboard.orders_heard"
+          detail={model.ordersHeard.detail}
+          wide
+        >
+          {model.ordersHeard.value}
+        </Stat>
         <div class="stat">
           <div class="stat__label">{t("dashboard.current_speed")}</div>
           <div id="speed" aria-live="polite">

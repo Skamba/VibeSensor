@@ -141,6 +141,42 @@ describe("order bands", () => {
     ]);
   });
 
+  test("a band the live spectra hear names its sensors, strongest first", () => {
+    const names: Record<string, string> = { a: "Front Left", b: "Rear Right" };
+    const heard = orderBands(
+      {
+        basis_speed_source: null,
+        wheel: { rpm: 600, mode: null, reason: null },
+        driveshaft: { rpm: null, mode: null, reason: null },
+        engine: { rpm: null, mode: null, reason: null },
+        order_bands: [
+          {
+            key: "wheel_1x",
+            code: "T1",
+            center_hz: 20,
+            tolerance: 0.1,
+            // A sensor the page does not know is left out.
+            heard_at: ["b", "gone", "a"],
+          },
+          { key: "wheel_2x", code: "T2", center_hz: 40, tolerance: 0.1 },
+        ],
+      },
+      null,
+      t,
+      (id) => names[id] ?? null,
+    );
+    expect(heard.map((band) => [band.label, band.heardAt])).toEqual([
+      [
+        t("bands.heard_at", {
+          band: coded("T1", "bands.wheel_1x"),
+          sensors: "Rear Right, Front Left",
+        }),
+        "Rear Right, Front Left",
+      ],
+      [coded("T2", "bands.wheel_2x"), undefined],
+    ]);
+  });
+
   test("an engine's own orders are engine bands and its firing order says so", () => {
     const six = orderBands(
       {

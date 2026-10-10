@@ -433,7 +433,8 @@ hump peak at one that does not, and the median of the matched peaks at each
 sensor tells the corners apart no better than the hump does. So each
 order's level at each sensor is read at its own line instead, in every
 window, whatever louder content the window holds elsewhere
-(`analysis/orders/tracking.py`, `dsp/window_spectrum.py`).
+(`analysis/orders/tracking.py`, `dsp/window_spectrum.py`; the significance
+rule itself is `dsp/line_significance.py`, which the live view shares).
 
 **Where the spectra come from.** The post-stop raw replay
 ([analysis_pipeline.md](analysis_pipeline.md)) keeps each window's combined
@@ -719,7 +720,8 @@ rear-right sensor, the launch flare and the guided engine test (see
 17.2 s with the tracked verdicts, without memory tracing (each window is
 read three times, at the line and at its two controls, about 6 µs a read);
 peak traced memory 118 MB either way, the spectra kept (about 2 KB per
-window). The live view does not keep or read spectra.
+window). The live view keeps no spectra; it reads each sensor's latest one
+once a second (see "Live vs post-stop reuse").
 
 ## Engine tone through a near-1:1 gear
 
@@ -821,6 +823,16 @@ The same reference math serves both runtime and diagnostics:
   recurring in the predicted wheel/driveshaft/engine bands, and reads each
   order's level at its line inside the same band ("Order-tracked reads";
   the line's factor `k` comes from matches within the band's tolerance)
+- the live view reads each sensor's latest spectrum at every band's line once
+  a second and asks the report's question of the last 10 s of reads
+  (`live/order_hearing.py`): the middle of the reads stands three standard
+  errors out of the control reads' scatter, and the line stands 6 dB clear of
+  the floor beside it in the current speed bin, by the same functions and
+  thresholds (`dsp/line_significance.py`, which `tracking.py` imports). It
+  places the line at the prediction (`k = 1`), has no ringing-tone exclusion
+  and shows an order once two verdicts in a row hear it; each band's
+  `heard_at` names the sensors (see "The live view and the report" in
+  [metrics.md](metrics.md)). The report still decides.
 
 The saved per-sample peak/floor inputs consumed by order matching come from the
 same canonical live-processing FFT/strength pipeline
@@ -841,8 +853,10 @@ That shared ownership is why `dsp/order_bands.py` exists outside
 | `apps/server/vibesensor/dsp/order_bands.py` | Shared order-match tolerance and live band-payload helpers. |
 | `apps/server/vibesensor/analysis/orders/physics.py` | Fixed hypothesis catalog and per-sample predicted-Hz helpers. |
 | `apps/server/vibesensor/analysis/orders/matching.py` | Match predicted order bands against stored sample peaks, read each window at the order's line, and classify each window's match from its read (or its peak) as heard. |
-| `apps/server/vibesensor/analysis/orders/tracking.py` | Order-tracked reads: speed rates, swept line widths, which sensors, cells and phases hear an order, and per-sensor order levels. |
-| `apps/server/vibesensor/dsp/window_spectrum.py` | A replayed window's combined spectrum and one read at an order's line. |
+| `apps/server/vibesensor/analysis/orders/tracking.py` | Order-tracked reads: speed rates, which sensors, cells and phases hear an order, and per-sensor order levels. |
+| `apps/server/vibesensor/dsp/window_spectrum.py` | A window's combined spectrum, one read at an order's line, and the line's swept width. |
+| `apps/server/vibesensor/dsp/line_significance.py` | Whether an order's line reads stand out of the floor: the rule the report and the live view share. |
+| `apps/server/vibesensor/live/order_hearing.py` | Which orders the live spectra hear, by that rule over the last 10 s (`heard_at` on each live band). |
 | `apps/server/vibesensor/analysis/orders/scoring.py` | Convert matched evidence into confidence and ranking score. |
 | `apps/server/vibesensor/analysis/orders/finding_builder.py` | Project scored evidence into domain `Finding` objects. |
 | `apps/server/vibesensor/analysis/orders/pipeline.py` | Coordinate the full order-analysis pass. |

@@ -48,3 +48,18 @@ export function sensorLabel(
     name: String(client.name || client.id).trim(),
   });
 }
+
+/**
+ * The sensors that hear a band's order, named, strongest first; null where
+ * none does. The server judges it by the report's rule over the last few
+ * seconds (`heard_at`); a sensor the page does not know is left out.
+ */
+export function heardAtText(
+  heardAt: readonly string[] | undefined,
+  sensorName: (clientId: string) => string | null,
+): string | null {
+  const names = (heardAt ?? [])
+    .map(sensorName)
+    .filter((name): name is string => Boolean(name));
+  return names.length ? names.join(", ") : null;
+}

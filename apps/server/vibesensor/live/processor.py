@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from vibesensor.common.recent_counter import RecentCounter
+from vibesensor.dsp.window_spectrum import WindowSpectrum
 from vibesensor.live.buffers import ClientBuffer
 from vibesensor.live.compute import SignalMetricsComputer
 from vibesensor.live.models import (
@@ -24,6 +25,7 @@ from vibesensor.live.models import (
     ProcessorConfig,
     ProcessorStats,
 )
+from vibesensor.live.order_hearing import LiveSpectrum
 from vibesensor.live.payload import build_multi_spectrum_payload
 
 if TYPE_CHECKING:
@@ -227,6 +229,22 @@ class SignalProcessor:
                 self._buffers,
                 client_ids,
             )
+
+    def latest_spectra(self, client_ids: list[str]) -> dict[str, LiveSpectrum]:
+        """Each of *client_ids*' latest combined spectrum, for the live order reads."""
+        spectra: dict[str, LiveSpectrum] = {}
+        with self._lock:
+            for client_id in client_ids:
+                buf = self._buffers.get(client_id)
+                combined = buf.latest_spectrum.get("combined") if buf is not None else None
+                if buf is None or combined is None or buf.compute_sample_rate_hz <= 0:
+                    continue
+                spectra[client_id] = LiveSpectrum(
+                    generation=buf.spectrum_generation,
+                    spectrum=WindowSpectrum(freq_hz=combined["freq"], amp_g=combined["amp"]),
+                    window_s=self._config.fft_n / buf.compute_sample_rate_hz,
+                )
+        return spectra
 
     def latest_sample_xyz(self, client_id: str) -> tuple[float, float, float] | None:
         with self._lock:

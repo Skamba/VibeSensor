@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+import numpy as np
 import pytest
 
 from vibesensor.domain.analysis_settings import AnalysisSettingsSnapshot
 from vibesensor.domain.car import CarSnapshot
 from vibesensor.domain.engine_profile import EngineProfile
+from vibesensor.dsp.fft_analysis import SpectralAnalysisComputer
 from vibesensor.ingest.registry import ClientSnapshot
+from vibesensor.live import ws_payload_projection
+from vibesensor.live.order_hearing import LiveSpectrum
 from vibesensor.live.ws_payload_projection import LiveWsPayloadProjector
 from vibesensor.speed.speed_source_config import SpeedSourceConfig
 
@@ -35,6 +39,7 @@ class _FakeProcessor:
         self._spectra_payload = spectra_payload
         self.recent_data_ages: list[float] = []
         self.spectra_requests: list[list[str]] = []
+        self.latest: dict[str, object] = {}
 
     def clients_with_recent_data(self, _client_ids: list[str], *, max_age_s: float) -> list[str]:
         self.recent_data_ages.append(max_age_s)
@@ -43,6 +48,13 @@ class _FakeProcessor:
     def multi_spectrum_payload(self, fresh_ids: list[str]) -> dict[str, object]:
         self.spectra_requests.append(list(fresh_ids))
         return dict(self._spectra_payload)
+
+    def latest_spectra(self, client_ids: list[str]) -> dict[str, object]:
+        return {
+            client_id: self.latest[client_id]
+            for client_id in client_ids
+            if client_id in self.latest
+        }
 
 
 class _FakeGpsMonitor:
@@ -232,3 +244,38 @@ def test_spectra_only_cover_sensors_with_recent_data() -> None:
     projector.build_shared_payload(include_heavy=True)
 
     assert processor.spectra_requests == [[]]
+
+
+def test_a_band_names_the_sensors_whose_recent_spectra_hear_its_order(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    now = [1000.0]
+    monkeypatch.setattr(ws_payload_projection.time, "monotonic", lambda: now[0])
+    projector, processor, _gps_monitor = _build_projector(speed_mps=30.0)
+    wheel = next(
+        band
+        for band in projector.build_shared_payload(include_heavy=False)["rotational_speeds"][
+            "order_bands"
+        ]
+        if band["key"] == "wheel_1x"
+    )
+    computer = SpectralAnalysisComputer(fft_n=2048, spectrum_min_hz=5.0, spectrum_max_hz=200.0)
+    rng = np.random.default_rng(4)
+    t = np.arange(2048) / 800
+    bands = []
+    for generation in range(10):
+        block = rng.normal(0.0, 0.002, size=(3, 2048))
+        block[2] += 0.02 * np.sin(2 * np.pi * wheel["center_hz"] * t)
+        computed = computer.compute_combined_strength_metrics(block.astype(np.float32), 800)
+        assert computed is not None
+        processor.latest = {
+            "aaaaaaaaaaaa": LiveSpectrum(generation, computed[1], window_s=2048 / 800)
+        }
+        bands = projector.build_shared_payload(include_heavy=False)["rotational_speeds"][
+            "order_bands"
+        ]
+        now[0] += 1.0
+
+    by_key = {band["key"]: band for band in bands}
+    assert by_key["wheel_1x"]["heard_at"] == ["aaaaaaaaaaaa"]
+    assert "heard_at" not in by_key["engine_1x"]

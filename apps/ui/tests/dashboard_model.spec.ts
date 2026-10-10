@@ -12,6 +12,7 @@ import {
   actionBarModel,
   type LiveHealth,
   liveHealth,
+  ordersHeard,
   type RecordingInputs,
   recordingModel,
   runsAffected,
@@ -31,7 +32,10 @@ import {
   type Readiness,
 } from "../src/pages/dashboard/readiness";
 import { setLanguage, t as activeT } from "../src/i18n";
-import type { AdaptedClient } from "../src/transport/live_models";
+import type {
+  AdaptedClient,
+  RotationalSpeeds,
+} from "../src/transport/live_models";
 
 const t = (key: string, vars?: Record<string, unknown>) =>
   vars && Object.keys(vars).length ? `${key}:${JSON.stringify(vars)}` : key;
@@ -749,6 +753,64 @@ describe("run health", () => {
 });
 
 describe("live overview helpers", () => {
+  test("orders heard name each heard order's sensors, and the report still decides", () => {
+    const speeds = (order_bands: RotationalSpeeds["order_bands"]) => ({
+      basis_speed_source: null,
+      wheel: { rpm: 600, mode: null, reason: null },
+      driveshaft: { rpm: null, mode: null, reason: null },
+      engine: { rpm: null, mode: null, reason: null },
+      order_bands,
+    });
+    const names: Record<string, string> = { a: "Front Left", b: "Engine Bay" };
+    const name = (id: string) => names[id] ?? null;
+    const detail = "dashboard.orders_heard_detail";
+    expect(
+      ordersHeard(
+        speeds([
+          {
+            key: "wheel_1x",
+            code: "T1",
+            center_hz: 12,
+            tolerance: 0.1,
+            heard_at: ["a"],
+          },
+          { key: "wheel_2x", code: "T2", center_hz: 24, tolerance: 0.1 },
+          {
+            key: "engine_2x",
+            code: "E2",
+            center_hz: 60,
+            tolerance: 0.1,
+            heard_at: ["b", "a"],
+          },
+        ]),
+        name,
+        t,
+      ),
+    ).toEqual({
+      value: [
+        t("dashboard.order_heard_at", { code: "T1", sensors: "Front Left" }),
+        t("dashboard.order_heard_at", {
+          code: "E2",
+          sensors: "Engine Bay, Front Left",
+        }),
+      ].join(" · "),
+      detail,
+    });
+    expect(
+      ordersHeard(
+        speeds([
+          { key: "wheel_1x", code: "T1", center_hz: 12, tolerance: 0.1 },
+        ]),
+        name,
+        t,
+      ),
+    ).toEqual({ value: "dashboard.orders_heard_none", detail });
+    expect(ordersHeard(speeds(null), name, t)).toEqual({
+      value: "dashboard.orders_heard_waiting",
+      detail,
+    });
+  });
+
   test("freshness is relative to the slowest sensor's frame cadence", () => {
     const clients = [{ sample_rate_hz: 400, frame_samples: 200 }];
     expect(classifyFreshness(503, clients)).toBe("fresh");

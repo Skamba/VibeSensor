@@ -67,8 +67,22 @@ const levels: SensorLevels = {
     spectra.value.clients[id]?.strength_metrics?.top_peaks?.[0]?.hz ?? null,
 };
 
+/** A sensor's name on Live, by client id; null for one the page does not know. */
+const sensorName = computed(() => {
+  const byId = new Map(clients.value.map((client) => [client.id, client]));
+  return (clientId: string): string | null => {
+    const client = byId.get(clientId);
+    return client ? sensorLabel(client, locationOf(client), t) : null;
+  };
+});
+
 const chartBands = computed(() =>
-  orderBands(rotationalSpeeds.value, activeCar.value?.fuel_type ?? null, t),
+  orderBands(
+    rotationalSpeeds.value,
+    activeCar.value?.fuel_type ?? null,
+    t,
+    sensorName.value,
+  ),
 );
 export const hasBands = computed(
   () => chartBands.value.length > 0 && prepared.value.entries.length > 0,

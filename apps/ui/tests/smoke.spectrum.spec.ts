@@ -155,7 +155,13 @@ test("journey: live spectrum renders sensor traces, legend focus, and order band
           driveshaft: { rpm: null, mode: null, reason: "missing_final_drive" },
           engine: { rpm: null, mode: null, reason: "missing_final_drive" },
           order_bands: [
-            { key: "wheel_1x", code: "T1", center_hz: 11.7, tolerance: 0.08 },
+            {
+              key: "wheel_1x",
+              code: "T1",
+              center_hz: 11.7,
+              tolerance: 0.08,
+              heard_at: ["001122334455"],
+            },
           ],
         },
       },
@@ -163,6 +169,12 @@ test("journey: live spectrum renders sensor traces, legend focus, and order band
   });
 
   await expect(page.locator("#spectrumOverlay")).toBeHidden();
+  // The orders the live spectra hear, and where; the report still decides.
+  const heard = page.locator("#liveOrdersHeard");
+  await expect(heard.locator("[data-value]")).toHaveText(
+    "T1 at Front Left Wheel",
+  );
+  await expect(heard).toContainText("the report decides after the drive");
   await expect(page.locator("#specChart canvas")).toBeVisible();
   await expect.poll(() => paintedPixelCount(page)).toBeGreaterThan(500);
 
@@ -192,7 +204,10 @@ test("journey: live spectrum renders sensor traces, legend focus, and order band
   await bandToggle.click();
   await expect(bandToggle).toHaveAttribute("aria-pressed", "true");
   // Bands lead with the report's order label.
-  await expect(page.locator("#bandLegend")).toContainText("T1 · Wheel 1x");
+  await expect(page.locator("#bandLegend")).toContainText(
+    "T1 · Wheel 1x · heard at Front Left Wheel",
+  );
+  await expect(page.locator('#bandLegend [data-heard="true"]')).toBeVisible();
 
   // Hovering the plot inspects the nearest frequency bin.
   const box = await page.locator("#specChart canvas").boundingBox();

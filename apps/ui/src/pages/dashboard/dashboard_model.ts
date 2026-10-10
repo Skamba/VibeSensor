@@ -16,8 +16,10 @@ import {
 import { fmt, kmhInUnit, type SpeedUnit, speedUnitKey } from "../../format";
 import type { KeepAwakeMode } from "../../keep_awake";
 import { nearTieDominanceThreshold } from "../../constants";
+import { heardAtText } from "../../sensor_locations";
 import type {
   AdaptedClient,
+  RotationalSpeeds,
   SpectrumFrameData,
 } from "../../transport/live_models";
 import {
@@ -375,6 +377,34 @@ export function strongestSensor(
     tied,
     mg: top.mg,
     db: top.db,
+  };
+}
+
+/**
+ * The orders the last few seconds' spectra hear, each with the sensors that
+ * hear it, strongest first. The server judges it by the report's own rule
+ * (`heard_at` on each order band); the report still decides, over the whole
+ * drive. Waiting while there are no order bands (no car or no speed).
+ */
+export function ordersHeard(
+  speeds: RotationalSpeeds | null,
+  sensorName: (clientId: string) => string | null,
+  t: Translate,
+): { value: string; detail: string } {
+  const detail = t("dashboard.orders_heard_detail");
+  const bands = speeds?.order_bands ?? [];
+  if (bands.length === 0) {
+    return { value: t("dashboard.orders_heard_waiting"), detail };
+  }
+  const heard = bands.flatMap((band) => {
+    const sensors = heardAtText(band.heard_at, sensorName);
+    return sensors
+      ? [t("dashboard.order_heard_at", { code: band.code, sensors })]
+      : [];
+  });
+  return {
+    value: heard.length ? heard.join(" · ") : t("dashboard.orders_heard_none"),
+    detail,
   };
 }
 

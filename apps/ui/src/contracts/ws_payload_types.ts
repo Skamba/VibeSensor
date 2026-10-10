@@ -32,6 +32,7 @@ export interface components {
             center_hz: number;
             code: string;
             firing?: boolean;
+            heard_at?: string[];
             key: string;
             tolerance: number;
         };
