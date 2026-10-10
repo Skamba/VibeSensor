@@ -221,7 +221,6 @@ class OrderAnalysisSession:
         "_connected_locations",
         "_lang",
         "_per_sample_phases",
-        "_cached_peaks",
         "_speed_following_peaks",
         "_order_reference_spec",
         "_speed_moves",
@@ -253,21 +252,20 @@ class OrderAnalysisSession:
             self._samples, request.context, request.per_sample_phases, request.lang
         )
         self._references: dict[str, ReferenceColumns] = {}
-        self._cached_peaks: list[list[tuple[float, float]]] = [
-            _sample_top_peaks(sample) for sample in self._samples
-        ]
+        # Each sample's peaks, needed only for the peak tables below.
+        sample_peaks = [_sample_top_peaks(sample) for sample in self._samples]
         # A hypothesis placed from the speed is matched without the sensors'
         # fixed-frequency tones; an engine order placed from measured RPM may
         # ring steadily while the speed changes, so it keeps every peak.
-        tones = fixed_tones(self._samples, self._cached_peaks)
-        road_peaks = without_fixed_tones(self._cached_peaks, tones)
+        tones = fixed_tones(self._samples, sample_peaks)
+        road_peaks = without_fixed_tones(sample_peaks, tones)
         self._speed_following_peaks = {
             "road": peak_table(road_peaks),
             "engine": peak_table(
                 [
                     raw if _rpm_measured(sample) else road
                     for sample, raw, road in zip(
-                        self._samples, self._cached_peaks, road_peaks, strict=True
+                        self._samples, sample_peaks, road_peaks, strict=True
                     )
                 ]
             ),

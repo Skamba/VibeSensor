@@ -60,12 +60,32 @@ import importlib
 
 package = importlib.import_module("vibesensor.app")
 bootstrap = importlib.import_module("vibesensor.app.bootstrap")
-from vibesensor.app.bootstrap import create_app, create_app_from_env, main
+serve = importlib.import_module("vibesensor.app.serve")
+from vibesensor.app.bootstrap import create_app, create_app_from_env
+from vibesensor.app.serve import main
 
-_ = (package, bootstrap, create_app, create_app_from_env, main)
+_ = (package, bootstrap, serve, create_app, create_app_from_env, main)
         """
     )
     assert result.stdout.strip() == "ok"
+
+
+def test_server_supervisor_leaves_the_app_to_the_worker() -> None:
+    """The ``vibesensor-server`` process only supervises the Granian worker.
+
+    Granian forks the worker, so anything the supervisor imports stays resident
+    in it as a second copy once the worker touches those pages (~40 MB on the Pi).
+    """
+    result = _run_import_probe(
+        """
+import sys
+from vibesensor.app.serve import main
+
+app_modules = ("vibesensor.app.bootstrap", "vibesensor.app.composition", "numpy", "fastapi")
+print(sorted(m for m in app_modules if m in sys.modules))
+        """
+    )
+    assert result.stdout.strip().splitlines() == ["[]", "ok"]
 
 
 _SLOW_IMPORTS = (
@@ -78,7 +98,7 @@ _SLOW_IMPORTS = (
 )
 """Modules that cost seconds to import on the Pi and are only needed later.
 
-FFT (pyfftw pulls in scipy.fft) waits for the first sensor data, httpx for an
+FFT (pyfftw) waits for the first sensor data, httpx for an
 update or firmware download, reportlab for a PDF, the car library for the car
 picker. The server must not load them before it answers ``/api/health``.
 """
@@ -112,3 +132,18 @@ def test_server_start_leaves_slow_imports_for_first_use(tmp_path: Path) -> None:
         check=True,
     )
     assert result.stdout.strip().splitlines()[-1] == "[]"
+
+
+def test_first_fft_loads_pyfftw_without_scipy() -> None:
+    """pyfftw's optional scipy interfaces (~30 MB, >1 s on the Pi) stay unloaded."""
+    result = _run_import_probe(
+        """
+import sys
+from vibesensor.dsp.fft_analysis import _get_rfft_plan
+
+_get_rfft_plan(3, 256)
+print(sorted(m for m in sys.modules if m == "scipy" or m.startswith("scipy.")))
+import scipy.fftpack  # still importable for anyone who does need it
+        """
+    )
+    assert result.stdout.strip().splitlines() == ["[]", "ok"]
