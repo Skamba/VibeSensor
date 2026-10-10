@@ -1,5 +1,5 @@
 import type { FuelType } from "../../capabilities";
-import { fmt } from "../../format";
+import { fmt, formatMg } from "../../format";
 import { spectrumDbToMg } from "../../spectrum";
 import { orderBandFills } from "../../theme";
 import type { RotationalSpeeds } from "../../transport/live_models";
@@ -75,8 +75,6 @@ export function freqGridsMatch(
 export const formatHz = (value: number) => fmt(value, value >= 100 ? 0 : 1);
 /** A sensor's strength, dB above its noise floor, as the overview and report show it. */
 const formatDbAboveFloor = (value: number) => fmt(value, 0);
-/** An amplitude in mg, with two significant digits under 10 mg. */
-const formatMg = (mg: number) => fmt(mg, mg < 1 ? 2 : mg < 10 ? 1 : 0);
 /** A chart bin's amplitude (dB re 0.1 mg) in mg. */
 const formatBinMg = (db: number) => formatMg(spectrumDbToMg(db));
 const isFiniteNumber = (value: unknown): value is number =>

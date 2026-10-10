@@ -68,6 +68,11 @@ export function formatEpochTimestamp(epoch: number | null | undefined): string {
 }
 
 /** Like formatInt but respects the given BCP 47 locale tag (e.g. "nl", "en"). */
+/** An amplitude in mg as the report writes it: no grouping, two significant digits under 10 mg. */
+export function formatMg(mg: number): string {
+  return fmt(mg, mg < 1 ? 2 : mg < 10 ? 1 : 0);
+}
+
 export function formatIntLocale(value: number, lang: string): string {
   if (typeof value !== "number" || !Number.isFinite(value)) return "--";
   return getDefaultNumberFormat(lang).format(Math.round(value));

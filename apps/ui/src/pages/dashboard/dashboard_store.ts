@@ -15,7 +15,7 @@ import {
   speedUnit,
 } from "../../app_store";
 import { reportClock } from "../../clock_report";
-import { fmt, formatIntLocale, formatSpeed } from "../../format";
+import { fmt, formatIntLocale, formatMg, formatSpeed } from "../../format";
 import { lang, t } from "../../i18n";
 import { keepAwakeMode, startKeepAwake, stopKeepAwake } from "../../keep_awake";
 import {
@@ -472,7 +472,7 @@ function strongestText(
     return t("dashboard.strongest_signal_none");
   }
   const level = {
-    mg: formatInt(strongest.mg),
+    mg: formatMg(strongest.mg),
     value: formatInt(strongest.db),
   };
   return strongest.client
