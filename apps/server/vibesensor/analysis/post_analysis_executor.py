@@ -143,6 +143,10 @@ def execute_post_analysis(
 
         with _step(run_id, "analyze"):
             summary = _analyze(run_input, config.analysis_runner)
+            # The samples, their spectra and the replay's coverage are not needed
+            # past this point; release them before the analysis is encoded and stored.
+            sample_count = len(run_input.samples)
+            del run_input
         with _step(run_id, "persist_analysis"):
             db.store_analysis(run_id, summary)
     except _STEP_ERRORS as exc:
@@ -163,12 +167,12 @@ def execute_post_analysis(
     LOGGER.info(
         "Analysis completed for run %s: %d samples in %.2fs",
         run_id,
-        len(run_input.samples),
+        sample_count,
         duration_s,
         extra=log_extra(
             event="post_analysis_completed",
             run_id=run_id,
-            sample_count=len(run_input.samples),
+            sample_count=sample_count,
             duration_s=round(duration_s, 3),
         ),
     )

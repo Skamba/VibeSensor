@@ -234,17 +234,22 @@ class _RawCaptureLossCounts:
 
 def build_raw_backed_samples(
     *,
-    samples: tuple[SensorFrame, ...],
+    samples: list[SensorFrame],
     metadata: RunMetadata,
     raw_capture: RawRunCapture | None,
 ) -> RawReplayResult:
-    """Replace summary strength metrics with raw-backed metrics when possible."""
+    """Replace summary strength metrics with raw-backed metrics when possible.
+
+    Each sample is rebuilt in place in *samples*, so the loaded sample (with
+    its stored peaks) is released as soon as its window is replayed rather
+    than held until the whole replay is done.
+    """
 
     if raw_capture is None:
-        return _build_raw_capture_unavailable_replay_result(samples)
+        return _build_raw_capture_unavailable_replay_result(tuple(samples))
     fft_n = int(metadata.fft_window_size_samples or 0)
     if fft_n <= 0:
-        return _build_fft_unavailable_replay_result(samples=samples, raw_capture=raw_capture)
+        return _build_fft_unavailable_replay_result(samples=tuple(samples), raw_capture=raw_capture)
     context = _build_replay_context(
         metadata=metadata,
         raw_capture=raw_capture,
@@ -671,7 +676,7 @@ def _build_replay_context(
 
 def _build_replay_windows(
     *,
-    samples: tuple[SensorFrame, ...],
+    samples: list[SensorFrame],
     raw_capture: RawRunCapture,
     context: _ReplayBuildContext,
 ) -> _ReplayWindowBuildResult:
@@ -715,11 +720,15 @@ def _build_replay_windows(
 
 def _rebuilt_samples(
     *,
-    samples: tuple[SensorFrame, ...],
+    samples: list[SensorFrame],
     raw_capture: RawRunCapture,
     context: _ReplayBuildContext,
 ) -> tuple[list[SensorFrame], list[RawReplayWindowCoverage]]:
     """Each sample rebuilt from its raw window, and its window's coverage, in order.
+
+    *samples* is rebuilt in place and returned: a loaded sample is let go of
+    once its window is replayed (a sensor's window requests, which refer to
+    them, once the sensor is done).
 
     Sensor by sensor, the windows are found in the raw capture all at once
     (``contiguous_raw_window_starts``; one at a time only where a window is
@@ -729,7 +738,7 @@ def _rebuilt_samples(
     strengths ``_WINDOWS_PER_BATCH`` at a time. Each result is the one the
     window has on its own.
     """
-    frames = list(samples)
+    frames = samples
     coverages: list[RawReplayWindowCoverage | None] = [None] * len(samples)
     # Each sample rate's spectra, kept together as the rows of one array
     # (``WindowSpectrum.rows``), and how many rows are filled. Rows are taken
@@ -815,7 +824,8 @@ def _rebuilt_samples(
             while len(in_flight) > _FFT_CHUNKS_AHEAD:
                 take_oldest()
 
-        for client_id, sensor_requests in requests.items():
+        for client_id in list(requests):
+            sensor_requests = requests.pop(client_id)
             timeline = context.timelines[client_id]
             sensor_data = cast("RawCaptureSensorData", raw_capture.sensor_data(client_id))
             raw_starts = contiguous_raw_window_starts(

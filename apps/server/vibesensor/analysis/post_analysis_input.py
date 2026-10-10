@@ -56,8 +56,9 @@ class PostAnalysisRunInput:
 def build_post_analysis_input(loaded: LoadedPostAnalysisRun) -> PostAnalysisRunInput:
     """Normalize one loaded persisted run into canonical diagnostics input."""
 
+    # The replay rebuilds the loaded samples in place (see build_raw_backed_samples).
     replay_result = build_raw_backed_samples(
-        samples=tuple(loaded.samples),
+        samples=loaded.samples,
         metadata=loaded.metadata,
         raw_capture=loaded.raw_capture,
     )
