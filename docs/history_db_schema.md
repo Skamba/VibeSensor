@@ -186,6 +186,7 @@ raises a clear error; reset or reinstall to create a fresh current-schema DB.
 | `foreign_keys` | ON | Cascade deletes for samples when a run is deleted |
 | `busy_timeout` | 5000 ms | Waits out short lock contention instead of failing |
 | `query_only` | ON (reader connection) | The reader connection can never write |
+| `mmap_size` | 256 MiB (reader connection) | Reads pages straight from the mapped file instead of copying them into SQLite's cache; the post-analysis sample loads fetch 10-20% faster on the Pi. Mapped pages show up as file-backed RSS but are ordinary reclaimable page cache |
 | Batch insert size | 256 | Balances transaction overhead vs. memory usage |
 | Read batch size | 1000 (default) | Keyset pagination for streaming reads |
 
