@@ -53,7 +53,7 @@ each contiguous), so the FFT's per-axis passes read contiguous memory and the
 replay computes a block as the live tick does. Each sensor's windows are
 located in its raw buffer all at once (`contiguous_raw_window_starts()`; a
 window stored in pieces is resolved on its own), their spectra are computed
-64 at a time through one FFT plan on one helper thread
+64 at a time through one FFT plan on two helper threads, in order
 (`combined_spectra()`), and their strengths are taken 128 at a time on the
 worker thread meanwhile (`compute_vibration_strength_rows()`), straight from
 the kept spectra rows into columns (`StrengthRows`: each window's floor, and

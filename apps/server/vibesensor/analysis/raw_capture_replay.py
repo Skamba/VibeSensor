@@ -61,18 +61,20 @@ type RawCaptureMode = Literal["raw_backed", "partial_raw_backed", "summary_only"
 # Raw windows whose strengths are taken together: enough to share the per-call
 # cost of the strength pipeline, few enough to hold little memory.
 _WINDOWS_PER_BATCH = 128
-# Raw windows whose spectra the replay's FFT thread computes at once
-# (``combined_spectra``). On the Pi 3 A+ larger chunks, or more threads,
-# gain nothing and hold more memory (docs/multithreading_performance.md).
+# Raw windows whose spectra an FFT thread computes at once
+# (``combined_spectra``). On the Pi 3 A+ larger chunks gain nothing and hold
+# more memory (docs/multithreading_performance.md).
 _WINDOWS_PER_FFT = 64
 # The most a chunk's windows may span, as the bytes of the strided view of
 # every window there, to be gathered in one step: well within what numpy
 # allows a view on a 32-bit system (the Pi's).
 _MAX_GATHER_VIEW_BYTES = 1 << 30
 # Threads computing the spectra, and chunks queued for them: enough to keep
-# them busy.
-_FFT_WORKERS = 1
-_FFT_CHUNKS_AHEAD = 2
+# them busy. Since the strengths are taken as columns, one FFT thread is what
+# the replay waits on; a second one takes 1.7 s off a 30-minute drive's
+# replay on the Pi 3 A+ for ~6 MB (docs/multithreading_performance.md).
+_FFT_WORKERS = 2
+_FFT_CHUNKS_AHEAD = 3
 
 
 @dataclass(frozen=True, slots=True)
@@ -752,8 +754,8 @@ def _rebuild_samples(
     Sensor by sensor, the windows are found in the raw capture all at once
     (``contiguous_raw_window_starts``; one at a time only where a window is
     incomplete or in pieces). Their spectra are computed ``_WINDOWS_PER_FFT``
-    at a time on one FFT thread (``combined_spectra``, most of whose work runs
-    with the GIL released), while this thread takes the finished spectra's
+    at a time on ``_FFT_WORKERS`` threads (``combined_spectra``, most of whose
+    work runs with the GIL released), while this thread takes the finished spectra's
     strengths ``_WINDOWS_PER_BATCH`` at a time. Each result is the one the
     window has on its own.
     """
