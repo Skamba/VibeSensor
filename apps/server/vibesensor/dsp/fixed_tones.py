@@ -25,12 +25,11 @@ from vibesensor.dsp.line_significance import (
     HEARD_OVER_FLOOR,
     MIN_INDEPENDENT_READS,
     SENSOR_STANDARD_ERRORS,
-    deviations,
     independent_share,
     normalized,
     presence_block_s,
     present_level,
-    scatter,
+    read_scatter,
     stands_out,
 )
 from vibesensor.dsp.order_bands import ORDER_TOLERANCE_REL
@@ -227,9 +226,7 @@ def ringing(
     if len(excess) * share < MIN_INDEPENDENT_READS:
         return None
     reads = normalized(excess, flanks)
-    if not stands_out(
-        reads, scatter(deviations([reads], 1) or [0.0]), share, SENSOR_STANDARD_ERRORS
-    ):
+    if not stands_out(reads, read_scatter([], [reads]), share, SENSOR_STANDARD_ERRORS):
         return None
     level, _reads = present_level(excess, flanks, t_s, presence_block_s(window_s))
     if level <= 0:

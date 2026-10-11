@@ -2,17 +2,21 @@
 
 from __future__ import annotations
 
-from bisect import bisect_left
-from collections import defaultdict
 from collections.abc import Sequence, Set
 from dataclasses import dataclass
 from math import ceil, floor
+from typing import TYPE_CHECKING
+
+import numpy as np
+import numpy.typing as npt
 
 from vibesensor.analysis.math_utils import _weighted_percentile
 from vibesensor.domain.finding_types import VibrationSource
 from vibesensor.domain.location_hotspot import LocationHotspot
 from vibesensor.domain.locations import has_any_wheel_location, is_wheel_location
-from vibesensor.domain.order_match import OrderMatchObservation
+
+if TYPE_CHECKING:
+    from vibesensor.analysis.orders.matching import MatchedWindows
 
 NEAR_TIE_DOMINANCE_THRESHOLD = 1.15
 QUIET_SECOND_DOMINANCE = 10.0
@@ -48,29 +52,33 @@ class LocationAnalysisResult:
         return self.top_location
 
 
-def _peer_hz_by_location(matches: Sequence[OrderMatchObservation]) -> dict[str, list[float]]:
-    """Each sensor's matched frequencies, sorted: the peers that can corroborate a match."""
-    by_location: dict[str, list[float]] = defaultdict(list)
-    for peer in matches:
-        peer_location = peer.location.strip()
-        if peer_location and peer.matched_hz > 0:
-            by_location[peer_location].append(peer.matched_hz)
-    for peer_hz in by_location.values():
-        peer_hz.sort()
-    return by_location
+def _corroborating_sensors(
+    location: npt.NDArray[np.intp], matched_hz: npt.NDArray[np.float64]
+) -> npt.NDArray[np.intp]:
+    """How many sensors match each match's frequency: its own and every other one with a peak near.
 
-
-def _has_peer_within(sorted_hz: Sequence[float], hz: float, tolerance_hz: float) -> bool:
-    """Whether any of *sorted_hz* lies within *tolerance_hz* of *hz*: the nearest either side."""
-    above = bisect_left(sorted_hz, hz)
-    return (above < len(sorted_hz) and abs(sorted_hz[above] - hz) <= tolerance_hz) or (
-        above > 0 and abs(sorted_hz[above - 1] - hz) <= tolerance_hz
-    )
+    A peer is near within 3 % (0.75 Hz at least): another sensor's match at
+    its nearest frequency either side. A match at no frequency is its own alone.
+    """
+    corroborated = np.ones(location.size, dtype=np.intp)
+    at_hz = matched_hz > 0
+    tolerance_hz = np.maximum(0.75, matched_hz * 0.03)
+    for peer in np.unique(location[at_hz]).tolist():
+        peer_hz = np.sort(matched_hz[at_hz & (location == peer)])
+        above = np.searchsorted(peer_hz, matched_hz, side="left")
+        nearest_above = peer_hz[np.minimum(above, peer_hz.size - 1)]
+        nearest_below = peer_hz[np.maximum(above - 1, 0)]
+        near = ((above < peer_hz.size) & (np.abs(nearest_above - matched_hz) <= tolerance_hz)) | (
+            (above > 0) & (np.abs(nearest_below - matched_hz) <= tolerance_hz)
+        )
+        corroborated += at_hz & (location != peer) & near
+    return corroborated
 
 
 def score_locations_in_bin(
     bin_label: str,
-    matches: Sequence[OrderMatchObservation],
+    matches: MatchedWindows,
+    rows: npt.NDArray[np.intp],
     *,
     corroboration_amp_multiplier: float,
     connected_locations: Set[str] | None,
@@ -79,39 +87,35 @@ def score_locations_in_bin(
 ) -> LocationAnalysisResult | None:
     """Score and rank sensor locations within a single speed bin.
 
+    *rows* are the bin's matches (positions in *matches*), whose sensors
+    have no surrounding blanks (``summarize_order_match_locations``).
     *quiet_locations* are the sensors read at the order's line that do not
     hear it: they rank below every sensor that does, with no amplitude.
     """
-    per_loc_scores: dict[str, list[float]] = defaultdict(list)
-    per_loc_sample_counts: dict[str, int] = defaultdict(int)
-    per_loc_corroborated_counts: dict[str, list[int]] = defaultdict(list)
-    peer_hz_by_location = _peer_hz_by_location(matches)
-
-    for match in matches:
-        location = match.location.strip()
-        amp = match.amp
-        if not location or amp <= 0:
-            continue
-
-        matched_hz = match.matched_hz if match.matched_hz > 0 else None
-        rel_error = match.rel_error if match.rel_error >= 0 else None
-        quality_weight = max(0.0, min(1.0, 1.0 - rel_error)) if rel_error is not None else 1.0
-
-        corroborated_by_n_sensors = 1
-        if matched_hz is not None:
-            tolerance_hz = max(0.75, matched_hz * 0.03)
-            corroborated_by_n_sensors += sum(
-                1
-                for peer_location, peer_hz in peer_hz_by_location.items()
-                if peer_location != location and _has_peer_within(peer_hz, matched_hz, tolerance_hz)
-            )
-        corroboration_weight = (
-            corroboration_amp_multiplier if corroborated_by_n_sensors >= 2 else 1.0
-        )
-
-        per_loc_scores[location].append(amp * quality_weight * corroboration_weight)
-        per_loc_sample_counts[location] += 1
-        per_loc_corroborated_counts[location].append(corroborated_by_n_sensors)
+    names = matches.locations
+    location = matches.location[rows]
+    amp = matches.amp[rows]
+    rel_error = matches.rel_error[rows]
+    corroborated = _corroborating_sensors(location, matches.matched_hz[rows])
+    # A match at no amplitude counts only among the sensors matched.
+    scored = np.array([bool(name) for name in names], dtype=np.bool_)[location] & ~(amp <= 0)
+    quality_weight = np.where(
+        rel_error >= 0, np.maximum(0.0, np.minimum(1.0, 1.0 - rel_error)), 1.0
+    )
+    corroboration_weight = np.where(corroborated >= 2, corroboration_amp_multiplier, 1.0)
+    score = amp * quality_weight * corroboration_weight
+    scored_location = location[scored]
+    codes, first = np.unique(scored_location, return_index=True)
+    per_loc_scores = {
+        names[code]: score[scored][scored_location == code].tolist()
+        for code in codes[np.argsort(first, kind="stable")].tolist()
+    }
+    per_loc_sample_counts = {name: len(values) for name, values in per_loc_scores.items()}
+    corroborated_scored = corroborated[scored]
+    per_loc_corroborated_counts = {
+        names[code]: int(corroborated_scored[scored_location == code].max())
+        for code in codes.tolist()
+    }
 
     ranked = sorted(
         ((loc, sum(vals) / len(vals)) for loc, vals in per_loc_scores.items() if vals),
@@ -155,14 +159,14 @@ def score_locations_in_bin(
     total_samples = sum(per_loc_sample_counts.values())
     ambiguous = len(ranked_for_winner) > 1 and dominance < NEAR_TIE_DOMINANCE_THRESHOLD
     partial_coverage = bool(connected_locations is not None and top_loc not in connected_locations)
-    top_corroborated_by_n_sensors = max(per_loc_corroborated_counts.get(top_loc, [1]))
+    top_corroborated_by_n_sensors = per_loc_corroborated_counts.get(top_loc, 1)
     no_wheel_sensors = prefer_wheel and not has_any_wheel_location(
         loc for loc, amp in ranked_for_winner if amp > 0
     )
     # The sensors compared: those the order matched in this bin, quiet or not.
     # A quiet sensor with no match here is only the quieter second, not one
     # more sensor the order could be spread over.
-    matched_locations = {match.location.strip() for match in matches}
+    matched_locations = {names[code] for code in np.unique(location).tolist()}
     location_count = max(
         sum(1 for loc, _amp in ranked_for_winner if loc in matched_locations),
         min(2, len(ranked_for_winner)),

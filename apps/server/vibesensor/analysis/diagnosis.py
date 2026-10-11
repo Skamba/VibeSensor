@@ -38,7 +38,7 @@ from vibesensor.analysis.felt_ranking import (
 )
 from vibesensor.analysis.guided_steps import guided_step_done
 from vibesensor.analysis.location_scoring import NEAR_TIE_DOMINANCE_THRESHOLD
-from vibesensor.analysis.orders.tracking import window_duration_s
+from vibesensor.analysis.orders.tracking import frequency_tracking_slope, window_duration_s
 from vibesensor.analysis.phase_segmentation import BRAKING_MIN_DURATION_S, TimeSpanLookup
 from vibesensor.analysis.speed_profile_helpers import run_speed_source, speed_typed_in
 from vibesensor.common.units import G_TO_MG, SECONDS_PER_MINUTE
@@ -55,7 +55,6 @@ from vibesensor.domain.finding_types import ConfidenceLevel, DiagnosisVerdict, V
 from vibesensor.domain.locations import WHEEL_LOCATION_CODES, location_code_for_label, wheel_axle
 from vibesensor.domain.order_match import (
     OrderMatchObservation,
-    frequency_tracking_slope,
     heard_speed_range,
     trend_moves,
 )
@@ -1660,7 +1659,14 @@ def _speed_dependence(
         for t_s, speed in zip(times[known].tolist(), speeds[known].tolist(), strict=True)
         if in_window(t_s, settled)
     ]
-    slope = frequency_tracking_slope(coast_points) if trend_moves(coast_speeds) else None
+    slope = (
+        frequency_tracking_slope(
+            np.array([point.predicted_hz for point in coast_points], dtype=np.float64),
+            np.array([point.matched_hz for point in coast_points], dtype=np.float64),
+        )
+        if trend_moves(coast_speeds)
+        else None
+    )
     if slope is not None and slope < MIN_ORDER_TRACKING_SLOPE:
         # A fixed tone near the order's path while coasting, not the order.
         matched_inside = 0

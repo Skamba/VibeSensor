@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import Any
 
 import pytest
-from test_support.analysis import summarize_mappings
+from test_support.analysis import matched_windows, summarize_mappings
 from test_support.core import (
     ALL_WHEEL_SENSORS,
     assert_summary_sections,
@@ -55,7 +55,9 @@ def test_wheel_order_points_at_the_wheel_sensor_even_when_a_seat_reads_louder() 
         )
     ]
 
-    _, result = summarize_order_match_locations(matches, lang="en", suspected_source="wheel/tire")
+    _, result = summarize_order_match_locations(
+        matched_windows(matches, [0.0] * len(matches)), lang="en", suspected_source="wheel/tire"
+    )
 
     assert result is not None
     assert is_wheel_location(result.top_location), result.top_location
@@ -69,7 +71,9 @@ def test_near_tie_between_two_corners_is_reported_as_ambiguous() -> None:
         _obs(86.0, 0.0103, "Rear Left"),
     ]
 
-    sentence, result = summarize_order_match_locations(matches, lang="en")
+    sentence, result = summarize_order_match_locations(
+        matched_windows(matches, [0.0] * len(matches)), lang="en"
+    )
 
     assert result is not None
     assert result.ambiguous_location
@@ -148,8 +152,7 @@ def _tracked_score(
     ]
     match = OrderMatchAccumulator(
         possible=20 * len(levels),
-        matched_points=points,
-        matched_floor=[0.004] * len(points),
+        matches=matched_windows(points, [0.004] * len(points)),
         ref_sources={"speed+tire"},
         possible_by_speed_bin={},
         matched_by_speed_bin={},

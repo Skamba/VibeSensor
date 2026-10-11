@@ -19,6 +19,7 @@ from collections import Counter
 from collections.abc import Sequence
 from dataclasses import replace
 from statistics import median
+from typing import NamedTuple
 
 from vibesensor.analysis._types import PhaseLabels
 from vibesensor.analysis.orders.matching import BRAKING_PHASE, OrderMatchAccumulator
@@ -50,6 +51,15 @@ _MAX_CLEAR_PRESENT_SHARE = 0.1
 _DEFAULT_HALF_WINDOW_S = 1.28
 # Braking samples further apart than this belong to different stops.
 _SPELL_GAP_S = 1.0
+
+
+class _Heard(NamedTuple):
+    """A heard match: its sample, amplitude, speed (NaN where none) and sensor."""
+
+    idx: int
+    amp: float
+    speed_kmh: float
+    location: str
 
 
 def _phase_value(phase: object) -> str:
@@ -109,11 +119,19 @@ def only_while_braking(
     spell_of = _braking_spells(times, braking)
     window_start_us = samples.analysis_window_start_us
     window_end_us = samples.analysis_window_end_us
-    locations = match.heard_locations or {location for _idx, location in match.possible_samples}
+    names = match.matches.locations
+    location_of = dict(
+        zip(
+            match.possible_sample.tolist(),
+            [names[code] for code in match.possible_location.tolist()],
+            strict=True,
+        )
+    )
+    locations = match.heard_locations or set(location_of.values())
     # True: a braking spectrum; False: a spectrum clear of any braking; spectra
     # that straddle a braking spell are left out.
     side: dict[int, bool] = {}
-    for idx, location in match.possible_samples:
+    for idx, location in location_of.items():
         if location not in locations:
             continue
         t_s = times[idx]
@@ -125,16 +143,25 @@ def only_while_braking(
             _half_window_s(float(window_start_us[idx]), float(window_end_us[idx])),
         ):
             side[idx] = False
+    matches = match.matches.take(match.matches.heard)
+    # Each heard match in a spectrum on either side: its sample, amplitude,
+    # speed (NaN where none) and sensor.
     heard = [
-        (idx, point)
-        for idx, point in zip(match.matched_sample_indices, match.matched_points, strict=True)
-        if point.heard and idx in side
+        _Heard(idx, amp, speed_kmh, location)
+        for idx, amp, speed_kmh, location in zip(
+            matches.sample.tolist(),
+            matches.amp.tolist(),
+            matches.speed_kmh.tolist(),
+            matches.location_names(),
+            strict=True,
+        )
+        if idx in side
     ]
     possible_by_spell = Counter(spell_of[idx] for idx, is_braking in side.items() if is_braking)
     amps_by_spell: dict[int, list[float]] = {}
-    for idx, point in heard:
-        if side[idx]:
-            amps_by_spell.setdefault(spell_of[idx], []).append(point.amp)
+    for point in heard:
+        if side[point.idx]:
+            amps_by_spell.setdefault(spell_of[point.idx], []).append(point.amp)
     # The loudest stop's level, among the stops heard often enough to judge.
     stop_levels = [
         median(amps)
@@ -153,18 +180,19 @@ def only_while_braking(
     braking_possible = [
         idx for idx, is_braking in side.items() if is_braking and spell_of[idx] in shown
     ]
-    braking_heard = [point for idx, point in heard if side[idx] and spell_of[idx] in shown]
+    braking_heard = [point for point in heard if side[point.idx] and spell_of[point.idx] in shown]
     if len(braking_possible) < _MIN_SPECTRA or len(braking_heard) < _MIN_BRAKING_HEARD_SHARE * len(
         braking_possible
     ):
         return False
     # Compare with driving at the speeds the car braked through.
-    speeds = [point.speed_kmh for point in braking_heard if point.speed_kmh is not None]
+    speeds = [point.speed_kmh for point in braking_heard if point.speed_kmh == point.speed_kmh]
     if not speeds:
         return False
     low, high = min(speeds), max(speeds)
 
     def in_band(speed: float | None) -> bool:
+        # A NaN (no) speed is in no band.
         return speed is not None and low <= speed <= high
 
     # Each sensor against its own braking level: a sensor that hears the order
@@ -174,7 +202,6 @@ def only_while_braking(
     for point in braking_heard:
         amps_by_location.setdefault(point.location, []).append(point.amp)
     level_at = {location: median(amps) for location, amps in amps_by_location.items()}
-    location_of = dict(match.possible_samples)
     sample_speeds = optional_floats(samples.speed_kmh)
     clear_possible = [
         idx
@@ -185,8 +212,8 @@ def only_while_braking(
         return False
     clear_present = [
         point
-        for idx, point in heard
-        if not side[idx]
+        for point in heard
+        if not side[point.idx]
         and point.location in level_at
         and in_band(point.speed_kmh)
         and point.amp >= _PRESENT_LEVEL_RATIO * level_at[point.location]

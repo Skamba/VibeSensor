@@ -183,6 +183,27 @@ path caps the loop's duty cycle at 50%. Even at a 5–10× slower Raspberry Pi
   none, half the sensors' or half the time's raw capture), the CI-seed
   accuracy benchmark and the diagnostic matrix. Pi timing to be measured
   after merge.
+- Order matching stays on columns to the finding (`MatchedWindows`, "Order
+  matches as columns" in `docs/analysis_pipeline.md`): a hypothesis's
+  matched windows, their heard subset, the line's placement and the windows
+  off it, the wheel's harmonic comb, the tracking slope, the speed, phase
+  and amplitude evidence and the location scoring per speed bin read one
+  array per field, and the tracked cells' reads, medians and scatter are
+  arrays too (`CellReads`, `TrackedCells`). Only a finding's matches become
+  `OrderMatchObservation`s, with their sample's time and speed shared from
+  the drive's values: a new float per finding kept the analysis 0.7 MB
+  larger until the summary was stored. The location modules import
+  `MatchedWindows` for typing only, so the order modules still load with
+  the first analysis rather than at server start. Measured on the x86 dev
+  host (same drive, 11 interleaved rounds pinned to 4 cores,
+  `OPENBLAS_NUM_THREADS=1`): the whole post-analysis from 1.67 s to 1.32 s
+  (analyze 944 to 619 ms; load, replay and store unchanged), peak RSS 168.9
+  to 168.1 MB, memray peak 116.8 to 116.6 MB; without the raw capture from
+  0.93 s to 0.82 s (analyze 522 to 417 ms), peak RSS 130.0 to 129.0 MB,
+  memray peak 79.0 to 75.9 MB. The analysis JSON is byte-identical on that
+  drive (with all, none, half the sensors' or half the time's raw capture),
+  the CI-seed accuracy benchmark and the diagnostic matrix. Pi timing to be
+  measured after merge.
 - Tried and not kept for order matching: a pool of 3 forked processes, one
   hypothesis each, saved 21 s on the Pi but each child dirtied 30-45 MB of
   the parent's pages through reference counts (86-135 MB in all), leaving 54-100

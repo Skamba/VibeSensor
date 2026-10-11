@@ -250,7 +250,7 @@ coordinates the evidence flow:
    order's peaks move one-for-one with its predicted frequency; a fixed
    resonance (body mode, engine idle) that the prediction sweeps past stays
    at one frequency, yet falls inside the tolerance band over a speed range.
-   `frequency_tracking_slope()` (`domain/order_match.py`) takes the robust
+   `frequency_tracking_slope()` (`analysis/orders/tracking.py`) takes the robust
    (Theil–Sen) slope of matched vs predicted Hz over the heard matches; below
    `MIN_ORDER_TRACKING_SLOPE` (0.5) the hypothesis produces no finding. On
    the simulator real orders score 0.8–1.3 and a 13 Hz body resonance crossed
@@ -491,6 +491,12 @@ as floor):
   are stacked and read at once (gathered straight from the replay's spectra
   where it keeps them as rows of one array), each read bit for bit the one
   `line_read()` takes on its own, then filed by cell in window order.
+- `TrackedCells` takes the reads and control reads as columns (`CellReads`:
+  each read's cell, excess, flanks and time) and works out each cell's
+  medians, presence blocks and normalized reads with NumPy over the sorted
+  columns (`group_medians()`, `present_levels()`), the same values to the
+  bit as a list per cell: `np.median` is `statistics.median`, and the sums
+  stay Python `sum` in first-seen order.
 
 **Whether a sensor hears the order** (`TrackedCells`). The reads are grouped
 per sensor, 10 km/h speed bin and driving phase (the rest of the drive,
@@ -758,7 +764,14 @@ The matcher (`match_samples_for_hypothesis()`) takes the nearest peak in the
 tolerance band whatever its level, so it also lands on floor-level road noise
 at every sensor and in the windows an order is absent. It classifies each match
 once, and every metric below reads that classification
-(`OrderMatchObservation.heard`) instead of applying its own floor filter.
+(`MatchedWindows.heard`, `OrderMatchObservation.heard` on a finding's matched
+points) instead of applying its own floor filter. A hypothesis keeps its
+matched windows as columns (`MatchedWindows`: sample, speed, predicted and
+matched frequency, error, amplitude, floor, sensor, phase, speed bin, heard);
+the metrics below, the location scoring and the brake check read the
+columns, and only a finding's matches become `OrderMatchObservation`s, their
+time and speed taken from the drive's values by sample, so the findings
+share them.
 
 A match is **heard** when both hold:
 
@@ -805,7 +818,7 @@ After a wheel/tire hypothesis becomes a finding, `pipeline.py` asks
 `brake_attribution.only_while_braking()` whether the order was there only while
 the car braked (`BRAKING` phase; see "Braking" in `docs/analysis_pipeline.md`).
 The matcher records every possible window with its sensor
-(`OrderMatchAccumulator.possible_samples`), so the check compares, at the heard
+(`OrderMatchAccumulator.possible_sample` and `possible_location`), so the check compares, at the heard
 sensors, the share of braking windows that heard the order with the share of
 non-braking windows at the same speeds that heard it within 12 dB of its
 braking level. Windows within half an analysis window of a braking sample are
@@ -859,8 +872,8 @@ That shared ownership is why `dsp/order_bands.py` exists outside
 | `apps/server/vibesensor/domain/engine_profile.py` | Engine profile and the rules table of the engine orders it excites. |
 | `apps/server/vibesensor/dsp/order_bands.py` | Shared order-match tolerance and live band-payload helpers. |
 | `apps/server/vibesensor/analysis/orders/physics.py` | Fixed hypothesis catalog and per-sample predicted-Hz helpers. |
-| `apps/server/vibesensor/analysis/orders/matching.py` | Match predicted order bands against stored sample peaks, read each window at the order's line, and classify each window's match from its read (or its peak) as heard. |
-| `apps/server/vibesensor/analysis/orders/tracking.py` | Order-tracked reads: speed rates, which sensors, cells and phases hear an order, and per-sensor order levels. |
+| `apps/server/vibesensor/analysis/orders/matching.py` | Match predicted order bands against stored sample peaks, read each window at the order's line, and classify each window's match from its read (or its peak) as heard; a hypothesis's matched windows are columns (`MatchedWindows`). |
+| `apps/server/vibesensor/analysis/orders/tracking.py` | Order-tracked reads: speed rates, which sensors, cells and phases hear an order, per-sensor order levels, and how the matches track the prediction (`frequency_tracking_slope`). |
 | `apps/server/vibesensor/dsp/window_spectrum.py` | A window's combined spectrum, one read at an order's line, and the line's swept width. |
 | `apps/server/vibesensor/dsp/line_significance.py` | Whether an order's line reads stand out of the floor: the rule the report and the live view share. |
 | `apps/server/vibesensor/live/order_hearing.py` | Which orders the live spectra hear, by that rule over the last 10 s (`heard_at` on each live band). |

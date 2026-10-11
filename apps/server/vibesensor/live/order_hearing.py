@@ -38,10 +38,9 @@ from vibesensor.dsp.line_significance import (
     MIN_SCATTER_READS,
     SENSOR_STANDARD_ERRORS,
     clear,
-    deviations,
     independent_share,
     normalized,
-    scatter,
+    read_scatter,
     stands_out,
 )
 from vibesensor.dsp.window_spectrum import (
@@ -188,8 +187,7 @@ class _Reads:
             [read.line.excess for read in self.controls],
             [read.line.flanks for read in self.controls],
         )
-        distances = deviations([controls], MIN_SCATTER_READS) or deviations([reads], 1)
-        if not stands_out(reads, scatter(distances or [0.0]), share, SENSOR_STANDARD_ERRORS):
+        if not stands_out(reads, read_scatter([controls], [reads]), share, SENSOR_STANDARD_ERRORS):
             return None
         return median(line.excess for line in here)
 

@@ -6,7 +6,7 @@ from collections.abc import Callable
 from typing import Any
 
 import pytest
-from test_support.analysis import run_analysis
+from test_support.analysis import matched_windows, run_analysis
 from test_support.core import ALL_WHEEL_SENSORS, wheel_hz
 from test_support.synthetic_samples import make_sample
 
@@ -312,7 +312,7 @@ def _diffuse(
         set(_WHEELS),
         dict.fromkeys(_WHEELS, 1000),
         {location: round(rate * 1000) for location, rate in zip(_WHEELS, rates, strict=True)},
-        points,
+        matched_windows(points, [0.0] * len(points)),
     )
 
 
@@ -440,11 +440,9 @@ def test_braking_matches_weigh_on_the_speed_like_other_slowing_down() -> None:
             *_points("cruise", 60.0, 0.03, 5),
             *_points(phase, 60.0, 0.12, 5),
         ]
+        windows = matched_windows(points, [0.0] * len(points))
         evidence = compute_matched_speed_phase_evidence(
-            points,
-            [(point, 0.0) for point in points],
-            focused_speed_band=None,
-            hotspot_speed_band="",
+            windows, windows, focused_speed_band=None, hotspot_speed_band=""
         )
         return evidence.strongest_speed_band
 
@@ -484,8 +482,10 @@ def test_strongest_speed_is_amplitude_over_the_floor_within_the_heard_range() ->
         *[(point, 0.19) for point in _heard(40.0, 0.20, 10)],
         *[(point, 0.01) for point in _heard(140.0, 0.30, 3)],
     ]
-    points = [point for point, _floor in evidence]
+    windows = matched_windows(
+        [point for point, _floor in evidence], [floor for _point, floor in evidence]
+    )
     result = compute_matched_speed_phase_evidence(
-        points, evidence, focused_speed_band=None, hotspot_speed_band=""
+        windows, windows, focused_speed_band=None, hotspot_speed_band=""
     )
     assert result.strongest_speed_band == "90-100 km/h"

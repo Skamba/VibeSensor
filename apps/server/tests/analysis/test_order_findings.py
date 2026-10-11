@@ -5,8 +5,14 @@ Pure order-tracking rules whose effects the simulator benchmark cannot isolate.
 
 from __future__ import annotations
 
+import numpy as np
 import pytest
-from test_support.analysis import run_analysis, sample_columns_of, sample_peaks_of
+from test_support.analysis import (
+    matched_windows,
+    run_analysis,
+    sample_columns_of,
+    sample_peaks_of,
+)
 from test_support.core import standard_metadata, wheel_hz
 from test_support.findings import make_finding
 from test_support.synthetic_samples import make_sample
@@ -182,8 +188,7 @@ def _make_accumulator(
     speed_bins = matched_speed_bins or {"60-70": matched}
     return OrderMatchAccumulator(
         possible=possible,
-        matched_floor=[0.005] * matched,
-        matched_points=matched_points,
+        matches=matched_windows(matched_points, [0.005] * matched, samples=sample_indices),
         ref_sources={"speed+tire"},
         possible_by_speed_bin={"60-70": possible},
         matched_by_speed_bin=speed_bins,
@@ -193,7 +198,6 @@ def _make_accumulator(
         matched_by_location={"front_left": matched},
         has_phases=False,
         compliance=1.0,
-        matched_sample_indices=sample_indices,
     )
 
 
@@ -234,10 +238,10 @@ def _brake_check(*, front_left_clear_in_band: int, clear_amp: float) -> bool:
         )
         for t_s, kmh, loc, phase, amp in rows
     ]
+    matches = matched_windows(points, [0.001] * len(rows))
     match = OrderMatchAccumulator(
         possible=len(rows),
-        matched_points=points,
-        matched_floor=[0.001] * len(rows),
+        matches=matches,
         ref_sources={"speed+tire"},
         possible_by_speed_bin={},
         matched_by_speed_bin={},
@@ -248,8 +252,8 @@ def _brake_check(*, front_left_clear_in_band: int, clear_amp: float) -> bool:
         has_phases=True,
         compliance=1.0,
         heard_locations=frozenset({"front-left", "front-right"}),
-        matched_sample_indices=tuple(range(len(rows))),
-        possible_samples=tuple((idx, row[2]) for idx, row in enumerate(rows)),
+        possible_sample=np.arange(len(rows), dtype=np.intp),
+        possible_location=matches.location,
     )
     return only_while_braking(match, samples, [row[3] for row in rows])
 

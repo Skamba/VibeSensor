@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from math import log1p
 
+import numpy as np
+
 from vibesensor.analysis.constants import MEMS_NOISE_FLOOR_G, SNR_LOG_DIVISOR
 from vibesensor.analysis.location_analysis import (
     LocationAnalysisResult,
@@ -14,7 +16,7 @@ from vibesensor.analysis.orders.heuristics import (
     apply_localization_override,
     detect_diffuse_excitation,
 )
-from vibesensor.analysis.orders.matching import OrderMatchAccumulator
+from vibesensor.analysis.orders.matching import MatchedWindows, OrderMatchAccumulator
 from vibesensor.analysis.orders.physics import OrderHypothesis
 from vibesensor.analysis.orders.statistics import (
     compute_amplitude_and_error_stats,
@@ -23,7 +25,6 @@ from vibesensor.analysis.orders.statistics import (
 )
 from vibesensor.domain.finding_types import VibrationSource
 from vibesensor.domain.location_hotspot import LocationHotspot
-from vibesensor.domain.order_match import OrderMatchObservation
 from vibesensor.dsp.vibration_strength import vibration_strength_db_scalar
 
 
@@ -84,10 +85,8 @@ def _normalized_domain_hotspot(
     )
 
 
-def _at_tracked_levels(
-    match: OrderMatchAccumulator,
-) -> tuple[list[OrderMatchObservation], frozenset[str]]:
-    """The matched points, each at its sensor's tracked level of the order, and the quiet sensors.
+def _at_tracked_levels(match: OrderMatchAccumulator) -> tuple[MatchedWindows, frozenset[str]]:
+    """The matched windows, each at its sensor's tracked level of the order, and the quiet sensors.
 
     A window's ranked peak is the order plus whatever else sits in its band
     (the road's wheel-hop hump under a wheel order in town); the tracked level
@@ -105,13 +104,14 @@ def _at_tracked_levels(
         or (level.read_g if level.location in match.heard_locations else 0.0)
         for level in match.sensor_levels
     }
-    points = match.matched_points
+    windows = match.matches
     if not any(level.level_g for level in match.sensor_levels) or not {
-        point.location for point in points
+        windows.locations[code] for code in np.unique(windows.location).tolist()
     } <= set(levels):
-        return points, frozenset()
+        return windows, frozenset()
+    level_of = np.array([levels.get(location, 0.0) for location in windows.locations])
     return (
-        [point.with_amp(levels[point.location]) for point in points],
+        replace(windows, amp=level_of[windows.location]),
         frozenset(location for location, level in levels.items() if level <= 0),
     )
 
@@ -135,9 +135,9 @@ def score_order_finding(
     )
 
     relevant_speed_bins = [context.focused_speed_band] if context.focused_speed_band else None
-    points, quiet_locations = _at_tracked_levels(match)
+    windows, quiet_locations = _at_tracked_levels(match)
     location_line, loc_result = summarize_order_match_locations(
-        points,
+        windows,
         lang=context.lang,
         relevant_speed_bins=relevant_speed_bins,
         connected_locations=context.connected_locations,
@@ -188,7 +188,7 @@ def score_order_finding(
         context.connected_locations,
         match.possible_by_location,
         match.matched_by_location,
-        match.matched_points,
+        match.matches,
     )
     zone_source = hypothesis.suspected_source in (
         VibrationSource.ENGINE,

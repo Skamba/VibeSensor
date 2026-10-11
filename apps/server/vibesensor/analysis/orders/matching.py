@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-from collections import defaultdict
 from collections.abc import Collection, Sequence
 from dataclasses import dataclass, field
-from statistics import median
 from typing import NamedTuple, cast
 
 import numpy as np
@@ -31,6 +29,8 @@ from vibesensor.analysis.math_utils import _corr_abs_clamped, _ramp
 from vibesensor.analysis.orders.physics import OrderHypothesis, ReferenceColumns
 from vibesensor.analysis.orders.settings import ORDER_CONFIDENCE_SETTINGS
 from vibesensor.analysis.orders.tracking import (
+    CellKey,
+    CellReads,
     TrackedCells,
     speed_rates_kmh_per_s,
     window_duration_s,
@@ -41,7 +41,7 @@ from vibesensor.domain.order_match import OrderMatchObservation, SensorOrderLeve
 from vibesensor.dsp.constants import FFT_N, SAMPLE_RATE_HZ
 from vibesensor.dsp.fixed_tones import RingingTone
 from vibesensor.dsp.line_significance import CONTROL_REACHES
-from vibesensor.dsp.order_bands import order_peak_tolerance_hz, order_peak_tolerances_hz
+from vibesensor.dsp.order_bands import order_peak_tolerances_hz
 from vibesensor.dsp.window_spectrum import (
     SpectraByRows,
     line_reach_hz,
@@ -50,13 +50,108 @@ from vibesensor.dsp.window_spectrum import (
     spectra_by_rows,
 )
 from vibesensor.recording.run_schema import RunMetadata
-from vibesensor.recording.sample_columns import coded, first_seen
+from vibesensor.recording.sample_columns import coded, first_seen, optional_floats
 
 BRAKING_PHASE = DrivingPhase.BRAKING.value
 GUIDED_COAST_PHASE = "guided_coast_down"
 # The cells of the rest of the drive.
 DRIVING_PHASE = ""
 ACCELERATION_PHASE = DrivingPhase.ACCELERATION.value
+_NO_WINDOWS: npt.NDArray[np.intp] = np.empty(0, dtype=np.intp)
+_NO_READS = CellReads(_NO_WINDOWS, np.empty(0), np.empty(0), np.empty(0))
+
+
+@dataclass(frozen=True, slots=True)
+class MatchedWindows:
+    """A hypothesis's matched windows as columns, in window order.
+
+    Each window's sample, its speed as recorded (NaN where the sample has
+    none), the predicted and matched frequency, the match's relative error
+    and amplitude, the window's floor, its sensor, phase and speed bin
+    (indices into *locations*, *phases* and *speed_bins*, whose ``None`` is
+    not moving) and whether it hears the order
+    (``OrderMatchObservation.heard``). Columns, not an object per window:
+    a hypothesis matches most of a drive's windows, and only a finding's
+    become ``OrderMatchObservation``s (``observations``), with the time and
+    speed of their sample from the drive's (*sample_t_s*, *sample_speed_kmh*,
+    shared by every finding).
+    """
+
+    sample: npt.NDArray[np.intp]
+    speed_kmh: npt.NDArray[np.float64]
+    predicted_hz: npt.NDArray[np.float64]
+    matched_hz: npt.NDArray[np.float64]
+    rel_error: npt.NDArray[np.float64]
+    amp: npt.NDArray[np.float64]
+    floor: npt.NDArray[np.float64]
+    location: npt.NDArray[np.intp]
+    phase: npt.NDArray[np.intp]
+    speed_bin: npt.NDArray[np.intp]
+    heard: npt.NDArray[np.bool_]
+    locations: Sequence[str]
+    phases: Sequence[str | None]
+    speed_bins: Sequence[str | None]
+    sample_t_s: Sequence[float | None]
+    sample_speed_kmh: Sequence[float | None]
+
+    def __len__(self) -> int:
+        return int(self.sample.size)
+
+    def take(self, at: npt.NDArray[np.intp] | npt.NDArray[np.bool_]) -> MatchedWindows:
+        """The windows *at* (positions or a mask), in order."""
+        return MatchedWindows(
+            self.sample[at],
+            self.speed_kmh[at],
+            self.predicted_hz[at],
+            self.matched_hz[at],
+            self.rel_error[at],
+            self.amp[at],
+            self.floor[at],
+            self.location[at],
+            self.phase[at],
+            self.speed_bin[at],
+            self.heard[at],
+            self.locations,
+            self.phases,
+            self.speed_bins,
+            self.sample_t_s,
+            self.sample_speed_kmh,
+        )
+
+    def location_names(self) -> list[str]:
+        """Each window's sensor location."""
+        locations = self.locations
+        return [locations[code] for code in self.location.tolist()]
+
+    def observations(self) -> tuple[OrderMatchObservation, ...]:
+        """The windows as ``OrderMatchObservation``s: a finding's matched points."""
+        locations, phases = self.locations, self.phases
+        t_s, speed_kmh = self.sample_t_s, self.sample_speed_kmh
+        rows = zip(
+            self.sample.tolist(),
+            self.predicted_hz.tolist(),
+            self.matched_hz.tolist(),
+            self.rel_error.tolist(),
+            self.amp.tolist(),
+            self.location.tolist(),
+            self.phase.tolist(),
+            self.heard.tolist(),
+            strict=True,
+        )
+        return tuple(
+            OrderMatchObservation(
+                predicted_hz,
+                matched_hz,
+                error,
+                amp,
+                locations[at],
+                t_s[sample],
+                speed_kmh[sample],
+                phases[phase],
+                heard,
+            )
+            for sample, predicted_hz, matched_hz, error, amp, at, phase, heard in rows
+        )
 
 
 @dataclass(frozen=True)
@@ -64,16 +159,14 @@ class OrderMatchAccumulator:
     """Accumulated statistics from matching one hypothesis across samples.
 
     Every match is classified once, while matching, as heard or not
-    (``OrderMatchObservation.heard``), and the sensors that hear the order
+    (``MatchedWindows.heard``), and the sensors that hear the order
     (``heard_locations``) are derived once from those verdicts. Every metric
     that weighs the order's evidence reads them; none re-filters the raw
     matches. See "Heard matches" in ``docs/order_tracking.md``.
     """
 
     possible: int
-    matched_points: list[OrderMatchObservation]
-    # The floor of each match's window, parallel to ``matched_points``.
-    matched_floor: list[float]
+    matches: MatchedWindows
     ref_sources: set[str]
     possible_by_speed_bin: dict[str, int]
     matched_by_speed_bin: dict[str, int]
@@ -86,9 +179,10 @@ class OrderMatchAccumulator:
     heard_locations: frozenset[str] = frozenset()
     # How many sensors hear the order, graded (``_corroboration``).
     corroboration: float = 0.0
-    matched_sample_indices: tuple[int, ...] = ()
-    # The samples the order could be looked for in, with their sensor location.
-    possible_samples: tuple[tuple[int, str], ...] = ()
+    # The windows the order could be looked for in: each one's sample and
+    # sensor (an index into ``matches.locations``).
+    possible_sample: npt.NDArray[np.intp] = field(default_factory=lambda: _NO_WINDOWS)
+    possible_location: npt.NDArray[np.intp] = field(default_factory=lambda: _NO_WINDOWS)
     # The order's own level at each sensor whose spectra were kept, at the
     # speeds it is heard (``TrackedCells.sensor_levels``).
     sensor_levels: tuple[SensorOrderLevel, ...] = ()
@@ -104,7 +198,7 @@ class OrderMatchAccumulator:
 
     @property
     def matched(self) -> int:
-        return len(self.matched_points)
+        return len(self.matches)
 
     @property
     def match_rate(self) -> float:
@@ -131,23 +225,23 @@ class OrderMatchAccumulator:
     def heard_share(self) -> float:
         """Share of the matches at the sensors that hear the order that are heard."""
         matched = self._at_heard_locations(self.matched_by_location)
-        heard = sum(1 for point in self.matched_points if point.heard)
+        heard = int(np.count_nonzero(self.matches.heard))
         return heard / matched if matched else 0.0
 
     def _at_heard_locations(self, counts: dict[str, int]) -> int:
         return sum(counts.get(location, 0) for location in self.heard_locations)
 
     @property
-    def evidence(self) -> list[tuple[OrderMatchObservation, float]]:
-        """The heard matches with their window floors; all matches when none is heard.
+    def evidence(self) -> MatchedWindows:
+        """The heard matches; all matches when none is heard.
 
         The order's level, frequency error and tracking, and sample count come
         from these: floor-level matches say nothing about how strong an order is
         or how closely it follows its prediction. An order heard nowhere has
         nothing better than its floor-level matches.
         """
-        pairs = list(zip(self.matched_points, self.matched_floor, strict=True))
-        return [(point, floor) for point, floor in pairs if point.heard] or pairs
+        heard = self.matches.heard
+        return self.matches.take(heard) if heard.any() else self.matches
 
     @property
     def unique_match_locations(self) -> set[str]:
@@ -159,7 +253,12 @@ class OrderMatchAccumulator:
         """
         if self.heard_locations:
             return {location.strip() for location in self.heard_locations}
-        return {(point.location or "").strip() for point in self.matched_points if point.location}
+        locations = self.matches.locations
+        return {
+            (locations[code] or "").strip()
+            for code in np.unique(self.matches.location).tolist()
+            if locations[code]
+        }
 
     def is_eligible(
         self,
@@ -175,7 +274,8 @@ class OrderMatchAccumulator:
         somewhere is matched where it is heard, not where road noise sat near
         its frequency.
         """
-        evidence = len(self.evidence)
+        heard = int(np.count_nonzero(self.matches.heard))
+        evidence = heard or self.matched
         if self.possible < min_coverage or evidence < min_matched:
             return False
         if feature_interval_s is None or feature_interval_s <= 0:
@@ -195,8 +295,7 @@ class OrderMatchAccumulator:
         if matched_speed_bins >= ORDER_VARIABLE_MIN_MATCHED_SPEED_BINS:
             return True
         corr = _corr_abs_clamped(
-            [point.predicted_hz for point in self.matched_points],
-            [point.matched_hz for point in self.matched_points],
+            self.matches.predicted_hz.tolist(), self.matches.matched_hz.tolist()
         )
         return corr is not None and corr >= ORDER_VARIABLE_MIN_CORRELATION
 
@@ -204,11 +303,7 @@ class OrderMatchAccumulator:
     def matched_peaks(self) -> frozenset[tuple[int, float]]:
         """The spectral peaks this hypothesis matched, as ``(sample index, peak Hz)``."""
         return frozenset(
-            zip(
-                self.matched_sample_indices,
-                (point.matched_hz for point in self.matched_points),
-                strict=True,
-            )
+            zip(self.matches.sample.tolist(), self.matches.matched_hz.tolist(), strict=True)
         )
 
 
@@ -307,43 +402,47 @@ def _corroboration(shares: dict[str, float]) -> float:
     return sum(_ramp(share, low, low + settings.corroboration_ramp) for share in shares.values())
 
 
-def _line_half_width_hz(frequency_hz: float, bin_hz: float) -> float:
-    return max(ORDER_LINE_WIDTH_REL * frequency_hz, ORDER_LINE_WIDTH_MIN_BINS * bin_hz)
+def _line_half_width_hz(hz: npt.NDArray[np.float64], bin_hz: float) -> npt.NDArray[np.float64]:
+    """Half a peak's width on the order's line at each frequency *hz*."""
+    return np.maximum(ORDER_LINE_WIDTH_REL * hz, ORDER_LINE_WIDTH_MIN_BINS * bin_hz)
 
 
-def is_harmonic_of(peak_hz: float, fundamental_hz: float, multiple: int, bin_hz: float) -> bool:
-    """Whether a peak is the *multiple*-th harmonic of a fundamental's peak in the same spectrum.
+def is_harmonic_of(
+    peak_hz: npt.NDArray[np.float64],
+    fundamental_hz: npt.NDArray[np.float64],
+    multiple: int,
+    bin_hz: float,
+) -> npt.NDArray[np.bool_]:
+    """Whether each peak is the *multiple*-th harmonic of its fundamental's in the same spectrum.
 
     Read off one spectrum, the two differ from an exact harmonic only by where
     each sits on its line: the fundamental's error *multiple* times over plus
-    the harmonic's own.
+    the harmonic's own (``_line_half_width_hz``).
     """
     tolerance_hz = (multiple + 1) * _line_half_width_hz(fundamental_hz, bin_hz)
-    return abs(peak_hz - multiple * fundamental_hz) <= tolerance_hz
+    return np.abs(peak_hz - multiple * fundamental_hz) <= tolerance_hz
 
 
-@dataclass(frozen=True, slots=True)
-class _LinePoint:
-    """A clear match: the predicted frequency, the matched peak's, and whether under a pull."""
-
-    predicted_hz: float
-    matched_hz: float
-    pulling: bool = False
-
-
-def _off_the_line(points: Sequence[_LinePoint], bin_hz: float, compliance: float) -> list[bool]:
+def _off_the_line(
+    predicted_hz: npt.NDArray[np.float64],
+    matched_hz: npt.NDArray[np.float64],
+    pulling: npt.NDArray[np.bool_],
+    bin_hz: float,
+    compliance: float,
+) -> npt.NDArray[np.bool_]:
     """Which of a group of clear matches are off the order's spectral line.
 
-    An order is a line: its peak sits on the prediction times one constant
-    factor (a slightly-off tyre size or ratio) to within the speed reading's
-    error. A hard pull moves it: the drive torque makes the driven wheels slip
-    a few percent faster than the road (and a lagging speed reading lags the
-    prediction the same way), so the matches under a pull have a line of
-    their own when there are enough of them to place it. Broadband content
-    filling the tolerance window, such as a road-excited resonance hump, puts a
-    local-maximum peak somewhere in the window in most windows, scattered
-    across it. A group with under ``ORDER_LINE_MIN_SHARE`` on its lines has no
-    line: every match is off it.
+    Each match is its predicted frequency, its matched peak's and whether it
+    is under a pull. An order is a line: its peak sits on the prediction
+    times one constant factor (a slightly-off tyre size or ratio) to within
+    the speed reading's error. A hard pull moves it: the drive torque makes
+    the driven wheels slip a few percent faster than the road (and a lagging
+    speed reading lags the prediction the same way), so the matches under a
+    pull have a line of their own when there are enough of them to place it.
+    Broadband content filling the tolerance window, such as a road-excited
+    resonance hump, puts a local-maximum peak somewhere in the window in most
+    windows, scattered across it. A group with under ``ORDER_LINE_MIN_SHARE``
+    on its lines has no line: every match is off it.
 
     A line is placed on the matches where the tolerance window is wide enough
     to tell scatter from a line (``ORDER_LINE_MIN_TOLERANCE_WIDTHS``); with too
@@ -353,30 +452,40 @@ def _off_the_line(points: Sequence[_LinePoint], bin_hz: float, compliance: float
     at one frequency while the prediction sweeps past. An order's peak is on
     its line in any window.
     """
-    judged = [
-        point
-        for point in points
-        if order_peak_tolerance_hz(predicted_hz=point.predicted_hz, path_compliance=compliance)
-        >= ORDER_LINE_MIN_TOLERANCE_WIDTHS * _line_half_width_hz(point.predicted_hz, bin_hz)
-    ]
-    if len(judged) < ORDER_LINE_MIN_POINTS:
-        return [False] * len(points)
-    scale = {pulling: _line_scale(judged, pulling) for pulling in (False, True)}
-    off = [
-        abs(point.matched_hz - scale[point.pulling] * point.predicted_hz)
-        > _line_half_width_hz(point.predicted_hz, bin_hz)
-        for point in points
-    ]
-    if len(points) - sum(off) < ORDER_LINE_MIN_SHARE * len(points):
-        return [True] * len(points)
+    half_width_hz = _line_half_width_hz(predicted_hz, bin_hz)
+    judged = _judged(predicted_hz, half_width_hz, compliance)
+    if np.count_nonzero(judged) < ORDER_LINE_MIN_POINTS:
+        return np.zeros(predicted_hz.size, dtype=np.bool_)
+    ratio = matched_hz / predicted_hz
+    scale = np.where(
+        pulling,
+        _line_scale(ratio, judged & pulling, judged),
+        _line_scale(ratio, judged & ~pulling, judged),
+    )
+    off = np.abs(matched_hz - scale * predicted_hz) > half_width_hz
+    if off.size - np.count_nonzero(off) < ORDER_LINE_MIN_SHARE * off.size:
+        return np.ones(off.size, dtype=np.bool_)
     return off
 
 
-def _line_scale(judged: Sequence[_LinePoint], pulling: bool) -> float:
-    """The line's factor over the prediction under a pull or not (the group's if too few)."""
-    own = [point for point in judged if point.pulling is pulling]
-    placed_on = own if len(own) >= ORDER_LINE_MIN_POINTS else judged
-    return median(point.matched_hz / point.predicted_hz for point in placed_on)
+def _judged(
+    predicted_hz: npt.NDArray[np.float64],
+    half_width_hz: npt.NDArray[np.float64],
+    compliance: float,
+) -> npt.NDArray[np.bool_]:
+    """The matches whose tolerance window is wide enough to place a line in."""
+    return (
+        order_peak_tolerances_hz(predicted_hz, path_compliance=compliance)
+        >= ORDER_LINE_MIN_TOLERANCE_WIDTHS * half_width_hz
+    )
+
+
+def _line_scale(
+    ratio: npt.NDArray[np.float64], own: npt.NDArray[np.bool_], judged: npt.NDArray[np.bool_]
+) -> float:
+    """The line's factor over the prediction (*ratio*) on its *own* matches, else the *judged*."""
+    placed_on = own if np.count_nonzero(own) >= ORDER_LINE_MIN_POINTS else judged
+    return float(np.median(ratio[placed_on]))
 
 
 def fft_bin_hz(context: RunMetadata) -> float:
@@ -385,7 +494,9 @@ def fft_bin_hz(context: RunMetadata) -> float:
     return sample_rate_hz / fft_n
 
 
-def _masked(windows: _Windows, drive: DriveFacts, bin_hz: float, compliance: float) -> set[int]:
+def _masked(
+    windows: _Windows, drive: DriveFacts, bin_hz: float, compliance: float
+) -> npt.NDArray[np.bool_]:
     """The windows whose clear match is off the order's line (see ``_off_the_line``).
 
     Groups are per sensor and split by braking: a
@@ -393,35 +504,22 @@ def _masked(windows: _Windows, drive: DriveFacts, bin_hz: float, compliance: flo
     line. The sensors with too few clear matches to judge on their own are
     judged together: an order's line is at the same frequency at every sensor.
     """
-    groups: dict[tuple[int, bool], list[tuple[int, _LinePoint]]] = defaultdict(list)
+    masked = np.zeros(windows.sample.size, dtype=np.bool_)
     clear = np.flatnonzero(windows.clear)
-    for index, location, phase, predicted_hz, matched_hz in zip(
-        clear.tolist(),
-        windows.location[clear].tolist(),
-        windows.phase[clear].tolist(),
-        windows.predicted_hz[clear].tolist(),
-        windows.matched_hz[clear].tolist(),
-        strict=True,
-    ):
-        phase_key = drive.phases[phase]
-        point = _LinePoint(predicted_hz, matched_hz, pulling=phase_key == ACCELERATION_PHASE)
-        groups[(location, phase_key == BRAKING_PHASE)].append((index, point))
-    judged: list[list[tuple[int, _LinePoint]]] = []
-    pooled: dict[bool, list[tuple[int, _LinePoint]]] = defaultdict(list)
-    for (_location, braking), group in groups.items():
-        if len(group) >= ORDER_LINE_MIN_POINTS:
-            judged.append(group)
-        else:
-            pooled[braking].extend(group)
-    judged.extend(pooled.values())
-    return {
-        index
-        for group in judged
-        for (index, _), off in zip(
-            group, _off_the_line([match for _, match in group], bin_hz, compliance), strict=True
+    phase = windows.phase[clear]
+    braking = np.array([name == BRAKING_PHASE for name in drive.phases], dtype=np.bool_)[phase]
+    pulling = np.array([name == ACCELERATION_PHASE for name in drive.phases], dtype=np.bool_)[phase]
+    group = 2 * windows.location[clear] + braking
+    on_its_own = np.bincount(group)[group] >= ORDER_LINE_MIN_POINTS
+    # The pooled groups, braking or not, below every sensor's.
+    group = np.where(on_its_own, group + 2, braking)
+    for code in np.unique(group).tolist():
+        members = group == code
+        at = clear[members]
+        masked[at] = _off_the_line(
+            windows.predicted_hz[at], windows.matched_hz[at], pulling[members], bin_hz, compliance
         )
-        if off
-    }
+    return masked
 
 
 @dataclass(frozen=True, slots=True)
@@ -457,7 +555,9 @@ class DriveFacts:
     # Each sample's time (NaN where unknown), and whether it is known.
     t_s: npt.NDArray[np.float64]
     timed: npt.NDArray[np.bool_]
-    # Each sample's time and speed as recorded (``None`` where it has none).
+    # Each sample's speed as recorded (NaN where it has none), and its time
+    # and speed as values (None where none), which a finding's matches share.
+    recorded_speed_kmh: npt.NDArray[np.float64]
     sample_t_s: Sequence[float | None]
     sample_speed_kmh: Sequence[float | None]
 
@@ -512,14 +612,9 @@ def drive_facts(
         spectra=spectra_by_rows(table.spectra),
         t_s=table.t_s,
         timed=table.timed,
-        sample_t_s=[
-            t_s if timed else None
-            for t_s, timed in zip(table.t_s.tolist(), table.timed.tolist(), strict=True)
-        ],
-        sample_speed_kmh=[
-            speed_kmh if known else None
-            for speed_kmh, known in zip(speed.tolist(), table.has_speed.tolist(), strict=True)
-        ],
+        recorded_speed_kmh=speed,
+        sample_t_s=optional_floats(table.t_s),
+        sample_speed_kmh=optional_floats(speed),
     )
 
 
@@ -632,35 +727,27 @@ def match_samples_for_hypothesis(
         for code in set(kept_speed_bin[heard & has_speed_bin[kept_speed_bin] & braking].tolist())
     }
     heard_cell_phases = {phase for _location, _speed, phase in heard_cells}
-    matched_at = np.flatnonzero(matched)
-    matched_samples = windows.sample[kept][matched_at].tolist()
+    matched_samples = windows.sample[kept][matched]
     return OrderMatchAccumulator(
         possible=int(kept.size),
-        matched_points=[
-            OrderMatchObservation(
-                t_s=drive.sample_t_s[sample_idx],
-                speed_kmh=drive.sample_speed_kmh[sample_idx],
-                predicted_hz=window_hz,
-                matched_hz=peak_hz,
-                rel_error=error,
-                amp=amp,
-                location=drive.locations[at],
-                phase=drive.phases[phase_code],
-                heard=is_heard,
-            )
-            for sample_idx, window_hz, peak_hz, error, amp, at, phase_code, is_heard in zip(
-                matched_samples,
-                windows.predicted_hz[kept][matched_at].tolist(),
-                verdicts.matched_hz[matched_at].tolist(),
-                verdicts.rel_error[matched_at].tolist(),
-                verdicts.amp[matched_at].tolist(),
-                kept_location[matched_at].tolist(),
-                windows.phase[kept][matched_at].tolist(),
-                heard[matched_at].tolist(),
-                strict=True,
-            )
-        ],
-        matched_floor=windows.floor[kept][matched_at].tolist(),
+        matches=MatchedWindows(
+            sample=matched_samples,
+            speed_kmh=drive.recorded_speed_kmh[matched_samples],
+            predicted_hz=windows.predicted_hz[kept][matched],
+            matched_hz=verdicts.matched_hz[matched],
+            rel_error=verdicts.rel_error[matched],
+            amp=verdicts.amp[matched],
+            floor=windows.floor[kept][matched],
+            location=kept_location[matched],
+            phase=windows.phase[kept][matched],
+            speed_bin=kept_speed_bin[matched],
+            heard=heard[matched],
+            locations=drive.locations,
+            phases=drive.phases,
+            speed_bins=drive.speed_bins,
+            sample_t_s=drive.sample_t_s,
+            sample_speed_kmh=drive.sample_speed_kmh,
+        ),
         ref_sources=ref_sources,
         possible_by_speed_bin=possible_by_speed_bin,
         matched_by_speed_bin=_nonzero(matched_by_speed_bin),
@@ -672,14 +759,8 @@ def match_samples_for_hypothesis(
         compliance=compliance,
         heard_locations=heard_locations,
         corroboration=_corroboration(shares),
-        matched_sample_indices=tuple(matched_samples),
-        possible_samples=tuple(
-            zip(
-                windows.sample[kept].tolist(),
-                [drive.locations[code] for code in kept_location.tolist()],
-                strict=True,
-            )
-        ),
+        possible_sample=windows.sample[kept],
+        possible_location=kept_location,
         # The guided coast-down in neutral is a test, with the engine idling.
         sensor_levels=cells.sensor_levels(heard_speeds, (DRIVING_PHASE, BRAKING_PHASE)),
         braking_sensor_levels=cells.sensor_levels(braking_speeds, (BRAKING_PHASE,)),
@@ -699,8 +780,12 @@ def matched_peaks_for_hypothesis(
     context: RunMetadata,
     references: ReferenceColumns,
     drive: DriveFacts,
-) -> frozenset[tuple[int, float]]:
-    """``match_samples_for_hypothesis(...).matched_peaks``, without the rest of the accumulator."""
+) -> tuple[npt.NDArray[np.intp], npt.NDArray[np.float64]]:
+    """The samples a hypothesis matched, ascending, and each one's matched peak in Hz.
+
+    ``match_samples_for_hypothesis(...).matches``' ``sample`` and
+    ``matched_hz``, without the rest of the accumulator.
+    """
     windows, verdicts, _cells, _heard_cells = _match(
         peaks,
         tones,
@@ -711,13 +796,7 @@ def matched_peaks_for_hypothesis(
         getattr(hypothesis, "path_compliance", 1.0),
     )
     matched = verdicts.matched
-    return frozenset(
-        zip(
-            windows.sample[verdicts.kept][matched].tolist(),
-            verdicts.matched_hz[matched].tolist(),
-            strict=True,
-        )
-    )
+    return windows.sample[verdicts.kept][matched], verdicts.matched_hz[matched]
 
 
 def _match(
@@ -728,7 +807,7 @@ def _match(
     references: ReferenceColumns,
     drive: DriveFacts,
     compliance: float,
-) -> tuple[_Windows, _Verdicts, TrackedCells, dict[_CellKey, SensorOrderLevel]]:
+) -> tuple[_Windows, _Verdicts, TrackedCells, dict[CellKey, SensorOrderLevel]]:
     """One hypothesis's windows, their verdicts (``_tracked``), its line reads and heard cells."""
     # Each window: a sample with peaks or a spectrum, whose order is placed.
     # Peaks under the analysis floor are not analysed (``DriveTable``), so a
@@ -849,9 +928,6 @@ class _LineReadContext:
     braking_alone: bool
 
 
-type _CellKey = tuple[str, str, str]
-
-
 @dataclass(slots=True)
 class _LineReads:
     """Every window's read at the order's line, and the windows whose line could not be read."""
@@ -863,14 +939,14 @@ class _LineReads:
     off_edge: npt.NDArray[np.bool_]
     # Each line read's cell (an index into ``cell_keys``), line and how far it swept.
     line_cell: npt.NDArray[np.intp] = field(default_factory=lambda: np.empty(0, dtype=np.intp))
-    cell_keys: list[_CellKey] = field(default_factory=list)
+    cell_keys: list[CellKey] = field(default_factory=list)
     line_hz: npt.NDArray[np.float64] = field(default_factory=lambda: np.empty(0))
     line_half_width_hz: npt.NDArray[np.float64] = field(default_factory=lambda: np.empty(0))
 
 
 def _line_reads(
     windows: _Windows,
-    masked: set[int],
+    masked: npt.NDArray[np.bool_],
     read: _LineReadContext,
 ) -> _LineReads:
     """Every window read at the order's line, grouped by sensor, speed bin and driving phase.
@@ -896,7 +972,7 @@ def _line_reads(
     window_samples = windows.sample
     predicted_hz = windows.predicted_hz
     reads = _LineReads(
-        TrackedCells(window_s=window_s, braking_alone=read.braking_alone),
+        TrackedCells(window_s, (), _NO_READS, _NO_READS, braking_alone=read.braking_alone),
         np.full(window_samples.size, -1, dtype=np.intp),
         np.zeros(window_samples.size, dtype=np.bool_),
     )
@@ -907,11 +983,9 @@ def _line_reads(
     rate = drive.speed_rate[window_samples]
     # A window's peak lands anywhere on the stretch its line swept, so only the
     # windows whose line held still within a peak's width place the line.
-    held_width_hz = np.maximum(
-        ORDER_LINE_WIDTH_REL * predicted_hz, ORDER_LINE_WIDTH_MIN_BINS * read.bin_hz
-    )
+    held_width_hz = _line_half_width_hz(predicted_hz, read.bin_hz)
     swept_by = _swept_half_widths(predicted_hz, speed_kmh, rate, window_s)
-    swept = set(np.flatnonzero(swept_by > held_width_hz).tolist())
+    swept = swept_by > held_width_hz
     scale = _tracked_line_scale(windows, masked | swept, read.bin_hz, read.compliance)
     line_hz = scale * predicted_hz[spectral]
     half_width_hz = _swept_half_widths(line_hz, speed_kmh[spectral], rate[spectral], window_s)
@@ -967,36 +1041,20 @@ def _line_reads(
     entry_cell = np.full(entries.size, -1, dtype=np.intp)
     entry_cell[kept] = kept_cell
     control = ~main & taken & entry_taken[owner]
-    by_cell = _cell_slices(kept_cell, cells_in_order.size)
-    controls_by_cell = _cell_slices(entry_cell[owner[control]], cells_in_order.size)
-    main_excess, main_flanks = excess[main][kept], flanks[main][kept]
-    control_excess, control_flanks = excess[control], flanks[control]
-    kept_t_s, kept_timed = drive.t_s[kept_samples], drive.timed[kept_samples]
     reads.cell_keys = [drive.cells[cell] for cell in cells_in_order.tolist()]
-    for key, reads_at, controls_at in zip(reads.cell_keys, by_cell, controls_by_cell, strict=True):
-        cell_t_s = kept_t_s[reads_at]
-        reads.cells.add_reads(
-            key,
-            main_excess[reads_at].tolist(),
-            main_flanks[reads_at].tolist(),
-            cell_t_s.tolist(),
-            cell_t_s[kept_timed[reads_at]].tolist(),
-            control_excess[controls_at].tolist(),
-            control_flanks[controls_at].tolist(),
-        )
+    reads.cells = TrackedCells(
+        window_s,
+        reads.cell_keys,
+        CellReads(kept_cell, excess[main][kept], flanks[main][kept], drive.t_s[kept_samples]),
+        CellReads(entry_cell[owner[control]], excess[control], flanks[control]),
+        braking_alone=read.braking_alone,
+    )
     positions = entries[kept]
     reads.read_at[window_of[kept]] = np.arange(kept.size)
     reads.line_cell = kept_cell
     reads.line_hz = line_hz[positions]
     reads.line_half_width_hz = half_width_hz[positions]
     return reads
-
-
-def _cell_slices(cell_of: npt.NDArray[np.intp], cells: int) -> list[npt.NDArray[np.intp]]:
-    """The positions in *cell_of* of each cell's entries, cell by cell, each in their order."""
-    order = np.argsort(cell_of, kind="stable")
-    bounds = np.searchsorted(cell_of[order], np.arange(cells + 1))
-    return [order[start:stop] for start, stop in zip(bounds[:-1], bounds[1:], strict=True)]
 
 
 def _swept_half_widths(
@@ -1028,7 +1086,7 @@ class _Verdicts(NamedTuple):
 def _tracked(
     windows: _Windows,
     drive: DriveFacts,
-    masked: set[int],
+    masked: npt.NDArray[np.bool_],
     reads: _LineReads,
     heard: dict[tuple[str, str, str], SensorOrderLevel],
     hearing: Collection[tuple[str, str]],
@@ -1071,9 +1129,7 @@ def _tracked(
         [name in hearing_locations for name in drive.locations], dtype=np.bool_
     )[windows.location]
     unheard = ~tracked & np.where(read, cell_unheard[cell], reads.off_edge & off_hearing)
-    off_line = np.zeros(count, dtype=np.bool_)
-    off_line[list(masked)] = True
-    as_is = ~tracked & ~unheard & ~off_line
+    as_is = ~tracked & ~unheard & ~masked
     matched_hz = windows.matched_hz.copy()
     rel_error = windows.rel_error.copy()
     amp = windows.amp.copy()
@@ -1085,8 +1141,7 @@ def _tracked(
         peak_hz = windows.matched_hz[at]
         on_line = windows.matched[at] & (
             np.abs(peak_hz - line_hz)
-            <= np.maximum(ORDER_LINE_WIDTH_REL * line_hz, ORDER_LINE_WIDTH_MIN_BINS * bin_hz)
-            + reads.line_half_width_hz[lines]
+            <= _line_half_width_hz(line_hz, bin_hz) + reads.line_half_width_hz[lines]
         )
         tracked_hz = np.where(on_line, peak_hz, line_hz)
         matched_hz[at] = tracked_hz
@@ -1108,29 +1163,15 @@ def _tracked(
 
 
 def _tracked_line_scale(
-    windows: _Windows, excluded: set[int], bin_hz: float, compliance: float
+    windows: _Windows, excluded: npt.NDArray[np.bool_], bin_hz: float, compliance: float
 ) -> float:
     """The order line's factor over its prediction where the clear matches place one, else 1."""
-    clear = np.flatnonzero(windows.clear)
-    points = [
-        _LinePoint(predicted_hz, matched_hz)
-        for index, predicted_hz, matched_hz in zip(
-            clear.tolist(),
-            windows.predicted_hz[clear].tolist(),
-            windows.matched_hz[clear].tolist(),
-            strict=True,
-        )
-        if index not in excluded
-    ]
-    judged = [
-        point
-        for point in points
-        if order_peak_tolerance_hz(predicted_hz=point.predicted_hz, path_compliance=compliance)
-        >= ORDER_LINE_MIN_TOLERANCE_WIDTHS * _line_half_width_hz(point.predicted_hz, bin_hz)
-    ]
-    if len(judged) < ORDER_LINE_MIN_POINTS:
+    placing = np.flatnonzero(windows.clear & ~excluded)
+    predicted_hz = windows.predicted_hz[placing]
+    judged = _judged(predicted_hz, _line_half_width_hz(predicted_hz, bin_hz), compliance)
+    if np.count_nonzero(judged) < ORDER_LINE_MIN_POINTS:
         return 1.0
-    return _line_scale(judged, pulling=False)
+    return _line_scale(windows.matched_hz[placing] / predicted_hz, judged, judged)
 
 
 def _nonzero(counts: dict[str, int]) -> dict[str, int]:

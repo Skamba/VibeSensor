@@ -5,20 +5,22 @@ from __future__ import annotations
 import math
 from dataclasses import replace
 
+import numpy as np
+
 from vibesensor.analysis.constants import ORDER_MIN_CONFIDENCE, ORDER_MIN_MATCH_POINTS
 from vibesensor.analysis.math_utils import _mean, _ramp
+from vibesensor.analysis.orders.matching import MatchedWindows
 from vibesensor.analysis.orders.settings import ORDER_HEURISTIC_SETTINGS
 from vibesensor.domain.finding import Finding as DomainFinding
 from vibesensor.domain.finding_types import VibrationSource
 from vibesensor.domain.locations import is_wheel_location
-from vibesensor.domain.order_match import OrderMatchObservation
 
 
 def detect_diffuse_excitation(
     connected_locations: set[str],
     possible_by_location: dict[str, int],
     matched_by_location: dict[str, int],
-    matched_points: list[OrderMatchObservation],
+    matches: MatchedWindows,
     *,
     min_match_points: int = ORDER_MIN_MATCH_POINTS,
 ) -> tuple[bool, float]:
@@ -41,11 +43,10 @@ def detect_diffuse_excitation(
         loc_matched = matched_by_location.get(location, 0)
         if loc_possible >= min_loc_points:
             loc_rates.append(loc_matched / max(1, loc_possible))
-            loc_amps = [
-                point.amp
-                for point in matched_points
-                if (point.location or "").strip() == location and point.amp > 0
-            ]
+            at_location = np.array(
+                [(name or "").strip() == location for name in matches.locations], dtype=np.bool_
+            )
+            loc_amps = matches.amp[at_location[matches.location] & (matches.amp > 0)].tolist()
             if loc_amps:
                 loc_mean_amps[location] = _mean(loc_amps)
     if len(loc_rates) < 2:
