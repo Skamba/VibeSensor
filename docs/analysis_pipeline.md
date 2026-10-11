@@ -62,6 +62,15 @@ window's combined spectrum in memory (never persisted), so order tracking can
 read each order's level at its line at every sensor ("Order-tracked reads" in
 `docs/order_tracking.md`).
 
+The replay rebuilds a sample's strength fields in place on its `SensorFrame`
+and gathers the peaks it rebuilds straight into columns (`SamplePeaks` in
+`recording/sample_peaks.py`). The loader leaves every loaded frame's
+`top_peaks` empty: the stored peaks are read, straight into columns
+(`HistoryDB.load_run_peaks_by_id`), only for the samples the replay does not
+rebuild, and joined with the rebuilt ones as `DiagnosticsRunInput.peaks`. The
+analysis reads a sample's peaks there (through the drive table below), never
+from `SensorFrame.top_peaks`.
+
 The summary analysis is the single diagnosis: the UI insights endpoint and the
 PDF report both read its `findings`, `top_causes`, and `most_likely_origin`.
 
@@ -84,10 +93,11 @@ RunRecorder.stop_recording()            # recording/recorder.py
        └─ PostAnalysisWorker.schedule() # analysis/post_analysis.py
             └─ _worker_loop()           # daemon thread, sequential queue
                  └─ _run_post_analysis(run_id)
-                      ├─ load metadata, then a light pass over the summary rows picks ≤ 12,000 rows; only those are decoded
+                      ├─ load metadata, then a light pass over the summary rows picks ≤ 12,000 rows; only those are decoded, without their peaks
                       ├─ load raw manifest; replay memory-maps the raw waveform (read-only) via RawRunCapture
                       ├─ build_post_analysis_input(...)
-                      │    └─ raw_capture_replay.py rebuilds FFT-derived strength fields from raw windows when possible
+                      │    ├─ raw_capture_replay.py rebuilds FFT-derived strength fields (in place) and peaks from raw windows when possible
+                      │    └─ the stored peaks of the samples it did not rebuild are read (SamplePeaks)
                       ├─ analysis_runner(...)
                       │    ← injected by RunRecorder
                       │      └─ RunAnalysis(metadata, samples, …).summarize()
@@ -143,8 +153,10 @@ and sensors read it instead of the samples: the noise baseline, the engine
 reference coverage (`effective_engine_rpm`, also the order session's engine
 reference and the diagnosis's RPM readings), the order session (drive facts,
 reference frequencies, fixed and ringing tones, peak tables), the persistent
-peak bins and the peak table. The findings take the IDLE-filtered rows with
-`DriveTable.subset`.
+peak bins, the peak table and the diagnosis (location floors, unexplained
+vibration, spectrum). The findings take the IDLE-filtered rows with
+`DriveTable.subset`. The table takes its peaks, with each one's local floor,
+from the run's `SamplePeaks` (`DiagnosticsRunInput.peaks`).
 
 A text column keeps its distinct values once, in the order the samples first
 give them, and every grouping over the table (`first_seen`,
@@ -160,7 +172,7 @@ Summary analysis flow:
 ```text
 Input: PostAnalysisRunInput (summary rows, FFT peaks recomputed from raw capture when available)
   │
-  ├─ _run_input.build_diagnostics_run_input() → typed metadata + samples
+  ├─ _run_input.build_diagnostics_run_input() → typed metadata + samples + their peaks (SamplePeaks)
   │
   ├─ run_data_preparation.prepare_run_data() → PreparedRunData
   │    ├─ drive_table.build_drive_table() → DriveTable (samples as columns, analysed peaks)

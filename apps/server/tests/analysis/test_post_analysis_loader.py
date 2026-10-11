@@ -9,9 +9,11 @@ selection a full decode of every row gives.
 from __future__ import annotations
 
 import math
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
+from test_support.analysis import peaks_by_sample, sample_peaks_of
 from test_support.history_db_lifecycle import (
     build_history_db,
     create_analyzing_run,
@@ -92,6 +94,19 @@ def _varied_row(index: int) -> dict[str, object]:
     return row
 
 
+def _assert_loaded_rows(result: LoadedPostAnalysisRun, rows: list[SensorFrame]) -> None:
+    """*result* holds *rows* without their peaks, and reads those as stored."""
+    assert result.samples == [replace(row, top_peaks=()) for row in rows]
+    assert peaks_by_sample(result.stored_peaks(range(len(rows)))) == peaks_by_sample(
+        sample_peaks_of(rows)
+    )
+    # Only the samples asked for, in the order asked.
+    some = list(range(1, len(rows), 3))
+    assert peaks_by_sample(result.stored_peaks(some)) == peaks_by_sample(
+        sample_peaks_of([rows[position] for position in some])
+    )
+
+
 def _full_decode_event_score(sample: SensorFrame) -> tuple[float, float, float]:
     """The loudness ranking a fully decoded row gets."""
     return (
@@ -121,7 +136,7 @@ def test_light_pass_picks_the_rows_a_full_decode_would(
     result = _loaded(db, "run-long")
     selection = post_analysis_loader._select_post_analysis_rows(columns)
     assert len(result.samples) == cap
-    assert result.samples == [every_row[index] for index in selection.indices]
+    _assert_loaded_rows(result, [every_row[index] for index in selection.indices])
     assert result.sampling_method == "event_preserving"
     assert result.event_sample_count == selection.event_sample_count > 0
     assert result.summary_duration_s == pytest.approx(0.25 * 299)
@@ -135,7 +150,7 @@ def test_a_run_under_the_cap_loads_every_row_in_order(tmp_path: Path) -> None:
 
     assert result.sampling_method == "full"
     assert result.stride == 1
-    assert result.samples == run_samples(db, "run-short")
+    _assert_loaded_rows(result, run_samples(db, "run-short"))
 
 
 def test_corrupt_rows_are_skipped(tmp_path: Path) -> None:

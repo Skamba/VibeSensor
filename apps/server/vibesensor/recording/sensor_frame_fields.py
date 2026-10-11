@@ -7,10 +7,13 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, fields
 from typing import cast
 
+import numpy as np
+
 from vibesensor.common.json_types import JsonArray, JsonObject, JsonValue, is_json_array
 from vibesensor.common.json_utils import safe_json_dumps, safe_json_loads
 from vibesensor.common.scalars import float_or, optional_float, optional_int
 from vibesensor.domain.strength_metrics import StrengthPeak
+from vibesensor.recording.sample_peaks import SamplePeaks
 from vibesensor.recording.sensor_frame import SensorFrame
 from vibesensor.recording.sensor_frame_values import (
     SensorFrameDecodeError,
@@ -18,6 +21,7 @@ from vibesensor.recording.sensor_frame_values import (
     strict_optional_int,
 )
 from vibesensor.recording.strength_metrics_codec import (
+    stored_peak_columns,
     stored_strength_peak_amps,
     stored_strength_peaks,
     strength_peak_payloads,
@@ -26,11 +30,13 @@ from vibesensor.recording.strength_metrics_codec import (
 
 __all__ = [
     "SENSOR_FRAME_FIELD_NAMES",
+    "sensor_frame_peaks_from_row_value",
     "sensor_frame_top_peak_amp_from_row_value",
     "sensor_frame_from_mapping_payload",
     "sensor_frame_from_row_payload",
     "sensor_frames_from_canonical_rows",
     "storage_float_column",
+    "storage_peak_columns",
     "storage_top_peak_amp_column",
     "sensor_frame_to_mapping_payload",
     "sensor_frame_to_row_payload",
@@ -453,6 +459,42 @@ def _storage_top_peaks_column(
             return None
         top_peaks.append(peaks)
     return top_peaks
+
+
+def sensor_frame_peaks_from_row_value(
+    value: object, *, source: str = "sample row"
+) -> tuple[StrengthPeak, ...]:
+    """The peaks a full row decode keeps from a ``top_peaks`` column (``SensorFrame.top_peaks``)."""
+    return _strength_peaks(_top_peaks_from_row_value(value, source=source))
+
+
+def storage_peak_columns(values: Sequence[object]) -> SamplePeaks | None:
+    """The peaks a full row decode keeps from each stored ``top_peaks`` value, as columns.
+
+    Each value's ``sensor_frame_peaks_from_row_value``, decoding only what the
+    analysis reads of them. None when a value is not a list of well-formed
+    peaks: decode those rows one at a time.
+    """
+    texts: list[str] = []
+    positions: list[int] = []
+    for position, value in enumerate(values):
+        if value is None or value == "":
+            continue
+        if type(value) is not str:
+            return None
+        texts.append(value)
+        positions.append(position)
+    columns = stored_peak_columns(texts, max_items=_MAX_TOP_PEAKS)
+    if columns is None:
+        return None
+    counts, hz, amp, local_floor_amp_g = columns
+    return SamplePeaks.of_peaks(
+        np.repeat(np.array(positions, dtype=np.intp), counts),
+        hz,
+        amp,
+        local_floor_amp_g,
+        len(values),
+    )
 
 
 def storage_top_peak_amp_column(values: Sequence[object]) -> list[float | None] | None:

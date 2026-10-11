@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import pytest
+from test_support.analysis import sample_peaks_of
 from test_support.findings import make_finding
 from test_support.report_helpers import analysis_sample_with_peaks as sample
 
-from vibesensor.analysis._sample_metrics import _estimate_strength_floor_amp_g
 from vibesensor.analysis._view_types import PeakTableRowData
 from vibesensor.analysis.drive_table import DriveTable, build_drive_table
 from vibesensor.analysis.findings import _build_persistent_peak_findings
@@ -24,7 +24,8 @@ from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mapping
 
 
 def _table(samples: list[dict]) -> DriveTable:
-    return build_drive_table(sensor_frames_from_mappings(samples))
+    frames = sensor_frames_from_mappings(samples)
+    return build_drive_table(frames, sample_peaks_of(frames))
 
 
 def _findings_at(samples: list[dict], frequency: str) -> list:
@@ -132,25 +133,22 @@ def test_strongest_speed_band_follows_the_amplitude() -> None:
     assert target.strongest_speed_band in {"70-80 km/h", "80-90 km/h"}
 
 
-def _floor_sample(peaks: list[tuple[float, float]], *, floor_amp: float | None = None) -> object:
+def _floor(peaks: list[tuple[float, float]], *, floor_amp: float | None = None) -> float | None:
+    """The noise floor the drive table gives a sample with *peaks* and *floor_amp*."""
     row: dict[str, object] = {
         "top_peaks": [{"hz": hz, "amp": amp} for hz, amp in peaks],
         "speed_kmh": 80.0,
     }
     if floor_amp is not None:
         row["strength_floor_amp_g"] = floor_amp
-    return sensor_frames_from_mappings([row])[0]
+    table = _table([row])
+    return float(table.floor_amp_g[0]) if table.has_floor[0] else None
 
 
 def test_noise_floor_falls_back_to_the_quiet_end_of_the_peaks() -> None:
-    assert (
-        _estimate_strength_floor_amp_g(_floor_sample([(20.0, 0.2), (30.0, 0.3)], floor_amp=0.0))
-        is None
-    )
+    assert _floor([(20.0, 0.2), (30.0, 0.3)], floor_amp=0.0) is None
     amps = [0.1, 0.2, 0.3]
-    assert _estimate_strength_floor_amp_g(
-        _floor_sample([(10.0, a) for a in amps])
-    ) == pytest.approx(percentile(sorted(amps), 0.20))
+    assert _floor([(10.0, a) for a in amps]) == pytest.approx(percentile(sorted(amps), 0.20))
 
 
 def _peak_row(frequency_hz: float, classification: str = "transient") -> PeakTableRowData:

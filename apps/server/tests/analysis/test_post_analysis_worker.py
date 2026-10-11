@@ -10,9 +10,11 @@ import math
 import sqlite3
 import threading
 from collections.abc import Callable, Sequence
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
+from test_support.analysis import sample_peaks_of
 from test_support.history_db_lifecycle import (
     build_history_db,
     create_analyzing_run,
@@ -62,9 +64,13 @@ class _HistoryStore:
             ]
         )
 
-    def load_run_samples_by_id(self, _run_id: str, row_ids: Sequence[int]):
+    def load_run_samples_without_peaks(self, _run_id: str, row_ids: Sequence[int]):
         frames = self._frames()
-        return [frames[row_id - 1] for row_id in row_ids]
+        return [replace(frames[row_id - 1], top_peaks=()) for row_id in row_ids], list(row_ids)
+
+    def load_run_peaks_by_id(self, _run_id: str, row_ids: Sequence[int]):
+        frames = self._frames()
+        return sample_peaks_of([frames[row_id - 1] for row_id in row_ids])
 
     def _frames(self):
         return sensor_frames_from_mappings(self.rows)

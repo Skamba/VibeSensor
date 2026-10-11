@@ -6,9 +6,8 @@ from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 from vibesensor.analysis._types import Sample
-from vibesensor.analysis.constants import MEMS_NOISE_FLOOR_G, MIN_ANALYSIS_FREQ_HZ
-from vibesensor.domain.strength_metrics import StrengthPeak
-from vibesensor.dsp.vibration_strength import percentile, vibration_strength_db_scalar
+from vibesensor.analysis.constants import MEMS_NOISE_FLOOR_G
+from vibesensor.dsp.vibration_strength import percentile
 
 if TYPE_CHECKING:
     from vibesensor.analysis.drive_table import DriveTable
@@ -25,52 +24,6 @@ def _sensor_limit_g(sensor_model: object) -> float | None:
 def _primary_vibration_strength_db(sample: Sample) -> float | None:
     value = sample.vibration_strength_db
     return float(value) if value is not None else None
-
-
-def _analysed_peaks(sample: Sample) -> list[StrengthPeak]:
-    return [
-        peak
-        for peak in sample.top_peaks[:8]
-        if peak.hz > 0 and peak.amp > 0 and peak.hz >= MIN_ANALYSIS_FREQ_HZ
-    ]
-
-
-def _sample_top_peaks(sample: Sample) -> list[tuple[float, float]]:
-    return [(peak.hz, peak.amp) for peak in _analysed_peaks(sample)]
-
-
-def _sample_most_prominent_peak(sample: Sample) -> tuple[float, StrengthPeak] | None:
-    """The sample's peak that stands out most from the spectrum around it, and by how much (dB).
-
-    A peak recorded without its local floor stands on the sample's overall floor.
-    """
-    overall_floor = sample.strength_floor_amp_g or 0.0
-    return max(
-        (
-            (
-                vibration_strength_db_scalar(
-                    peak_band_rms_amp_g=peak.amp,
-                    floor_amp_g=(
-                        peak.local_floor_amp_g
-                        if peak.local_floor_amp_g is not None
-                        else overall_floor
-                    ),
-                ),
-                peak,
-            )
-            for peak in _analysed_peaks(sample)
-        ),
-        key=lambda prominent: prominent[0],
-        default=None,
-    )
-
-
-def _estimate_strength_floor_amp_g(sample: Sample) -> float | None:
-    """Estimate per-sample floor amplitude: its own where over 0, else from its peaks."""
-    floor_amp = sample.strength_floor_amp_g
-    if floor_amp is not None and floor_amp > 0:
-        return float(floor_amp)
-    return _floor_from_peaks([peak.amp for peak in _analysed_peaks(sample)])
 
 
 def _floor_from_peaks(peak_amps: Sequence[float]) -> float | None:

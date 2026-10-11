@@ -8,9 +8,11 @@ from __future__ import annotations
 
 import math
 from dataclasses import replace
+from typing import Any
 
 import numpy as np
 import pytest
+from test_support.analysis import stored_peaks_of
 from test_support.raw_capture_assertions import warning_codes
 from test_support.raw_capture_fixtures import (
     post_analysis_metadata,
@@ -45,6 +47,11 @@ from vibesensor.summary.run_context_warning import (
 _SAMPLE_RATE_HZ = 800
 _FFT_N = 64
 _RUN_START_MONOTONIC_US = 1_000_000
+
+
+def _loaded(**fields: Any) -> LoadedPostAnalysisRun:
+    """A loaded run whose stored peaks are its samples' ``top_peaks``."""
+    return LoadedPostAnalysisRun(stored_peaks=stored_peaks_of(fields["samples"]), **fields)
 
 
 def _rate_capture(
@@ -109,7 +116,7 @@ def test_build_post_analysis_input_uses_corrected_observed_sample_rate(
 ) -> None:
     observed_sample_rate_hz = 780
     raw_start_offset_us = 100_000
-    loaded = LoadedPostAnalysisRun(
+    loaded = _loaded(
         run_id="run-corrected-rate",
         metadata=post_analysis_metadata("run-corrected-rate"),
         language="en",
@@ -255,7 +262,7 @@ def test_build_post_analysis_input_marks_gap_windows_partial_and_falls_back() ->
             )
         ],
     )
-    loaded = LoadedPostAnalysisRun(
+    loaded = _loaded(
         run_id="run-gap",
         metadata=post_analysis_metadata("run-gap"),
         language="en",
@@ -274,6 +281,7 @@ def test_build_post_analysis_input_marks_gap_windows_partial_and_falls_back() ->
                     "sample_rate_hz": _SAMPLE_RATE_HZ,
                     "vibration_strength_db": 12.0,
                     "dominant_freq_hz": 14.0,
+                    "top_peaks": [{"hz": 14.0, "amp": 0.2, "local_floor_amp_g": 0.01}],
                 },
             ]
         ),
@@ -298,6 +306,17 @@ def test_build_post_analysis_input_marks_gap_windows_partial_and_falls_back() ->
     ]
     assert result.samples[1].vibration_strength_db == 12.0
     assert result.samples[1].dominant_freq_hz == 14.0
+    # The partial window's sample keeps its stored peaks.
+    peaks = result.diagnostics_run.peaks
+    stored = slice(peaks.start[1], peaks.start[2])
+    assert list(
+        zip(
+            peaks.hz[stored].tolist(),
+            peaks.amp[stored].tolist(),
+            peaks.local_floor_amp_g[stored].tolist(),
+            strict=True,
+        )
+    ) == [(14.0, 0.2, 0.01)]
 
 
 def test_build_post_analysis_input_falls_back_for_legacy_raw_capture_without_anchor() -> None:
@@ -322,7 +341,7 @@ def test_build_post_analysis_input_falls_back_for_legacy_raw_capture_without_anc
         ],
         run_start_monotonic_us=None,
     )
-    loaded = LoadedPostAnalysisRun(
+    loaded = _loaded(
         run_id="run-legacy",
         metadata=post_analysis_metadata("run-legacy"),
         language="en",
@@ -418,7 +437,7 @@ def _outcome_capture(
 def test_build_post_analysis_input_marks_no_valid_bin_fft_windows_unusable() -> None:
     sample_rate_hz = 8
     fft_n = 64
-    loaded = LoadedPostAnalysisRun(
+    loaded = _loaded(
         run_id="run-no-valid-bins",
         metadata=post_analysis_metadata("run-no-valid-bins", sample_rate_hz=sample_rate_hz),
         language="en",
@@ -430,6 +449,7 @@ def test_build_post_analysis_input_marks_no_valid_bin_fft_windows_unusable() -> 
                     "sample_rate_hz": sample_rate_hz,
                     "vibration_strength_db": 0.0,
                     "dominant_freq_hz": 0.0,
+                    "top_peaks": [{"hz": 3.0, "amp": 0.2}],
                 }
             ]
         ),
@@ -452,7 +472,7 @@ def test_build_post_analysis_input_marks_no_valid_bin_fft_windows_unusable() -> 
     assert WARNING_CODE_RAW_REPLAY_FFT_UNUSABLE in warning_codes(result.raw_replay.warnings)
     assert rebuilt.vibration_strength_db is None
     assert rebuilt.dominant_freq_hz is None
-    assert rebuilt.top_peaks == ()
+    assert result.diagnostics_run.peaks.row.size == 0
     assert rebuilt.strength_bucket is None
     assert rebuilt.strength_peak_amp_g is None
     assert rebuilt.strength_floor_amp_g is None
@@ -469,7 +489,7 @@ def test_build_post_analysis_input_marks_fatal_raw_capture_loss_policy() -> None
         ),
         sensors=raw_capture.sensors,
     )
-    loaded = LoadedPostAnalysisRun(
+    loaded = _loaded(
         run_id="run-fatal-drops",
         metadata=post_analysis_metadata("run-fatal-drops"),
         language="en",
@@ -519,7 +539,7 @@ def test_each_replayed_window_is_the_live_spectrum_of_its_samples(
     if not stored_in_time_order:
         chunks = chunks[1::2] + chunks[0::2]
     sample_ends = list(range(_FFT_N, 641, 55))
-    loaded = LoadedPostAnalysisRun(
+    loaded = _loaded(
         run_id="run-batch",
         metadata=post_analysis_metadata("run-batch"),
         language="en",
@@ -545,7 +565,8 @@ def test_each_replayed_window_is_the_live_spectrum_of_its_samples(
     computer = raw_capture_replay.SpectralAnalysisComputer(
         fft_n=_FFT_N, spectrum_min_hz=SPECTRUM_MIN_HZ, spectrum_max_hz=SPECTRUM_MAX_HZ
     )
-    for sample, sample_end in zip(result.samples, sample_ends, strict=True):
+    peaks = result.diagnostics_run.peaks
+    for row, (sample, sample_end) in enumerate(zip(result.samples, sample_ends, strict=True)):
         # C order, as the live ring buffer hands it over: the mean's summation
         # order, and so its last bit, follows the memory layout.
         block = np.ascontiguousarray(waveform[sample_end - _FFT_N : sample_end].T, dtype=np.float32)
@@ -556,7 +577,8 @@ def test_each_replayed_window_is_the_live_spectrum_of_its_samples(
         np.testing.assert_array_equal(sample.spectrum.amp_g, live["combined_amp"])
         assert sample.vibration_strength_db == metrics["vibration_strength_db"]
         assert sample.strength_floor_amp_g == metrics["noise_floor_amp_g"]
-        assert [(peak.hz, peak.amp) for peak in sample.top_peaks] == [
-            (peak["hz"], peak["amp"]) for peak in metrics["top_peaks"]
-        ]
+        start, end = peaks.start[row], peaks.start[row + 1]
+        assert list(
+            zip(peaks.hz[start:end].tolist(), peaks.amp[start:end].tolist(), strict=True)
+        ) == [(peak["hz"], peak["amp"]) for peak in metrics["top_peaks"]]
         assert sample.accel_z_g == float(block[2, -1])

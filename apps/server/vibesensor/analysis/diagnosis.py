@@ -10,7 +10,7 @@ from __future__ import annotations
 from collections import Counter, defaultdict
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, replace
-from math import floor, log
+from math import floor, isnan, log
 from statistics import median
 from typing import TYPE_CHECKING, cast
 
@@ -22,11 +22,6 @@ from vibesensor.analysis._reference_resolution import (
     ESTIMATED_RPM_SOURCE,
     _tire_reference_from_context,
     effective_engine_rpm,
-)
-from vibesensor.analysis._sample_metrics import (
-    _estimate_strength_floor_amp_g,
-    _sample_most_prominent_peak,
-    _sample_top_peaks,
 )
 from vibesensor.analysis._sensor_locations import _location_label
 from vibesensor.analysis.constants import (
@@ -193,7 +188,7 @@ def build_diagnosis(
     level = top_cause.confidence_level if top_cause is not None else None
     candidate = None if verdict is DiagnosisVerdict.NO_FAULT else test_run.diagnosis_order_finding
     located = [(sample, _location_label(sample, metadata=metadata)) for sample in samples]
-    floors = _location_floors(located)
+    floors = _location_floors(located, drive_table)
     bin_hz = 1.0 / window_duration_s(metadata)
     braking = _braking_spans(test_run)
     presence = _presence_ratio(candidate, located, braking)
@@ -349,13 +344,14 @@ def build_diagnosis(
         "amplitude_basis": basis,
         "location_amplitudes": rows,
         "unexplained_vibration": (
-            _unexplained(located, bin_hz)
+            _unexplained(located, drive_table, bin_hz)
             if verdict is DiagnosisVerdict.NO_FAULT and basis == "overall"
             else None
         ),
         "amplitude_vs_speed": _amplitude_vs_speed(candidate, bin_hz),
         "spectrum": _spectrum(
             located,
+            drive_table,
             bin_hz,
             location=spectrum_location,
             centre_speed_kmh=reference_speed,
@@ -763,11 +759,13 @@ def _tone_mg(level_g: float, bin_hz: float) -> float:
     return _mg(level_g / tone_line_level_g(1.0, bin_hz))
 
 
-def _location_floors(located: Iterable[tuple[Sample, str]]) -> dict[str, float]:
+def _location_floors(located: Sequence[tuple[Sample, str]], table: DriveTable) -> dict[str, float]:
+    """Each location's median sample floor (``DriveTable.floor_amp_g``)."""
     floors: dict[str, list[float]] = defaultdict(list)
-    for sample, location in located:
-        floor_amp = _estimate_strength_floor_amp_g(sample)
-        if floor_amp is not None:
+    for (_sample, location), has_floor, floor_amp in zip(
+        located, table.has_floor.tolist(), table.floor_amp_g.tolist(), strict=True
+    ):
+        if has_floor:
             floors[location].append(floor_amp)
     return {location: median(values) for location, values in floors.items() if values}
 
@@ -869,7 +867,7 @@ def _overall_location_amplitudes(
 
 
 def _unexplained(
-    located: Sequence[tuple[Sample, str]], bin_hz: float
+    located: Sequence[tuple[Sample, str]], table: DriveTable, bin_hz: float
 ) -> UnexplainedVibration | None:
     """The vibration a sensor felt by the elevated band (L3) or above, where it stood out most.
 
@@ -881,10 +879,17 @@ def _unexplained(
     frequency: at a wheel that is mostly the wheel hop every car has.
     """
     prominent: dict[str, list[tuple[float, float]]] = defaultdict(list)
-    for sample, location in located:
-        peak = _sample_most_prominent_peak(sample)
+    starts = table.peak_start.tolist()
+    amps = table.peak_amp.tolist()
+    local_floors = table.peak_local_floor_amp_g.tolist()
+    for row, (sample, location) in enumerate(located):
+        peak = _most_prominent_peak(
+            amps[starts[row] : starts[row + 1]],
+            local_floors[starts[row] : starts[row + 1]],
+            sample.strength_floor_amp_g or 0.0,
+        )
         if peak is not None:
-            prominent[location].append((peak[0], peak[1].amp))
+            prominent[location].append(peak)
     felt = [
         (prominence, location)
         for location, peaks in prominent.items()
@@ -896,6 +901,25 @@ def _unexplained(
     _prominence, location = max(felt, key=lambda found: (found[0], found[1]))
     amp = percentile(sorted(amp for _db, amp in prominent[location]), 0.95)
     return {"location": location, "amplitude_mg": _tone_mg(amp, bin_hz)}
+
+
+def _most_prominent_peak(
+    amps: Sequence[float], local_floors: Sequence[float], overall_floor: float
+) -> tuple[float, float] | None:
+    """How far a sample's peak that stands out most does (dB), and its amplitude.
+
+    A peak recorded without its local floor (NaN) stands on the sample's
+    overall floor. The first of equally prominent peaks counts.
+    """
+    prominent: tuple[float, float] | None = None
+    for amp, local_floor in zip(amps, local_floors, strict=True):
+        prominence = vibration_strength_db_scalar(
+            peak_band_rms_amp_g=amp,
+            floor_amp_g=overall_floor if isnan(local_floor) else local_floor,
+        )
+        if prominent is None or prominence > prominent[0]:
+            prominent = (prominence, amp)
+    return prominent
 
 
 def _location_amplitudes(
@@ -1779,6 +1803,7 @@ def _order_markers(
 
 def _spectrum(
     located: Sequence[tuple[Sample, str]],
+    table: DriveTable,
     bin_hz: float,
     *,
     location: str | None,
@@ -1789,8 +1814,8 @@ def _spectrum(
         return None
     # Moving samples only: standing still is no point on the speed axis.
     moving = [
-        (sample, sample.speed_kmh)
-        for sample, label in located
+        (row, sample, sample.speed_kmh)
+        for row, (sample, label) in enumerate(located)
         if label == location and sample.speed_kmh is not None and sample.speed_kmh > 0
     ]
     if not moving:
@@ -1798,21 +1823,26 @@ def _spectrum(
     centre = (
         centre_speed_kmh
         if centre_speed_kmh is not None
-        else median(speed for _sample, speed in moving)
+        else median(speed for _row, _sample, speed in moving)
     )
     in_window = [
-        (sample, speed)
-        for sample, speed in moving
+        (row, sample, speed)
+        for row, sample, speed in moving
         if abs(speed - centre) <= _SPECTRUM_HALF_WINDOW_KMH
     ]
     if len(in_window) < _SPECTRUM_MIN_WINDOW_SAMPLES:
         in_window = moving
-    window = [sample for sample, _speed in in_window]
-    window_speeds = [speed for _sample, speed in in_window]
+    rows = np.array([row for row, _sample, _speed in in_window], dtype=np.intp)
+    window = [sample for _row, sample, _speed in in_window]
+    window_speeds = [speed for _row, _sample, speed in in_window]
     bins: dict[float, list[float]] = defaultdict(list)
-    for sample in window:
+    starts = table.peak_start
+    for row in rows.tolist():
+        start, end = int(starts[row]), int(starts[row + 1])
         seen: dict[float, float] = {}
-        for hz, amp in _sample_top_peaks(sample):
+        for hz, amp in zip(
+            table.peak_hz[start:end].tolist(), table.peak_amp[start:end].tolist(), strict=True
+        ):
             if hz > _SPECTRUM_MAX_HZ:
                 continue
             key = floor(hz / _SPECTRUM_BIN_HZ) * _SPECTRUM_BIN_HZ + _SPECTRUM_BIN_HZ / 2
@@ -1826,11 +1856,7 @@ def _spectrum(
         {"hz": hz, "amplitude_mg": _tone_mg(amp, bin_hz)}
         for hz, amp in sorted(recurring[:_SPECTRUM_MAX_PEAKS])
     ]
-    floors = [
-        floor_amp
-        for sample in window
-        if (floor_amp := _estimate_strength_floor_amp_g(sample)) is not None
-    ]
+    floors = table.floor_amp_g[rows][table.has_floor[rows]].tolist()
     window_centre = median(window_speeds)
     return {
         "location": location,

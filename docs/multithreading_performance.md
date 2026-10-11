@@ -122,6 +122,25 @@ path caps the loop's duty cycle at 50%. Even at a 5–10× slower Raspberry Pi
   48 s to 40 s, peak RSS unchanged (162 MB); the analysis JSON is
   byte-identical on that drive, the CI-seed accuracy benchmark and the
   diagnostic matrix.
+- The analysis reads the drive as columns (`DriveTable`, "Drive table" in
+  `docs/analysis_pipeline.md`): the noise baseline, engine reference, order
+  session, peak bins, peak table and diagnosis read one array per field and
+  the analysed peaks as one flat table, built once, instead of re-deriving
+  each sample's peaks, floor, speed bin and label stage by stage. A run's
+  peaks are columns (`SamplePeaks`) from the start: the raw replay rebuilds
+  a sample's strength fields in place and gathers its peaks straight into
+  them, rather than building a `StrengthPeak` tuple and a new `SensorFrame`
+  per window, and the loader decodes the kept rows without their peaks and
+  reads the stored peaks, straight into columns, only for the samples the
+  replay does not rebuild (none on a drive with raw capture). Measured on
+  the x86 dev host (30-minute, 4-sensor drive, `OPENBLAS_NUM_THREADS=1`,
+  medians of 7 interleaved runs): the whole post-analysis from 2.32 s to
+  1.85 s (load 293 to 238 ms, replay 657 to 531 ms, analyze 1273 to 996 ms),
+  peak RSS from 196.5 to 178.4 MB; the same drive without its raw capture
+  from 1.24 s to 0.95 s, peak RSS from 151.5 to 141.5 MB. The analysis JSON
+  is byte-identical on that drive (also with all or half of its raw capture
+  removed), the CI-seed accuracy benchmark and the diagnostic matrix. Pi
+  timing to be measured after merge.
 - Tried and not kept for order matching: a pool of 3 forked processes, one
   hypothesis each, saved 21 s on the Pi but each child dirtied 30-45 MB of
   the parent's pages through reference counts (86-135 MB in all), leaving 54-100
@@ -162,8 +181,10 @@ path caps the loop's duty cycle at 50%. Even at a 5–10× slower Raspberry Pi
 
 | Host | CPU time | Peak RSS |
 |------|----------|----------|
-| x86 dev host | ~5.4 s | ~197 MB |
-| Raspberry Pi 3 A+ (`nice -n 10`) | ~39 s | ~146 MB |
+| x86 dev host | ~2.1 s | ~178 MB |
+| Raspberry Pi 3 A+ (`nice -n 10`) | ~39 s (before the drive table) | ~146 MB |
+
+The x86 row is the post-analysis's own CPU time (load to store, `OPENBLAS_NUM_THREADS=1`).
 
 ### 64-bit, numba and free-threading (measured, not kept)
 

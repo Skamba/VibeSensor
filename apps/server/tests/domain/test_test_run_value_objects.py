@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+from test_support.analysis import sample_peaks_of
 
 from vibesensor.analysis._run_input import build_diagnostics_run_input
 from vibesensor.analysis.run_analysis import RunAnalysis
@@ -94,10 +95,10 @@ class TestTestRunQueries:
             }
             for i in range(30)
         ]
+        frames = sensor_frames_from_mappings(samples)
         analysis = RunAnalysis(
             build_diagnostics_run_input(
-                run_metadata_from_mapping(metadata),
-                sensor_frames_from_mappings(samples),
+                run_metadata_from_mapping(metadata), frames, sample_peaks_of(frames)
             ),
         )
         result = analysis.summarize()

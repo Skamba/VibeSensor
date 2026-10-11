@@ -27,6 +27,23 @@ class _StoredPeakLevel(msgspec.Struct):
 _STORED_PEAK_LEVELS_DECODER = msgspec.json.Decoder(list[_StoredPeakLevel])
 
 
+class _StoredPeakShape(msgspec.Struct):
+    """A stored peak, typed as ``StrengthPeak`` but without building one.
+
+    The same fields and types, so it decodes exactly the lists
+    ``_STORED_PEAKS_DECODER`` does.
+    """
+
+    hz: float = 0.0
+    amp: float = 0.0
+    vibration_strength_db: float | None = None
+    strength_bucket: str | None = None
+    local_floor_amp_g: float | None = None
+
+
+_STORED_PEAK_SHAPES_DECODER = msgspec.json.Decoder(list[_StoredPeakShape])
+
+
 def _finite_or_absent(value: object) -> bool:
     return value is None or (type(value) is float and -_INF < value < _INF)
 
@@ -118,6 +135,36 @@ def stored_strength_peak_amps(text: str, *, max_items: int) -> list[float] | Non
     except msgspec.DecodeError:
         return None
     return [peak.amp for peak in peaks[: max(0, max_items)] if peak.hz > 0.0 and peak.amp > 0.0]
+
+
+def stored_peak_columns(
+    texts: Sequence[str], *, max_items: int
+) -> tuple[list[int], list[float], list[float], list[float]] | None:
+    """The peaks ``stored_strength_peaks`` keeps of each text, as flat columns.
+
+    How many each text keeps, then every kept peak's frequency, amplitude and
+    local floor (NaN where it has none), text by text. ``None`` where a text
+    gives ``stored_strength_peaks`` None; the caller then takes the general path.
+    """
+    limit = max(0, max_items)
+    counts: list[int] = []
+    kept: list[_StoredPeakShape] = []
+    for text in texts:
+        try:
+            peaks = _STORED_PEAK_SHAPES_DECODER.decode(text)
+        except msgspec.DecodeError:
+            return None
+        valid = [peak for peak in peaks[:limit] if peak.hz > 0.0 and peak.amp > 0.0]
+        counts.append(len(valid))
+        kept.extend(valid)
+    if not all(_clean_text_or_absent(bucket) for bucket in {peak.strength_bucket for peak in kept}):
+        return None
+    return (
+        counts,
+        [peak.hz for peak in kept],
+        [peak.amp for peak in kept],
+        [math.nan if peak.local_floor_amp_g is None else peak.local_floor_amp_g for peak in kept],
+    )
 
 
 def strength_peak_to_payload(peak: StrengthPeak) -> JsonObject:

@@ -14,7 +14,7 @@ from dataclasses import replace
 
 import numpy as np
 import pytest
-from test_support.analysis import run_analysis
+from test_support.analysis import run_analysis, sample_peaks_of
 from test_support.core import standard_metadata, wheel_hz
 from test_support.synthetic_samples import make_sample
 
@@ -357,7 +357,7 @@ def _buzzing_drive(buzz_g: float, seed: int) -> DriveTable:
             make_sample(t_s=2.56 * index, speed_kmh=0.0, client_name="a", client_id="a")
         )
         samples.append(replace(frame, spectrum=spectrum))
-    return build_drive_table(samples)
+    return build_drive_table(samples, sample_peaks_of(samples))
 
 
 def test_a_fixed_tone_masks_the_line_reads_only_where_it_rings_as_a_line() -> None:

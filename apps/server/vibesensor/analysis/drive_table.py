@@ -23,6 +23,7 @@ from vibesensor.analysis._types import Sample
 from vibesensor.analysis.constants import MIN_ANALYSIS_FREQ_HZ
 from vibesensor.domain.finding import speed_bin_label
 from vibesensor.dsp.window_spectrum import WindowSpectrum
+from vibesensor.recording.sample_peaks import SamplePeaks
 
 __all__ = [
     "DriveTable",
@@ -62,7 +63,8 @@ class DriveTable:
     # The speed bin (``speed_bin_label``) of each moving sample; -1 where it is not moving.
     speed_bin_of: npt.NDArray[np.intp]
     speed_bins: Sequence[str]
-    # Each sample's floor (``_sample_metrics._estimate_strength_floor_amp_g``).
+    # Each sample's floor: its own where over 0, else from its analysed peaks
+    # (``_sample_metrics._floor_from_peaks``).
     floor_amp_g: npt.NDArray[np.float64]
     has_floor: npt.NDArray[np.bool_]
     engine_rpm: npt.NDArray[np.float64]
@@ -74,12 +76,14 @@ class DriveTable:
     final_drive_ratio: npt.NDArray[np.float64]
     has_final_drive_ratio: npt.NDArray[np.bool_]
     spectra: Sequence[WindowSpectrum | None]
-    # The analysed peaks (``_sample_metrics._analysed_peaks``), sample by
-    # sample in rank order: each one's sample, frequency and amplitude, and
-    # where each sample's run of them starts (one more entry than samples).
+    # The analysed peaks (``_analysed_peaks``), sample by sample in rank
+    # order: each one's sample, frequency, amplitude and local floor (NaN where
+    # it has none), and where each sample's run of them starts (one more entry
+    # than samples).
     peak_row: npt.NDArray[np.intp]
     peak_hz: npt.NDArray[np.float64]
     peak_amp: npt.NDArray[np.float64]
+    peak_local_floor_amp_g: npt.NDArray[np.float64]
     peak_start: npt.NDArray[np.intp]
 
     @property
@@ -145,6 +149,7 @@ class DriveTable:
             peak_row=peak_row,
             peak_hz=self.peak_hz[peaks],
             peak_amp=self.peak_amp[peaks],
+            peak_local_floor_amp_g=self.peak_local_floor_amp_g[peaks],
             peak_start=_starts(peak_row, int(rows.size)),
         )
 
@@ -224,8 +229,8 @@ def _starts(rows: npt.NDArray[np.intp], size: int) -> npt.NDArray[np.intp]:
     return starts
 
 
-def build_drive_table(samples: Sequence[Sample]) -> DriveTable:
-    """*samples* as a ``DriveTable``."""
+def build_drive_table(samples: Sequence[Sample], peaks: SamplePeaks) -> DriveTable:
+    """*samples*, whose peaks are *peaks*, as a ``DriveTable``."""
     size = len(samples)
     sensor_of, sensors = coded(
         [(sample.location, sample.client_name, sample.client_id) for sample in samples]
@@ -245,7 +250,9 @@ def build_drive_table(samples: Sequence[Sample]) -> DriveTable:
     final_drive_ratio, has_final_drive_ratio = _floats(
         [sample.final_drive_ratio for sample in samples]
     )
-    peak_row, peak_hz, peak_amp = _analysed_peaks(samples)
+    analysed = _analysed_peaks(peaks)
+    peak_row = peaks.row[analysed]
+    peak_amp = peaks.amp[analysed]
     peak_start = _starts(peak_row, size)
     floor_amp_g, has_floor = _floors(
         [sample.strength_floor_amp_g for sample in samples], peak_amp, peak_start
@@ -275,8 +282,9 @@ def build_drive_table(samples: Sequence[Sample]) -> DriveTable:
         has_final_drive_ratio=has_final_drive_ratio,
         spectra=[sample.spectrum for sample in samples],
         peak_row=peak_row,
-        peak_hz=peak_hz,
+        peak_hz=peaks.hz[analysed],
         peak_amp=peak_amp,
+        peak_local_floor_amp_g=peaks.local_floor_amp_g[analysed],
         peak_start=peak_start,
     )
 
@@ -293,23 +301,14 @@ def _speed_bins(
     return first_seen(codes, labels)
 
 
-def _analysed_peaks(
-    samples: Sequence[Sample],
-) -> tuple[npt.NDArray[np.intp], npt.NDArray[np.float64], npt.NDArray[np.float64]]:
-    """Each sample's analysed peaks: its ranked peaks above the analysis floor."""
-    counts: list[int] = []
-    hz: list[float] = []
-    amp: list[float] = []
-    for sample in samples:
-        ranked = sample.top_peaks[:_ANALYSED_PEAKS]
-        counts.append(len(ranked))
-        hz.extend([peak.hz for peak in ranked])
-        amp.extend([peak.amp for peak in ranked])
-    peak_hz = np.array(hz, dtype=np.float64)
-    peak_amp = np.array(amp, dtype=np.float64)
-    analysed = (peak_hz > 0) & (peak_amp > 0) & (peak_hz >= MIN_ANALYSIS_FREQ_HZ)
-    rows = np.repeat(np.arange(len(samples), dtype=np.intp), counts)
-    return rows[analysed], peak_hz[analysed], peak_amp[analysed]
+def _analysed_peaks(peaks: SamplePeaks) -> npt.NDArray[np.bool_]:
+    """Which peaks are analysed: a sample's first ranked ones, those above the analysis floor."""
+    return (
+        (peaks.rank() < _ANALYSED_PEAKS)
+        & (peaks.hz > 0)
+        & (peaks.amp > 0)
+        & (peaks.hz >= MIN_ANALYSIS_FREQ_HZ)
+    )
 
 
 def _floors(

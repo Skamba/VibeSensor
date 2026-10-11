@@ -5,8 +5,8 @@ from __future__ import annotations
 from collections import defaultdict, deque
 from collections.abc import Sequence
 from concurrent.futures import Future, ThreadPoolExecutor
-from dataclasses import dataclass, replace
-from math import isfinite
+from dataclasses import dataclass
+from math import isfinite, nan
 from typing import Literal, cast
 
 import numpy as np
@@ -14,10 +14,9 @@ import numpy.typing as npt
 from numpy.lib.stride_tricks import as_strided
 
 from vibesensor.common.json_utils import i18n_ref
-from vibesensor.domain.strength_metrics import StrengthPeak
 from vibesensor.dsp.constants import SPECTRUM_MAX_HZ, SPECTRUM_MIN_HZ
 from vibesensor.dsp.fft_analysis import SpectralAnalysisComputer
-from vibesensor.dsp.vibration_strength import VibrationStrengthMetrics
+from vibesensor.dsp.vibration_strength import StrengthPeak, VibrationStrengthMetrics
 from vibesensor.dsp.window_spectrum import WindowSpectrum
 from vibesensor.recording.raw_capture import RawCaptureSensorData, RawRunCapture
 from vibesensor.recording.raw_capture_quality import (
@@ -35,6 +34,7 @@ from vibesensor.recording.raw_capture_timeline import (
     resolve_raw_window_end_time,
 )
 from vibesensor.recording.run_schema import RunMetadata
+from vibesensor.recording.sample_peaks import SamplePeaks
 from vibesensor.recording.sensor_frame import SensorFrame
 from vibesensor.summary.run_context_warning import (
     WARNING_CODE_RAW_CAPTURE_LOSS_POLICY,
@@ -51,7 +51,7 @@ __all__ = [
     "RawReplayResult",
     "RawReplaySummary",
     "RawReplayWindowCoverage",
-    "build_raw_backed_samples",
+    "replay_raw_windows",
 ]
 
 type RawReplayCoverageState = Literal["complete", "partial", "missing"]
@@ -129,10 +129,16 @@ class RawReplaySummary:
 
 @dataclass(frozen=True, slots=True)
 class RawReplayResult:
-    """Replay result carrying rebuilt samples plus structured coverage metadata."""
+    """The replay's coverage facts, and the peaks of the samples it rebuilt.
 
-    samples: tuple[SensorFrame, ...]
+    The replay rebuilds a sample's strength fields in place; ``rebuilt`` says
+    which samples it rebuilt, and ``peaks`` holds their peaks (none for the
+    others, whose stored peaks stand).
+    """
+
     summary: RawReplaySummary
+    peaks: SamplePeaks
+    rebuilt: npt.NDArray[np.bool_]
     window_coverages: tuple[RawReplayWindowCoverage, ...] = ()
 
 
@@ -180,7 +186,7 @@ class _WindowSpectra:
 
 @dataclass(frozen=True, slots=True)
 class _PendingWindow:
-    """A complete raw window's spectrum, its strength still to be taken (``_rebuilt_samples``)."""
+    """A complete raw window's spectrum, its strength still to be taken (``_rebuild_samples``)."""
 
     request: _WindowRequest
     spectrum: WindowSpectrum
@@ -198,8 +204,8 @@ class _ReplayBuildContext:
 
 @dataclass(frozen=True, slots=True)
 class _ReplayWindowBuildResult:
-    samples: tuple[SensorFrame, ...]
     coverages: tuple[RawReplayWindowCoverage, ...]
+    peaks: _RebuiltPeaks
     raw_backed_count: int
     complete_window_count: int
     partial_window_count: int
@@ -232,13 +238,51 @@ class _RawCaptureLossCounts:
     udp_ingest_queue_drop_count: int
 
 
-def build_raw_backed_samples(
+class _RebuiltPeaks:
+    """The samples the replay rebuilds, and their peaks, gathered as it rebuilds them."""
+
+    __slots__ = ("amp", "hz", "local_floor_amp_g", "rebuilt", "rows")
+
+    def __init__(self, size: int) -> None:
+        self.rebuilt = np.zeros(size, dtype=np.bool_)
+        self.rows: list[int] = []
+        self.hz: list[float] = []
+        self.amp: list[float] = []
+        self.local_floor_amp_g: list[float] = []
+
+    def add(self, index: int, peaks: Sequence[StrengthPeak]) -> None:
+        """Sample *index* rebuilt, with its *peaks* of finite frequency and amplitude over 0."""
+        self.rebuilt[index] = True
+        for peak in peaks:
+            hz, amp = peak["hz"], peak["amp"]
+            if isfinite(hz) and isfinite(amp) and hz > 0 and amp > 0:
+                local_floor = peak.get("local_floor_amp_g")
+                self.rows.append(index)
+                self.hz.append(hz)
+                self.amp.append(amp)
+                self.local_floor_amp_g.append(
+                    local_floor if local_floor is not None and isfinite(local_floor) else nan
+                )
+
+    def peaks(self) -> SamplePeaks:
+        return SamplePeaks.of_peaks(
+            self.rows, self.hz, self.amp, self.local_floor_amp_g, int(self.rebuilt.size)
+        )
+
+
+def replay_raw_windows(
     *,
     samples: tuple[SensorFrame, ...],
     metadata: RunMetadata,
     raw_capture: RawRunCapture | None,
 ) -> RawReplayResult:
-    """Replace summary strength metrics with raw-backed metrics when possible."""
+    """Rebuild each sample's strength from its raw window, where it has a complete one.
+
+    A rebuilt sample's strength fields (its last reading per axis, dominant
+    frequency, strength, bucket, peak and floor amplitude, and spectrum) are
+    set in place; its peaks are the result's. A sample without a complete raw
+    window keeps its stored ones.
+    """
 
     if raw_capture is None:
         return _build_raw_capture_unavailable_replay_result(samples)
@@ -301,7 +345,8 @@ def _assemble_raw_replay_result(
     raw_capture_mode: RawCaptureMode,
 ) -> RawReplayResult:
     return RawReplayResult(
-        samples=windows.samples,
+        peaks=windows.peaks.peaks(),
+        rebuilt=windows.peaks.rebuilt,
         summary=RawReplaySummary(
             raw_capture_available=True,
             raw_backed_summary_row_count=windows.raw_backed_count,
@@ -373,8 +418,8 @@ def _window_request(
     sample: SensorFrame,
     timeline: RawSensorTimeline | None,
     sensor_data: RawCaptureSensorData | None,
-) -> tuple[SensorFrame, RawReplayWindowCoverage] | _WindowRequest:
-    """When *sample*'s raw window ends, or the sample as it is with why it has none."""
+) -> RawReplayWindowCoverage | _WindowRequest:
+    """When *sample*'s raw window ends, or why it has none."""
     if timeline is None or sensor_data is None:
         return _uncovered(sample, "missing", "sensor_missing")
     sensor_manifest = sensor_data.manifest
@@ -402,17 +447,14 @@ def _window_request(
 
 def _uncovered(
     sample: SensorFrame, coverage_state: RawReplayCoverageState, reason: str | None
-) -> tuple[SensorFrame, RawReplayWindowCoverage]:
-    """*sample* as it is, without a complete raw window, and why."""
-    return (
-        sample,
-        RawReplayWindowCoverage(
-            client_id=sample.client_id,
-            t_s=sample.t_s,
-            coverage_state=coverage_state,
-            raw_backed=False,
-            reason=reason,
-        ),
+) -> RawReplayWindowCoverage:
+    """*sample*'s coverage without a complete raw window, and why: it is not rebuilt."""
+    return RawReplayWindowCoverage(
+        client_id=sample.client_id,
+        t_s=sample.t_s,
+        coverage_state=coverage_state,
+        raw_backed=False,
+        reason=reason,
     )
 
 
@@ -422,7 +464,7 @@ def _segmented_window(
     timeline: RawSensorTimeline,
     sensor_data: RawCaptureSensorData,
     fft_n: int,
-) -> tuple[SensorFrame, RawReplayWindowCoverage] | _RawWindow:
+) -> RawReplayWindowCoverage | _RawWindow:
     """*request*'s window, one resolved on its own: incomplete, or in pieces in the raw buffer."""
     sample = request.sample
     window = _resolve_window(timeline=timeline, sample=sample, fft_n=fft_n)
@@ -502,84 +544,67 @@ def _window_spectra(
 
 
 def _fft_unusable_window(
+    index: int,
     window: _RawWindow,
     last_xyz: tuple[float, float, float],
     mean_xyz: tuple[float, float, float],
-) -> tuple[SensorFrame, RawReplayWindowCoverage]:
-    """*window*'s sample where its sample rate leaves the spectrum no analysis bins."""
+    rebuilt: _RebuiltPeaks,
+) -> RawReplayWindowCoverage:
+    """Rebuild *window*'s sample where its sample rate leaves the spectrum no analysis bins.
+
+    It has no strength and no peaks.
+    """
     sample = window.request.sample
-    return (
-        replace(
-            sample,
-            accel_x_g=last_xyz[0],
-            accel_y_g=last_xyz[1],
-            accel_z_g=last_xyz[2],
-            dominant_freq_hz=None,
-            top_peaks=(),
-            vibration_strength_db=None,
-            strength_bucket=None,
-            strength_peak_amp_g=None,
-            strength_floor_amp_g=None,
-        ),
-        RawReplayWindowCoverage(
-            client_id=sample.client_id,
-            t_s=sample.t_s,
-            coverage_state="complete",
-            raw_backed=False,
-            reason="fft_no_valid_bins",
-            mean_xyz=mean_xyz,
-        ),
+    sample.accel_x_g, sample.accel_y_g, sample.accel_z_g = last_xyz
+    sample.dominant_freq_hz = None
+    sample.vibration_strength_db = None
+    sample.strength_bucket = None
+    sample.strength_peak_amp_g = None
+    sample.strength_floor_amp_g = None
+    rebuilt.add(index, ())
+    return RawReplayWindowCoverage(
+        client_id=sample.client_id,
+        t_s=sample.t_s,
+        coverage_state="complete",
+        raw_backed=False,
+        reason="fft_no_valid_bins",
+        mean_xyz=mean_xyz,
     )
 
 
 def _finish_window(
-    window: _PendingWindow, strength_metrics: VibrationStrengthMetrics
-) -> tuple[SensorFrame, RawReplayWindowCoverage]:
-    """*window*'s sample rebuilt from its raw window's spectrum and *strength_metrics*.
+    index: int,
+    window: _PendingWindow,
+    strength_metrics: VibrationStrengthMetrics,
+    rebuilt: _RebuiltPeaks,
+) -> RawReplayWindowCoverage:
+    """Rebuild *window*'s sample from its raw window's spectrum and *strength_metrics*.
 
     The metrics as ``strength_metrics_from_mapping`` takes them, read directly:
     they are this replay's own, of known types.
     """
     sample, last_xyz = window.request.sample, window.last_xyz
     peaks = strength_metrics["top_peaks"]
-    top_peaks = tuple(
-        StrengthPeak(
-            hz=peak["hz"],
-            amp=peak["amp"],
-            vibration_strength_db=_finite_or_none(peak["vibration_strength_db"]),
-            strength_bucket=peak["strength_bucket"] or None,
-            local_floor_amp_g=_finite_or_none(peak.get("local_floor_amp_g")),
-        )
-        for peak in peaks
-        if isfinite(peak["hz"]) and isfinite(peak["amp"]) and peak["hz"] > 0 and peak["amp"] > 0
-    )
+    rebuilt.add(index, peaks)
     dominant_hz = peaks[0]["hz"] if peaks else None
-    return (
-        replace(
-            sample,
-            accel_x_g=last_xyz[0],
-            accel_y_g=last_xyz[1],
-            accel_z_g=last_xyz[2],
-            dominant_freq_hz=(
-                dominant_hz
-                if dominant_hz is not None and isfinite(dominant_hz) and dominant_hz > 0
-                else None
-            ),
-            top_peaks=top_peaks,
-            vibration_strength_db=_finite_or_none(strength_metrics["vibration_strength_db"]),
-            strength_bucket=strength_metrics["strength_bucket"] or None,
-            strength_peak_amp_g=_finite_or_none(strength_metrics["peak_amp_g"]),
-            strength_floor_amp_g=_finite_or_none(strength_metrics["noise_floor_amp_g"]),
-            spectrum=window.spectrum,
-        ),
-        RawReplayWindowCoverage(
-            client_id=sample.client_id,
-            t_s=sample.t_s,
-            coverage_state="complete",
-            raw_backed=True,
-            reason=window.request.reason,
-            mean_xyz=window.mean_xyz,
-        ),
+    sample.accel_x_g, sample.accel_y_g, sample.accel_z_g = last_xyz
+    sample.dominant_freq_hz = (
+        dominant_hz
+        if dominant_hz is not None and isfinite(dominant_hz) and dominant_hz > 0
+        else None
+    )
+    sample.vibration_strength_db = _finite_or_none(strength_metrics["vibration_strength_db"])
+    sample.strength_bucket = strength_metrics["strength_bucket"] or None
+    sample.strength_peak_amp_g = _finite_or_none(strength_metrics["peak_amp_g"])
+    sample.strength_floor_amp_g = _finite_or_none(strength_metrics["noise_floor_amp_g"])
+    sample.spectrum = window.spectrum
+    return RawReplayWindowCoverage(
+        client_id=sample.client_id,
+        t_s=sample.t_s,
+        coverage_state="complete",
+        raw_backed=True,
+        reason=window.request.reason,
+        mean_xyz=window.mean_xyz,
     )
 
 
@@ -603,7 +628,8 @@ def _build_raw_capture_unavailable_replay_result(
     samples: tuple[SensorFrame, ...],
 ) -> RawReplayResult:
     return RawReplayResult(
-        samples=samples,
+        peaks=SamplePeaks.none(len(samples)),
+        rebuilt=np.zeros(len(samples), dtype=np.bool_),
         summary=RawReplaySummary(
             raw_capture_available=False,
             raw_backed_summary_row_count=0,
@@ -675,9 +701,7 @@ def _build_replay_windows(
     raw_capture: RawRunCapture,
     context: _ReplayBuildContext,
 ) -> _ReplayWindowBuildResult:
-    replayed, coverages = _rebuilt_samples(
-        samples=samples, raw_capture=raw_capture, context=context
-    )
+    coverages, rebuilt = _rebuild_samples(samples=samples, raw_capture=raw_capture, context=context)
     raw_backed_count = 0
     complete_window_count = 0
     partial_window_count = 0
@@ -701,8 +725,8 @@ def _build_replay_windows(
         if coverage.reason == "fft_no_valid_bins":
             fft_unusable_window_count += 1
     return _ReplayWindowBuildResult(
-        samples=tuple(replayed),
         coverages=tuple(coverages),
+        peaks=rebuilt,
         raw_backed_count=raw_backed_count,
         complete_window_count=complete_window_count,
         partial_window_count=partial_window_count,
@@ -713,13 +737,13 @@ def _build_replay_windows(
     )
 
 
-def _rebuilt_samples(
+def _rebuild_samples(
     *,
     samples: tuple[SensorFrame, ...],
     raw_capture: RawRunCapture,
     context: _ReplayBuildContext,
-) -> tuple[list[SensorFrame], list[RawReplayWindowCoverage]]:
-    """Each sample rebuilt from its raw window, and its window's coverage, in order.
+) -> tuple[list[RawReplayWindowCoverage], _RebuiltPeaks]:
+    """Rebuild each sample from its raw window: each one's window coverage, in order, and the peaks.
 
     Sensor by sensor, the windows are found in the raw capture all at once
     (``contiguous_raw_window_starts``; one at a time only where a window is
@@ -729,7 +753,7 @@ def _rebuilt_samples(
     strengths ``_WINDOWS_PER_BATCH`` at a time. Each result is the one the
     window has on its own.
     """
-    frames = list(samples)
+    rebuilt = _RebuiltPeaks(len(samples))
     coverages: list[RawReplayWindowCoverage | None] = [None] * len(samples)
     # Each sample rate's spectra, kept together as the rows of one array
     # (``WindowSpectrum.rows``), and how many rows are filled. Rows are taken
@@ -743,7 +767,7 @@ def _rebuilt_samples(
             [window.spectrum for _index, window in windows], sample_rate_hz
         )
         for (index, window), window_metrics in zip(windows, strength_metrics, strict=True):
-            frames[index], coverages[index] = _finish_window(window, window_metrics)
+            coverages[index] = _finish_window(index, window, window_metrics, rebuilt)
         windows.clear()
 
     def take_oldest() -> None:
@@ -752,10 +776,12 @@ def _rebuilt_samples(
         sample_rate_hz = chunk[0][1].request.sample_rate_hz
         freq_hz = context.fft_computer.freq_slice(sample_rate_hz)
         if computed.spectra is not None:
-            rows, filled = kept.setdefault(
-                sample_rate_hz,
-                (np.empty((len(samples), freq_hz.size), dtype=np.float32), [0]),
-            )
+            if sample_rate_hz not in kept:
+                kept[sample_rate_hz] = (
+                    np.empty((len(samples), freq_hz.size), dtype=np.float32),
+                    [0],
+                )
+            rows, filled = kept[sample_rate_hz]
             first = filled[0]
             rows[first : first + len(chunk)] = computed.spectra
             filled[0] += len(chunk)
@@ -763,7 +789,7 @@ def _rebuilt_samples(
         for position, (index, window) in enumerate(chunk):
             last_xyz, mean_xyz = computed.last_xyz[position], computed.mean_xyz[position]
             if computed.spectra is None:
-                frames[index], coverages[index] = _fft_unusable_window(window, last_xyz, mean_xyz)
+                coverages[index] = _fft_unusable_window(index, window, last_xyz, mean_xyz, rebuilt)
                 continue
             windows.append(
                 (
@@ -794,7 +820,7 @@ def _rebuilt_samples(
         if isinstance(request, _WindowRequest):
             requests[sample.client_id].append((index, request))
         else:
-            frames[index], coverages[index] = request
+            coverages[index] = request
 
     with ThreadPoolExecutor(max_workers=_FFT_WORKERS, thread_name_prefix="raw-replay-fft") as pool:
 
@@ -844,7 +870,7 @@ def _rebuilt_samples(
                     )
                 )
                 if not isinstance(window, _RawWindow):
-                    frames[index], coverages[index] = window
+                    coverages[index] = window
                     continue
                 chunk.append((index, window))
                 if len(chunk) >= _WINDOWS_PER_FFT:
@@ -858,7 +884,7 @@ def _rebuilt_samples(
         if windows:
             finish(windows, sample_rate_hz)
     # Every sample has its coverage by now.
-    return frames, cast("list[RawReplayWindowCoverage]", coverages)
+    return cast("list[RawReplayWindowCoverage]", coverages), rebuilt
 
 
 def _summarize_raw_timelines(
@@ -922,7 +948,8 @@ def _build_fft_unavailable_replay_result(
     invalid_chunk_count = raw_capture.manifest.losses.invalid_chunk_count
     write_error_chunk_count = raw_capture.manifest.losses.write_error_chunk_count
     return RawReplayResult(
-        samples=samples,
+        peaks=SamplePeaks.none(len(samples)),
+        rebuilt=np.zeros(len(samples), dtype=np.bool_),
         summary=RawReplaySummary(
             raw_capture_available=True,
             raw_backed_summary_row_count=0,

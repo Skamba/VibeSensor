@@ -2,18 +2,57 @@
 
 from __future__ import annotations
 
+import math
 from collections.abc import Mapping, Sequence
 from typing import Any
 
 from test_support.core import standard_metadata
 from vibesensor.analysis._run_input import build_diagnostics_run_input
+from vibesensor.analysis.post_analysis_loader import StoredPeaksReader
 from vibesensor.analysis.run_analysis import RunAnalysis
 from vibesensor.analysis.summary_payload import analysis_result_to_summary
 from vibesensor.recording.run_metadata import run_metadata_from_mapping
 from vibesensor.recording.run_schema import RunMetadata
+from vibesensor.recording.sample_peaks import SamplePeaks
 from vibesensor.recording.sensor_frame import SensorFrame
 from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
 from vibesensor.summary.contracts import AnalysisSummary
+
+
+def sample_peaks_of(samples: Sequence[SensorFrame]) -> SamplePeaks:
+    """*samples*' ``top_peaks`` as the analysis reads a run's peaks (``SamplePeaks``)."""
+    rows: list[int] = []
+    hz: list[float] = []
+    amp: list[float] = []
+    local_floor_amp_g: list[float] = []
+    for row, sample in enumerate(samples):
+        for peak in sample.top_peaks:
+            rows.append(row)
+            hz.append(peak.hz)
+            amp.append(peak.amp)
+            local_floor_amp_g.append(
+                math.nan if peak.local_floor_amp_g is None else peak.local_floor_amp_g
+            )
+    return SamplePeaks.of_peaks(rows, hz, amp, local_floor_amp_g, len(samples))
+
+
+def peaks_by_sample(peaks: SamplePeaks) -> list[list[tuple[float, float, float | None]]]:
+    """Each sample's peaks: frequency, amplitude and local floor (None where it has none)."""
+    starts = peaks.start.tolist()
+    rows = list(
+        zip(
+            peaks.hz.tolist(),
+            peaks.amp.tolist(),
+            [None if math.isnan(floor) else floor for floor in peaks.local_floor_amp_g.tolist()],
+            strict=True,
+        )
+    )
+    return [rows[start:end] for start, end in zip(starts[:-1], starts[1:], strict=True)]
+
+
+def stored_peaks_of(samples: Sequence[SensorFrame]) -> StoredPeaksReader:
+    """A ``LoadedPostAnalysisRun.stored_peaks`` that reads *samples*' ``top_peaks``."""
+    return lambda positions: sample_peaks_of([samples[position] for position in positions])
 
 
 def summarize_sensor_frames(
@@ -23,7 +62,9 @@ def summarize_sensor_frames(
     file_name: str = "run",
 ) -> AnalysisSummary:
     """Analyze typed run data and serialize the summary payload the way the app does."""
-    run = build_diagnostics_run_input(metadata, samples, file_name=file_name)
+    run = build_diagnostics_run_input(
+        metadata, samples, sample_peaks_of(samples), file_name=file_name
+    )
     result = RunAnalysis(
         run,
         file_name=file_name,

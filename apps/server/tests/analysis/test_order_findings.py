@@ -6,7 +6,7 @@ Pure order-tracking rules whose effects the simulator benchmark cannot isolate.
 from __future__ import annotations
 
 import pytest
-from test_support.analysis import run_analysis
+from test_support.analysis import run_analysis, sample_peaks_of
 from test_support.core import standard_metadata, wheel_hz
 from test_support.findings import make_finding
 from test_support.synthetic_samples import make_sample
@@ -432,9 +432,10 @@ def _context(overrides: dict | None = None):
 def _driveshaft(
     sample: dict, overrides: dict | None, tire_circumference_m: float | None
 ) -> ReferenceColumns:
+    frames = sensor_frames_from_mappings([sample])
     return reference_columns(
         "driveshaft",
-        build_drive_table(sensor_frames_from_mappings([sample])),
+        build_drive_table(frames, sample_peaks_of(frames)),
         _context(overrides),
         tire_circumference_m,
     )

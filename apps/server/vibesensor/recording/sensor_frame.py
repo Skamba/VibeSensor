@@ -18,10 +18,11 @@ class SensorFrame:
     """A single sample record shared by run recording and persistence.
 
     ``top_peaks`` stays typed as :class:`StrengthPeak` objects internally and
-    is serialized back to JSON payload dicts only at explicit boundaries.
-    ``spectrum`` is the window's combined spectrum when the post-stop analysis
-    rebuilt it from the raw capture; it lives in memory only and is never
-    stored or exported.
+    is serialized back to JSON payload dicts only at explicit boundaries. The
+    post-stop analysis loads frames without them and reads a run's peaks as
+    columns (``SamplePeaks``). ``spectrum`` is the window's combined spectrum
+    when the post-stop analysis rebuilt it from the raw capture; it lives in
+    memory only and is never stored or exported.
     """
 
     run_id: str
