@@ -100,7 +100,9 @@ def only_while_braking(
     braking = [_phase_value(phase) == BRAKING_PHASE for phase in per_sample_phases]
     times = optional_floats(samples.t_s)
     braking_times = sorted(
-        t_s for t_s, is_braking in zip(times, braking, strict=True) if is_braking and t_s is not None
+        t_s
+        for t_s, is_braking in zip(times, braking, strict=True)
+        if is_braking and t_s is not None
     )
     if not braking_times:
         return False

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -11,7 +10,6 @@ from vibesensor.analysis._run_input import (
     DiagnosticsRunInput,
     build_diagnostics_run_input,
 )
-from vibesensor.analysis._types import Sample
 from vibesensor.analysis.post_analysis_loader import LoadedPostAnalysisRun
 from vibesensor.analysis.raw_capture_replay import (
     RawReplaySummary,
@@ -22,6 +20,7 @@ from vibesensor.dsp.strength_bands import bucket_for_strength
 from vibesensor.dsp.vibration_strength import vibration_strength_db_scalar
 from vibesensor.recording.raw_capture import RawCaptureManifest
 from vibesensor.recording.run_schema import RunMetadata
+from vibesensor.recording.sample_columns import SampleColumns
 from vibesensor.recording.sample_peaks import SamplePeaks
 
 
@@ -53,7 +52,7 @@ class PostAnalysisRunInput:
         return self.diagnostics_run.context
 
     @property
-    def samples(self) -> tuple[Sample, ...]:
+    def samples(self) -> SampleColumns:
         return self.diagnostics_run.samples
 
 
@@ -63,7 +62,7 @@ def build_post_analysis_input(loaded: LoadedPostAnalysisRun) -> PostAnalysisRunI
     The raw replay rebuilds the samples it can (in place, with their peaks);
     the others keep their stored strengths, and their stored peaks are read.
     """
-    samples = tuple(loaded.samples)
+    samples = loaded.samples
     replay_result = replay_raw_windows(
         samples=samples,
         metadata=loaded.metadata,
@@ -128,24 +127,22 @@ def _raw_capture_min_sensor_metrics(
     return min_sensor_sample_count, min_sensor_duration_s
 
 
-def _ensure_strength_metrics(samples: Sequence[Sample], peaks: SamplePeaks) -> None:
+def _ensure_strength_metrics(samples: SampleColumns, peaks: SamplePeaks) -> None:
     """Give each sample without a strength one from its peak (else its first peak) and floor."""
-    first_peak_amps = peaks.first_amp().tolist()
-    for sample, first_peak_amp in zip(samples, first_peak_amps, strict=True):
-        if sample.vibration_strength_db is not None:
-            continue
-        peak_amp_g = sample.strength_peak_amp_g
-        # A sample without peaks has NaN here, which is not over 0.
-        if (peak_amp_g is None or peak_amp_g <= 0) and first_peak_amp > 0:
+    first_peak_amps = peaks.first_amp()
+    for row in np.flatnonzero(np.isnan(samples.vibration_strength_db)).tolist():
+        peak_amp_g = float(samples.strength_peak_amp_g[row])
+        first_peak_amp = float(first_peak_amps[row])
+        # NaN (no peak amplitude, or a sample without peaks) is not over 0.
+        if not peak_amp_g > 0 and first_peak_amp > 0:
             peak_amp_g = first_peak_amp
-        floor_amp_g = sample.strength_floor_amp_g
-        if peak_amp_g is None or peak_amp_g <= 0 or floor_amp_g is None or floor_amp_g <= 0:
+        floor_amp_g = float(samples.strength_floor_amp_g[row])
+        if not (peak_amp_g > 0 and floor_amp_g > 0):
             continue
         vibration_strength_db = vibration_strength_db_scalar(
             peak_band_rms_amp_g=peak_amp_g,
             floor_amp_g=floor_amp_g,
         )
-        sample.vibration_strength_db = vibration_strength_db
-        sample.strength_bucket = sample.strength_bucket or bucket_for_strength(
-            vibration_strength_db
-        )
+        samples.vibration_strength_db[row] = vibration_strength_db
+        if samples.strength_bucket_of[row] < 0:
+            samples.set_strength_buckets([row], [bucket_for_strength(vibration_strength_db)])

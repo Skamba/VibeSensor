@@ -1589,9 +1589,7 @@ def _guided_steps_done(
     if refs.manual_speed:
         return []
     known = ~np.isnan(samples.t_s) & ~np.isnan(samples.speed_kmh)
-    by_time = dict(
-        zip(samples.t_s[known].tolist(), samples.speed_kmh[known].tolist(), strict=True)
-    )
+    by_time = dict(zip(samples.t_s[known].tolist(), samples.speed_kmh[known].tolist(), strict=True))
     speeds = sorted(by_time.items())
     return [phase for phase in phases if guided_step_done(phase, speeds, braking)]
 

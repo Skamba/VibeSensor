@@ -97,7 +97,9 @@ def _speed_breakdown(samples: SampleColumns, table: DriveTable) -> list[SpeedBre
     """Vibration statistics by speed bin (*table* is *samples* as a drive table)."""
     strength_db = samples.vibration_strength_db
     bins = sorted(
-        zip(table.speed_bins, rows_of_groups(table.speed_bin_of, len(table.speed_bins)), strict=True),
+        zip(
+            table.speed_bins, rows_of_groups(table.speed_bin_of, len(table.speed_bins)), strict=True
+        ),
         key=lambda found: speed_band_sort_key(found[0]),
     )
     rows: list[SpeedBreakdownRowData] = []
@@ -143,13 +145,13 @@ def _sensor_intensity_by_location(
     strength_db = samples.vibration_strength_db
     usable = ~np.isnan(strength_db)
     times = optional_floats(samples.t_s)
-    for location, rows in zip(labels, rows_of_groups(label_of, len(labels)), strict=True):
+    for location, group_rows in zip(labels, rows_of_groups(label_of, len(labels)), strict=True):
         if not location:
             continue
         if include_locations is not None and location not in include_locations:
             continue
-        observed_sample_counts[location] = int(rows.size)
-        used = rows[usable[rows]]
+        observed_sample_counts[location] = int(group_rows.size)
+        used = group_rows[usable[group_rows]]
         if used.size:
             amps = strength_db[used].tolist()
             usable_sample_counts[location] = int(used.size)
@@ -159,17 +161,17 @@ def _sensor_intensity_by_location(
                 for row, amp in zip(used.tolist(), amps, strict=True):
                     by_phase[phase_keys[row]].append(amp)
                 phase_amp[location] = by_phase
-        row_list = rows.tolist()
+        row_list = group_rows.tolist()
         dropped_totals[location] = [
             (times[row], dropped)
             for row, dropped in zip(
-                row_list, samples.frames_dropped_total[rows].tolist(), strict=True
+                row_list, samples.frames_dropped_total[group_rows].tolist(), strict=True
             )
         ]
         overflow_totals[location] = [
             (times[row], overflow)
             for row, overflow in zip(
-                row_list, samples.queue_overflow_drops[rows].tolist(), strict=True
+                row_list, samples.queue_overflow_drops[group_rows].tolist(), strict=True
             )
         ]
         bucketed = samples.strength_bucket_of[used]

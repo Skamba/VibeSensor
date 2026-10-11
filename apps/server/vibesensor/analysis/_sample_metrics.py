@@ -5,7 +5,6 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
-from vibesensor.analysis._types import Sample
 from vibesensor.analysis.constants import MEMS_NOISE_FLOOR_G
 from vibesensor.dsp.vibration_strength import percentile
 
@@ -19,11 +18,6 @@ def _sensor_limit_g(sensor_model: object) -> float | None:
     if "adxl345" in sensor_model.lower():
         return 16.0
     return None
-
-
-def _primary_vibration_strength_db(sample: Sample) -> float | None:
-    value = sample.vibration_strength_db
-    return float(value) if value is not None else None
 
 
 def _floor_from_peaks(peak_amps: Sequence[float]) -> float | None:

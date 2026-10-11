@@ -178,7 +178,9 @@ class SampleColumns:
 
         The client ids come in the order a pass over the samples meets them in.
         """
-        client_of_sensor, client_ids = coded([client_id for _location, _name, client_id in self.sensors])
+        client_of_sensor, client_ids = coded(
+            [client_id for _location, _name, client_id in self.sensors]
+        )
         return first_seen(client_of_sensor[self.sensor_of], client_ids)
 
     def set_strength_buckets(self, rows: Sequence[int], buckets: Sequence[str | None]) -> None:
@@ -231,7 +233,9 @@ def rows_of_groups(group_of: npt.NDArray[np.intp], count: int) -> list[npt.NDArr
 
 def optional_floats(values: _Floats) -> list[float | None]:
     """*values* as Python floats, None where NaN: a ``SensorFrame`` field's values."""
-    return cast("list[float | None]", np.where(np.isnan(values), None, values).tolist())
+    found = values.astype(object)
+    found[np.isnan(values)] = None
+    return cast("list[float | None]", found.tolist())
 
 
 def _coded_or_none(values: Sequence[str | None]) -> tuple[npt.NDArray[np.intp], list[str]]:
