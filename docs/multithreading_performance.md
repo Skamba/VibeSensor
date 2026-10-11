@@ -37,8 +37,8 @@ path caps the loop's duty cycle at 50%. Even at a 5–10× slower Raspberry Pi
 - `PostAnalysisWorker` in `apps/server/vibesensor/analysis/post_analysis.py`
   owns a single daemon thread for completed-run post-analysis. Report requests
   read persisted analysis and render on demand.
-- Post-analysis stays on that one thread, with one helper thread for the raw
-  replay's FFTs. Its cost is many small steps per window (the raw replay's
+- Post-analysis stays on that one thread, with two helper threads for the
+  raw replay's FFTs. Its cost is many small steps per window (the raw replay's
   strength pipeline, order matching, line reads), so it is cut by taking
   windows together as arrays (an order's line reads all at once, the replay's
   windows as below), each result bit for bit the one-at-a-time result.
@@ -48,8 +48,8 @@ path caps the loop's duty cycle at 50%. Even at a 5–10× slower Raspberry Pi
 - The raw replay locates each sensor's windows in its raw buffer all at once
   (`contiguous_raw_window_starts`), gathers 64 at a time in one strided step,
   and computes their spectra through one FFT plan (`combined_spectra`; a
-  short chunk is zero-padded so there is only the one plan) on a single
-  helper thread, while the worker thread takes the strengths of the spectra
+  short chunk is zero-padded so there is only the one plan) on helper
+  threads (two since the change below, each with its own plan), while the worker thread takes the strengths of the spectra
   already computed 128 at a time as columns (`StrengthRows`, below). It keeps the spectra as rows of one array per
   sample rate (`WindowSpectrum.rows`), which order matching's line reads
   gather from. Measured on a 30-minute, 4-sensor drive on the Pi: the replay
@@ -76,6 +76,15 @@ path caps the loop's duty cycle at 50%. Even at a 5–10× slower Raspberry Pi
   capture is unchanged. The analysis JSON is byte-identical. The worker
   thread now waits on the FFT thread (about 50 ms per build on PC, against
   7 ms before), so on PC the FFT thread is the longer of the two.
+- With the strengths as columns, the replay waits on its FFT thread on the Pi
+  too, so the FFT chunks run on two threads (`_FFT_WORKERS`, three chunks
+  queued); each thread keeps its own plan and the chunks are taken in order,
+  so every spectrum is the same. Measured on the 30-minute, 4-sensor drive on
+  the Pi (5 interleaved rounds after a warm-up): the build step went from
+  7.4 s to 5.7 s and the whole post-analysis from 28.2 s to 26.4 s, for
+  2.1 s more CPU, peak RSS 128 MB to 134 MB and MemAvailable at least 225 MB
+  throughout; on PC, pinned to 4 cores, the build went from 486 ms to
+  380 ms. The analysis JSON is byte-identical.
 - Of the FFT thread's ~9.4 s on the Pi (49 ms per 64-window chunk), the FFT
   itself (pyFFTW, float32) is ~1.8 s; the rest is elementwise passes (int16
   to g, mean, window, magnitude, the float64 combine). The combine squares
@@ -98,7 +107,8 @@ path caps the loop's duty cycle at 50%. Even at a 5–10× slower Raspberry Pi
   interval), so fewer, larger calls are what helped; 32 windows per FFT
   chunk were 2 s slower on the Pi than 64 and save only ~2 MB, and 128
   gained nothing for more memory. A second FFT thread saved 0.4 s for +9 MB
-  and 2 s more CPU; one chunk queued instead of two cost 2 s; strengths on
+  and 2 s more CPU while the strengths' per-window objects were the longer
+  part (kept once they became columns, above); one chunk queued instead of two cost 2 s; strengths on
   worker threads were slower (GIL); a fancy-index gather of each window was
   3.7 s on the Pi, and a `sliding_window_view` of a sensor's whole buffer is
   refused on the Pi's 32-bit numpy. The strength batch size does not change
