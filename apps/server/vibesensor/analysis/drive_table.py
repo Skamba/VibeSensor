@@ -49,7 +49,7 @@ class DriveTable:
     # Each sample's sensor: its (location code, name, client id).
     sensor_of: npt.NDArray[np.intp]
     sensors: Sequence[tuple[str, str, str]]
-    # Each sample's sensor label (``_location_label``) and client id.
+    # Each sample's sensor label (``location_labels``) and client id.
     location_of: npt.NDArray[np.intp]
     locations: Sequence[str]
     client_of: npt.NDArray[np.intp]

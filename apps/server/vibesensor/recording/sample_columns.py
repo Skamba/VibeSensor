@@ -94,14 +94,10 @@ class SampleColumns:
     spectra: list[WindowSpectrum | None]
 
     @classmethod
-    def from_fields(
-        cls,
-        values: Mapping[str, Sequence[Any]],
-        spectra: Sequence[WindowSpectrum | None] | None = None,
-    ) -> SampleColumns:
+    def from_fields(cls, values: Mapping[str, Sequence[Any]]) -> SampleColumns:
         """The samples whose ``SAMPLE_COLUMN_FIELDS`` are *values* (each as ``SensorFrame`` has it).
 
-        Without *spectra*, none has a spectrum.
+        None has a spectrum.
         """
         size = len(values["t_s"])
         sensor_of, sensors = coded(
@@ -137,7 +133,7 @@ class SampleColumns:
             strength_floor_amp_g=_floats(values["strength_floor_amp_g"]),
             frames_dropped_total=np.array(values["frames_dropped_total"], dtype=np.int64),
             queue_overflow_drops=np.array(values["queue_overflow_drops"], dtype=np.int64),
-            spectra=[None] * size if spectra is None else list(spectra),
+            spectra=[None] * size,
         )
 
     def __len__(self) -> int:

@@ -26,6 +26,7 @@ from pathlib import Path
 
 import pytest
 from pypdf import PdfReader
+from test_support.analysis import sample_columns_of
 from test_support.report_rendering import (
     propshaft_mentions,
     report_view_texts,
@@ -3997,7 +3998,7 @@ def test_gentle_firm_stops_count_on_a_late_one_hz_gps(tmp_path: Path) -> None:
         samples = [
             frame for batch in result.history_db.iter_run_samples(result.run_id) for frame in batch
         ]
-        segments = segment_run_phases(samples)[1]
+        segments = segment_run_phases(sample_columns_of(samples))[1]
         braking = [seg for seg in segments if seg.phase is DrivingPhase.BRAKING]
         assert len(braking) == 3, [(seg.start_t_s, seg.end_t_s) for seg in braking]
     finally:

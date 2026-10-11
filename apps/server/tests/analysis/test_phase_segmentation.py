@@ -6,6 +6,7 @@ import math
 import random
 
 import pytest
+from test_support.analysis import sample_columns_of
 
 from vibesensor.analysis.phase_segmentation import (
     DrivingPhase,
@@ -15,11 +16,12 @@ from vibesensor.analysis.phase_segmentation import (
     segment_run_phases,
     speed_slopes_kmh_s,
 )
+from vibesensor.recording.sample_columns import SampleColumns
 from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
 
 
-def _typed(samples: list[dict]) -> list:
-    return sensor_frames_from_mappings(samples)
+def _typed(samples: list[dict]) -> SampleColumns:
+    return sample_columns_of(sensor_frames_from_mappings(samples))
 
 
 def _drive(
@@ -28,7 +30,7 @@ def _drive(
     step_s: float = 0.25,
     sensors: int = 1,
     gps_hz: float | None = None,
-) -> list:
+) -> SampleColumns:
     """Rows every *step_s* through ``(duration_s, start_kmh, end_kmh)`` legs.
 
     Each moment has one row per sensor (same timestamp). With *gps_hz* the speed
@@ -49,7 +51,7 @@ def _drive(
     return _typed(rows)
 
 
-def _braking_seconds(samples: list) -> float:
+def _braking_seconds(samples: SampleColumns) -> float:
     phases, segments = segment_run_phases(samples)
     return sum(seg.end_t_s - seg.start_t_s for seg in segments if seg.phase is DrivingPhase.BRAKING)
 
@@ -127,7 +129,12 @@ class TestBraking:
         )
         if whole_kmh:
             samples = _typed(
-                [{"speed_kmh": round(row.speed_kmh), "t_s": row.t_s} for row in samples]
+                [
+                    {"speed_kmh": round(speed_kmh), "t_s": t_s}
+                    for speed_kmh, t_s in zip(
+                        samples.speed_kmh.tolist(), samples.t_s.tolist(), strict=True
+                    )
+                ]
             )
         assert _braking_seconds(samples) >= 3.0
 

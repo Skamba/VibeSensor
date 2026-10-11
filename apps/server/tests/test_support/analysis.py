@@ -13,10 +13,49 @@ from vibesensor.analysis.run_analysis import RunAnalysis
 from vibesensor.analysis.summary_payload import analysis_result_to_summary
 from vibesensor.recording.run_metadata import run_metadata_from_mapping
 from vibesensor.recording.run_schema import RunMetadata
+from vibesensor.recording.sample_columns import (
+    SAMPLE_COLUMN_FIELDS,
+    SampleColumns,
+    optional_floats,
+)
 from vibesensor.recording.sample_peaks import SamplePeaks
 from vibesensor.recording.sensor_frame import SensorFrame
 from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
 from vibesensor.summary.contracts import AnalysisSummary
+
+
+def sample_columns_of(samples: Sequence[SensorFrame]) -> SampleColumns:
+    """*samples* as the post-analysis reads a run's samples (``SampleColumns``), spectra too."""
+    columns = SampleColumns.from_fields(
+        {field: [getattr(sample, field) for sample in samples] for field in SAMPLE_COLUMN_FIELDS}
+    )
+    columns.spectra[:] = [sample.spectrum for sample in samples]
+    return columns
+
+
+def sample_column_values(columns: SampleColumns) -> dict[str, list[object]]:
+    """*columns*' samples field by field, as ``SensorFrame`` has them (None where none)."""
+    sensors = [columns.sensors[code] for code in columns.sensor_of.tolist()]
+    values: dict[str, list[object]] = {
+        "location": [location for location, _name, _client_id in sensors],
+        "client_name": [name for _location, name, _client_id in sensors],
+        "client_id": [client_id for _location, _name, client_id in sensors],
+        "speed_source": [columns.speed_sources[code] for code in columns.speed_source_of.tolist()],
+        "engine_rpm_source": [
+            columns.engine_rpm_sources[code] for code in columns.engine_rpm_source_of.tolist()
+        ],
+        "strength_bucket": [
+            None if code < 0 else columns.strength_buckets[code]
+            for code in columns.strength_bucket_of.tolist()
+        ],
+        "sample_rate_hz": columns.sample_rate_hz.tolist(),
+        "frames_dropped_total": columns.frames_dropped_total.tolist(),
+        "queue_overflow_drops": columns.queue_overflow_drops.tolist(),
+    }
+    for field in SAMPLE_COLUMN_FIELDS:
+        if field not in values:
+            values[field] = list(optional_floats(getattr(columns, field)))
+    return values
 
 
 def sample_peaks_of(samples: Sequence[SensorFrame]) -> SamplePeaks:
@@ -63,7 +102,7 @@ def summarize_sensor_frames(
 ) -> AnalysisSummary:
     """Analyze typed run data and serialize the summary payload the way the app does."""
     run = build_diagnostics_run_input(
-        metadata, samples, sample_peaks_of(samples), file_name=file_name
+        metadata, sample_columns_of(samples), sample_peaks_of(samples), file_name=file_name
     )
     result = RunAnalysis(
         run,

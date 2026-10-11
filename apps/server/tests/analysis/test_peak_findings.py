@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from test_support.analysis import sample_peaks_of
+from test_support.analysis import sample_columns_of, sample_peaks_of
 from test_support.findings import make_finding
 from test_support.report_helpers import analysis_sample_with_peaks as sample
 
@@ -25,7 +25,7 @@ from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mapping
 
 def _table(samples: list[dict]) -> DriveTable:
     frames = sensor_frames_from_mappings(samples)
-    return build_drive_table(frames, sample_peaks_of(frames))
+    return build_drive_table(sample_columns_of(frames), sample_peaks_of(frames))
 
 
 def _findings_at(samples: list[dict], frequency: str) -> list:

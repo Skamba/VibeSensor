@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+from test_support.analysis import sample_columns_of
 from test_support.findings import NO_FAULT_DIAGNOSIS, make_finding_payload
 
 from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
@@ -37,11 +38,13 @@ def test_build_analysis_summary_exposes_stable_public_entrypoint() -> None:
     summary = build_analysis_summary(
         file_name="run.csv",
         run_id="run-1",
-        samples=[
-            sensor_frame_from_mapping(
-                {"t_s": 0.0, "speed_kmh": 32.0, "vibration_strength_db": 14.0}
-            )
-        ],
+        samples=sample_columns_of(
+            [
+                sensor_frame_from_mapping(
+                    {"t_s": 0.0, "speed_kmh": 32.0, "vibration_strength_db": 14.0}
+                )
+            ]
+        ),
         duration_s=12.5,
         language="en",
         metadata={"end_time_utc": "2026-01-01T00:00:00Z"},
