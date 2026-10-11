@@ -33,7 +33,7 @@ class IsolatedRuntimePaths:
 
 _SERVER_SUBPROCESS_BOOTSTRAP = "\n".join(
     [
-        "from vibesensor.app.bootstrap import _run_server_with_port_fallback",
+        "from vibesensor.app.serve import APP_FACTORY_TARGET, run_server_with_port_fallback",
         "from vibesensor.app.config_loader import load_config",
         "from vibesensor.common.process_settings import export_config_path_env",
         "import sys",
@@ -41,8 +41,8 @@ _SERVER_SUBPROCESS_BOOTSTRAP = "\n".join(
         "config_path = Path(sys.argv[1])",
         "config = load_config(config_path)",
         "export_config_path_env(config_path)",
-        "_run_server_with_port_fallback(",
-        "    'vibesensor.app.bootstrap:create_app_from_env',",
+        "run_server_with_port_fallback(",
+        "    APP_FACTORY_TARGET,",
         "    host=config.server.host,",
         "    port=config.server.port,",
         "    factory=True,",
