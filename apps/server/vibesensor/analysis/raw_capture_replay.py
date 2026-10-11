@@ -16,7 +16,7 @@ from numpy.lib.stride_tricks import as_strided
 from vibesensor.common.json_utils import i18n_ref
 from vibesensor.dsp.constants import SPECTRUM_MAX_HZ, SPECTRUM_MIN_HZ
 from vibesensor.dsp.fft_analysis import SpectralAnalysisComputer
-from vibesensor.dsp.vibration_strength import StrengthPeak, VibrationStrengthMetrics
+from vibesensor.dsp.vibration_strength import StrengthRows
 from vibesensor.dsp.window_spectrum import WindowSpectrum
 from vibesensor.recording.raw_capture import RawCaptureSensorData, RawRunCapture
 from vibesensor.recording.raw_capture_quality import (
@@ -185,16 +185,6 @@ class _WindowSpectra:
 
 
 @dataclass(frozen=True, slots=True)
-class _PendingWindow:
-    """A complete raw window's spectrum, its strength still to be taken (``_rebuild_samples``)."""
-
-    request: _WindowRequest
-    spectrum: WindowSpectrum
-    last_xyz: tuple[float, float, float]
-    mean_xyz: tuple[float, float, float]
-
-
-@dataclass(frozen=True, slots=True)
 class _ReplayBuildContext:
     fft_n: int
     timelines: dict[str, RawSensorTimeline]
@@ -245,28 +235,36 @@ class _RebuiltPeaks:
 
     def __init__(self, size: int) -> None:
         self.rebuilt = np.zeros(size, dtype=np.bool_)
-        self.rows: list[int] = []
-        self.hz: list[float] = []
-        self.amp: list[float] = []
-        self.local_floor_amp_g: list[float] = []
+        self.rows: list[npt.NDArray[np.intp]] = []
+        self.hz: list[npt.NDArray[np.float64]] = []
+        self.amp: list[npt.NDArray[np.float64]] = []
+        self.local_floor_amp_g: list[npt.NDArray[np.float64]] = []
 
-    def add(self, index: int, peaks: Sequence[StrengthPeak]) -> None:
-        """Sample *index* rebuilt, with its *peaks* of finite frequency and amplitude over 0."""
-        self.rebuilt[index] = True
-        for peak in peaks:
-            hz, amp = peak["hz"], peak["amp"]
-            if isfinite(hz) and isfinite(amp) and hz > 0 and amp > 0:
-                local_floor = peak.get("local_floor_amp_g")
-                self.rows.append(index)
-                self.hz.append(hz)
-                self.amp.append(amp)
-                self.local_floor_amp_g.append(
-                    local_floor if local_floor is not None and isfinite(local_floor) else nan
-                )
+    def add(self, indexes: npt.NDArray[np.intp], strengths: StrengthRows) -> None:
+        """Samples *indexes* rebuilt, with the peaks of *strengths*' rows in turn.
+
+        Those of finite frequency and amplitude over 0; NaN for a local floor
+        that is not finite.
+        """
+        self.rebuilt[indexes] = True
+        hz, amp = strengths.peak_hz, strengths.peak_amp
+        kept = np.isfinite(hz) & np.isfinite(amp) & (hz > 0) & (amp > 0)
+        local_floor = strengths.peak_local_floor_amp_g[kept]
+        self.rows.append(indexes[strengths.peak_row[kept]])
+        self.hz.append(hz[kept])
+        self.amp.append(amp[kept])
+        self.local_floor_amp_g.append(np.where(np.isfinite(local_floor), local_floor, nan))
 
     def peaks(self) -> SamplePeaks:
+        size = int(self.rebuilt.size)
+        if not self.rows:
+            return SamplePeaks.none(size)
         return SamplePeaks.of_peaks(
-            self.rows, self.hz, self.amp, self.local_floor_amp_g, int(self.rebuilt.size)
+            np.concatenate(self.rows),
+            np.concatenate(self.hz),
+            np.concatenate(self.amp),
+            np.concatenate(self.local_floor_amp_g),
+            size,
         )
 
 
@@ -561,7 +559,7 @@ def _fft_unusable_window(
     sample.strength_bucket = None
     sample.strength_peak_amp_g = None
     sample.strength_floor_amp_g = None
-    rebuilt.add(index, ())
+    rebuilt.rebuilt[index] = True
     return RawReplayWindowCoverage(
         client_id=sample.client_id,
         t_s=sample.t_s,
@@ -572,44 +570,50 @@ def _fft_unusable_window(
     )
 
 
-def _finish_window(
-    index: int,
-    window: _PendingWindow,
-    strength_metrics: VibrationStrengthMetrics,
-    rebuilt: _RebuiltPeaks,
+def _replayed_window(
+    window: _RawWindow,
+    spectrum: WindowSpectrum,
+    last_xyz: tuple[float, float, float],
+    mean_xyz: tuple[float, float, float],
 ) -> RawReplayWindowCoverage:
-    """Rebuild *window*'s sample from its raw window's spectrum and *strength_metrics*.
+    """Rebuild *window*'s sample's last reading and spectrum.
 
-    The metrics as ``strength_metrics_from_mapping`` takes them, read directly:
-    they are this replay's own, of known types.
+    Its strength follows, with its batch's (``_set_strengths``).
     """
-    sample, last_xyz = window.request.sample, window.last_xyz
-    peaks = strength_metrics["top_peaks"]
-    rebuilt.add(index, peaks)
-    dominant_hz = peaks[0]["hz"] if peaks else None
+    sample = window.request.sample
     sample.accel_x_g, sample.accel_y_g, sample.accel_z_g = last_xyz
-    sample.dominant_freq_hz = (
-        dominant_hz
-        if dominant_hz is not None and isfinite(dominant_hz) and dominant_hz > 0
-        else None
-    )
-    sample.vibration_strength_db = _finite_or_none(strength_metrics["vibration_strength_db"])
-    sample.strength_bucket = strength_metrics["strength_bucket"] or None
-    sample.strength_peak_amp_g = _finite_or_none(strength_metrics["peak_amp_g"])
-    sample.strength_floor_amp_g = _finite_or_none(strength_metrics["noise_floor_amp_g"])
-    sample.spectrum = window.spectrum
+    sample.spectrum = spectrum
     return RawReplayWindowCoverage(
         client_id=sample.client_id,
         t_s=sample.t_s,
         coverage_state="complete",
         raw_backed=True,
         reason=window.request.reason,
-        mean_xyz=window.mean_xyz,
+        mean_xyz=mean_xyz,
     )
 
 
-def _finite_or_none(value: float | None) -> float | None:
-    return value if value is not None and isfinite(value) else None
+def _set_strengths(samples: Sequence[SensorFrame], strengths: StrengthRows) -> None:
+    """Set each sample's strength fields from its row of *strengths*, in turn.
+
+    As ``strength_metrics_from_mapping`` takes them from the metrics: the
+    dominant frequency is the first peak's (None where it has none, or one not
+    finite and over 0), and a value that is not finite is None.
+    """
+    for sample, dominant_hz, db, strength_bucket, peak_amp, floor_amp in zip(
+        samples,
+        strengths.first_peak(strengths.peak_hz).tolist(),
+        strengths.first_peak(strengths.peak_db).tolist(),
+        strengths.strength_buckets(),
+        strengths.first_peak(strengths.peak_amp).tolist(),
+        strengths.noise_floor_amp_g.tolist(),
+        strict=True,
+    ):
+        sample.dominant_freq_hz = dominant_hz if isfinite(dominant_hz) and dominant_hz > 0 else None
+        sample.vibration_strength_db = db if isfinite(db) else None
+        sample.strength_bucket = strength_bucket
+        sample.strength_peak_amp_g = peak_amp if isfinite(peak_amp) else None
+        sample.strength_floor_amp_g = floor_amp if isfinite(floor_amp) else None
 
 
 def _raw_capture_mode(
@@ -759,56 +763,55 @@ def _rebuild_samples(
     # (``WindowSpectrum.rows``), and how many rows are filled. Rows are taken
     # in turn, so only those filled take up memory.
     kept: dict[int, tuple[npt.NDArray[np.float32], list[int]]] = {}
-    pending: dict[int, list[tuple[int, _PendingWindow]]] = defaultdict(list)
+    # Each sample rate's samples whose strength is still to be taken: those of
+    # its last filled rows, in order.
+    pending: dict[int, list[int]] = defaultdict(list)
     in_flight: deque[tuple[list[tuple[int, _RawWindow]], Future[_WindowSpectra]]] = deque()
 
-    def finish(windows: list[tuple[int, _PendingWindow]], sample_rate_hz: int) -> None:
-        strength_metrics = context.fft_computer.combined_strength_metrics(
-            [window.spectrum for _index, window in windows], sample_rate_hz
+    def finish(sample_rate_hz: int) -> None:
+        """Take the strengths of the first ``_WINDOWS_PER_BATCH`` (at most) pending samples."""
+        waiting = pending[sample_rate_hz]
+        rows, filled = kept[sample_rate_hz]
+        first = filled[0] - len(waiting)
+        count = min(len(waiting), _WINDOWS_PER_BATCH)
+        indexes = np.array(waiting[:count], dtype=np.intp)
+        del waiting[:count]
+        strengths = context.fft_computer.combined_strengths(
+            rows[first : first + count], sample_rate_hz
         )
-        for (index, window), window_metrics in zip(windows, strength_metrics, strict=True):
-            coverages[index] = _finish_window(index, window, window_metrics, rebuilt)
-        windows.clear()
+        rebuilt.add(indexes, strengths)
+        _set_strengths([samples[index] for index in indexes.tolist()], strengths)
 
     def take_oldest() -> None:
         chunk, future = in_flight.popleft()
         computed = future.result()
+        if computed.spectra is None:
+            for position, (index, window) in enumerate(chunk):
+                coverages[index] = _fft_unusable_window(
+                    index, window, computed.last_xyz[position], computed.mean_xyz[position], rebuilt
+                )
+            return
         sample_rate_hz = chunk[0][1].request.sample_rate_hz
         freq_hz = context.fft_computer.freq_slice(sample_rate_hz)
-        if computed.spectra is not None:
-            if sample_rate_hz not in kept:
-                kept[sample_rate_hz] = (
-                    np.empty((len(samples), freq_hz.size), dtype=np.float32),
-                    [0],
-                )
-            rows, filled = kept[sample_rate_hz]
-            first = filled[0]
-            rows[first : first + len(chunk)] = computed.spectra
-            filled[0] += len(chunk)
-        windows = pending[sample_rate_hz]
+        if sample_rate_hz not in kept:
+            kept[sample_rate_hz] = (np.empty((len(samples), freq_hz.size), dtype=np.float32), [0])
+        rows, filled = kept[sample_rate_hz]
+        first = filled[0]
+        rows[first : first + len(chunk)] = computed.spectra
+        filled[0] += len(chunk)
+        waiting = pending[sample_rate_hz]
         for position, (index, window) in enumerate(chunk):
-            last_xyz, mean_xyz = computed.last_xyz[position], computed.mean_xyz[position]
-            if computed.spectra is None:
-                coverages[index] = _fft_unusable_window(index, window, last_xyz, mean_xyz, rebuilt)
-                continue
-            windows.append(
-                (
-                    index,
-                    _PendingWindow(
-                        request=window.request,
-                        spectrum=WindowSpectrum(
-                            freq_hz=freq_hz,
-                            amp_g=rows[first + position],
-                            rows=rows,
-                            row=first + position,
-                        ),
-                        last_xyz=last_xyz,
-                        mean_xyz=mean_xyz,
-                    ),
-                )
+            coverages[index] = _replayed_window(
+                window,
+                WindowSpectrum(
+                    freq_hz=freq_hz, amp_g=rows[first + position], rows=rows, row=first + position
+                ),
+                computed.last_xyz[position],
+                computed.mean_xyz[position],
             )
-            if len(windows) >= _WINDOWS_PER_BATCH:
-                finish(windows, sample_rate_hz)
+            waiting.append(index)
+        while len(waiting) >= _WINDOWS_PER_BATCH:
+            finish(sample_rate_hz)
 
     requests: dict[str, list[tuple[int, _WindowRequest]]] = defaultdict(list)
     for index, sample in enumerate(samples):
@@ -880,9 +883,9 @@ def _rebuild_samples(
                 submit(chunk, sensor_data)
         while in_flight:
             take_oldest()
-    for sample_rate_hz, windows in pending.items():
-        if windows:
-            finish(windows, sample_rate_hz)
+    for sample_rate_hz, waiting in pending.items():
+        if waiting:
+            finish(sample_rate_hz)
     # Every sample has its coverage by now.
     return cast("list[RawReplayWindowCoverage]", coverages), rebuilt
 

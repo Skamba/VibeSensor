@@ -4,7 +4,6 @@ import math
 import sys
 import threading
 from collections import OrderedDict
-from collections.abc import Sequence
 from threading import RLock
 from typing import TYPE_CHECKING, Literal, TypedDict, cast
 
@@ -17,6 +16,7 @@ from vibesensor.dsp.constants import (
     PEAK_SEPARATION_HZ,
 )
 from vibesensor.dsp.vibration_strength import (
+    StrengthRows,
     VibrationStrengthMetrics,
     _combined_spectrum_amp_g_array,
     compute_vibration_strength_db,
@@ -45,7 +45,6 @@ __all__ = [
     "SpectrumByAxis",
     "combined_spectrum",
     "combined_spectra",
-    "combined_strength_metrics",
     "compute_fft_spectrum",
     "fft_frequency_slice",
     "fft_window_values",
@@ -427,27 +426,6 @@ def combined_spectra(
     return np.sqrt(combined, out=combined).astype(np.float32)
 
 
-def combined_strength_metrics(
-    spectra: Sequence[WindowSpectrum],
-    *,
-    strength_range_mask: BoolArray | None = None,
-) -> list[VibrationStrengthMetrics]:
-    """Each combined spectrum's strength metrics, as ``compute_fft_spectrum`` has them.
-
-    All at once (``compute_vibration_strength_rows``): the spectra share their bins.
-    """
-    if not spectra:
-        return []
-    return compute_vibration_strength_rows(
-        freq_hz=spectra[0].freq_hz,
-        spectra=np.stack([spectrum.amp_g for spectrum in spectra]),
-        peak_bandwidth_hz=PEAK_BANDWIDTH_HZ,
-        peak_separation_hz=PEAK_SEPARATION_HZ,
-        top_n=_COMBINED_TOP_N,
-        strength_range_mask=strength_range_mask,
-    )
-
-
 def _amplitude_spectra(
     fft_block: FloatArray,
     *,
@@ -543,10 +521,6 @@ class SpectralAnalysisComputer:
                 self.fft_cache.popitem(last=False)
             return freq_slice, valid_idx, strength_range_mask
 
-    def strength_range_mask(self, sample_rate_hz: int) -> BoolArray:
-        _, _, strength_range_mask = self._fft_cache_entry(sample_rate_hz)
-        return strength_range_mask
-
     def combined_spectrum(
         self,
         fft_block: FloatArray,
@@ -589,14 +563,20 @@ class SpectralAnalysisComputer:
         freq_slice, _valid_idx, _strength_range_mask = self._fft_cache_entry(sample_rate_hz)
         return freq_slice
 
-    def combined_strength_metrics(
-        self,
-        spectra: Sequence[WindowSpectrum],
-        sample_rate_hz: int,
-    ) -> list[VibrationStrengthMetrics]:
-        """The strength metrics of *spectra*, combined spectra at *sample_rate_hz*."""
-        return combined_strength_metrics(
-            spectra, strength_range_mask=self.strength_range_mask(sample_rate_hz)
+    def combined_strengths(self, spectra: FloatArray, sample_rate_hz: int) -> StrengthRows:
+        """The strength of each row of *spectra*, as ``compute_fft_spectrum`` has it.
+
+        The rows are combined spectra on the bins ``freq_slice(sample_rate_hz)``,
+        taken all at once (``compute_vibration_strength_rows``).
+        """
+        freq_slice, _valid_idx, strength_range_mask = self._fft_cache_entry(sample_rate_hz)
+        return compute_vibration_strength_rows(
+            freq_hz=freq_slice,
+            spectra=spectra,
+            peak_bandwidth_hz=PEAK_BANDWIDTH_HZ,
+            peak_separation_hz=PEAK_SEPARATION_HZ,
+            top_n=_COMBINED_TOP_N,
+            strength_range_mask=strength_range_mask,
         )
 
     def compute_fft_spectrum(

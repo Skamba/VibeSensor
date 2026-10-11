@@ -54,17 +54,20 @@ replay computes a block as the live tick does. Each sensor's windows are
 located in its raw buffer all at once (`contiguous_raw_window_starts()`; a
 window stored in pieces is resolved on its own), their spectra are computed
 64 at a time through one FFT plan on one helper thread
-(`combined_spectra()`), and their strength metrics are taken 128 at a time
-(`compute_vibration_strength_rows()`) on the worker thread meanwhile; each
-result is bit for bit the one the live tick computes for that block on its
-own. The replay also keeps each
+(`combined_spectra()`), and their strengths are taken 128 at a time on the
+worker thread meanwhile (`compute_vibration_strength_rows()`), straight from
+the kept spectra rows into columns (`StrengthRows`: each window's floor, and
+every peak flat, with where each window's start); each result is bit for bit
+the one the live tick computes for that block on its own, whose metrics dict
+is one row of those columns (`StrengthRows.metrics()`). The replay also keeps each
 window's combined spectrum in memory (never persisted), so order tracking can
 read each order's level at its line at every sensor ("Order-tracked reads" in
 `docs/order_tracking.md`).
 
 The replay rebuilds a sample's strength fields in place on its `SensorFrame`
-and gathers the peaks it rebuilds straight into columns (`SamplePeaks` in
-`recording/sample_peaks.py`). The loader leaves every loaded frame's
+from those columns and gathers the peaks it rebuilds straight into columns
+(`SamplePeaks` in `recording/sample_peaks.py`), with no metrics dict or peak
+object per window. The loader leaves every loaded frame's
 `top_peaks` empty: the stored peaks are read, straight into columns
 (`HistoryDB.load_run_peaks_by_id`), only for the samples the replay does not
 rebuild, and joined with the rebuilt ones as `DiagnosticsRunInput.peaks`. The

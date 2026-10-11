@@ -110,6 +110,18 @@ class TestComputeVibrationStrengthBoundaries:
         assert result["vibration_strength_db"] > 0.0
         assert len(result["top_peaks"]) >= 1
 
+    def test_equal_peaks_rank_the_higher_bin_first(self) -> None:
+        # The same on every platform, as a sort's order of equal values is not:
+        # the post-stop replay's strengths must be the live tick's.
+        freq = [float(i) for i in range(100)]
+        amp = [0.001] * 100
+        for i in range(5, 95, 4):  # more equal peaks than a spectrum's candidates
+            amp[i] = 0.05
+        result = compute_vibration_strength_db(
+            freq_hz=freq, combined_spectrum_amp_g_values=amp, top_n=3
+        )
+        assert [peak["hz"] for peak in result["top_peaks"]] == [93.0, 89.0, 85.0]
+
     def test_last_bin_peak_is_still_reported(self) -> None:
         result = compute_vibration_strength_db(
             freq_hz=[0.0, 1.0, 2.0, 3.0, 4.0],

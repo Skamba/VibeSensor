@@ -80,7 +80,10 @@ def test_the_combined_strength_alone_matches_the_full_spectrum() -> None:
 
         assert full["has_valid_analysis_bins"]
         assert spectrum is not None
-        assert computer.combined_strength_metrics([spectrum], _FS) == [full["strength_metrics"]]
+        assert (
+            computer.combined_strengths(spectrum.amp_g[None, :], _FS).metrics(0)
+            == (full["strength_metrics"])
+        )
         np.testing.assert_array_equal(spectrum.freq_hz, full["freq_slice"])
         np.testing.assert_array_equal(spectrum.amp_g, full["combined_amp"])
         blocks.append(block)

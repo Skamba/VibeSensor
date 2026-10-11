@@ -53,9 +53,9 @@ def test_fft_cache_uses_lru_eviction(monkeypatch) -> None:
     monkeypatch.setattr("vibesensor.dsp.fft_analysis._FFT_CACHE_MAXSIZE", 2)
     computer = SignalMetricsComputer(_config(fft_n=8, sample_rate_hz=200, spectrum_max_hz=90.0))
 
-    computer.strength_range_mask(200)
-    computer.strength_range_mask(300)
-    computer.strength_range_mask(200)
-    computer.strength_range_mask(400)
+    computer.freq_slice(200)
+    computer.freq_slice(300)
+    computer.freq_slice(200)
+    computer.freq_slice(400)
 
     assert list(computer.fft_cache) == [200, 400]
