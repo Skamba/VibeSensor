@@ -33,7 +33,7 @@ def _spectrum(signal: np.ndarray, rng: np.random.Generator, noise_g: float = 0.0
     block[2] += signal
     spectrum = _COMPUTER.combined_spectrum(block.astype(np.float32), _FS)
     assert spectrum is not None
-    (metrics,) = _COMPUTER.combined_strength_metrics([spectrum], _FS)
+    metrics = _COMPUTER.combined_strengths(spectrum.amp_g[None, :], _FS).metrics(0)
     return metrics, spectrum
 
 

@@ -30,7 +30,7 @@ One package per feature under `apps/server/vibesensor/`; each owns its types, lo
 - `web/`: HTTP/WebSocket routes, Pydantic request/response models, middleware, health snapshot, `WebServices` + `create_router()`.
 - `ingest/`: UDP wire protocol, data receiver/control plane, client registry, ingest diagnostics.
 - `live/`: signal processor, processing loop, live WebSocket payload and broadcaster.
-- `dsp/`: FFT, order bands, canonical dB strength math, DSP constants.
+- `dsp/`: FFT, order bands, canonical dB strength math (many spectra at once as columns, `StrengthRows`, for the post-stop replay; the live tick's metrics are one row), DSP constants.
 - `recording/`: `RunRecorder`, sample flush, raw-capture writer, run metadata/sensor-frame codecs, capture readiness, the guided brake step's stop counter; `sample_peaks.py` holds a run's sample peaks as columns (`SamplePeaks`), which the post-run analysis reads instead of `SensorFrame.top_peaks`.
 - `analysis/`: post-run diagnostics (findings, `orders/`, `peaks/`) and the post-analysis worker; `drive_table.py` holds a drive's samples as columns and its analysed peaks as one flat table, built once per analysis and read by the findings stages ("Drive table" in `docs/analysis_pipeline.md`).
 - `summary/`: the persisted analysis-summary contract and its (de)serialization; read by history, report, and web.

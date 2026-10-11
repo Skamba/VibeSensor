@@ -50,8 +50,7 @@ path caps the loop's duty cycle at 50%. Even at a 5–10× slower Raspberry Pi
   and computes their spectra through one FFT plan (`combined_spectra`; a
   short chunk is zero-padded so there is only the one plan) on a single
   helper thread, while the worker thread takes the strengths of the spectra
-  already computed 128 at a time (peaks ranked with one `lexsort`) and reads
-  their metrics directly. It keeps the spectra as rows of one array per
+  already computed 128 at a time as columns (`StrengthRows`, below). It keeps the spectra as rows of one array per
   sample rate (`WindowSpectrum.rows`), which order matching's line reads
   gather from. Measured on a 30-minute, 4-sensor drive on the Pi: the replay
   (build step) went from 35 s to 12.5 s, the analyze step from 35.5 s to
@@ -61,6 +60,22 @@ path caps the loop's duty cycle at 50%. Even at a 5–10× slower Raspberry Pi
   is byte-identical on that drive, the CI-seed accuracy benchmark and the
   diagnostic matrix. The live tick's FFT and strength cost is unchanged
   (4.1 ms on the Pi).
+- The replay's strengths come out as columns (`StrengthRows`: each row's
+  noise floor, and its peaks as flat row/frequency/amplitude/dB/local-floor
+  columns with per-row offsets), written straight into the samples' strength
+  fields and the peak columns, with no metrics dict or peak object per window.
+  The order statistics (P20 threshold, floor medians) are taken on the
+  float32 rows and only their arithmetic in float64, which is exact because
+  every float32 widens exactly; a whole batch's peak candidates are ranked by
+  one `lexsort`, and the band sums use one in-place prefix sum. The live
+  single-spectrum strength is the same function on one row. Measured on PC
+  (a 4-sensor simulated drive with raw capture, 9 interleaved rounds pinned
+  to the same cores): the strength work per build went from ~430 ms to
+  ~250 ms, the build step from 561 ms to 499 ms, peak RSS from 179 MB to
+  172 MB and the memray peak from 127 MB to 120 MB; the drive without raw
+  capture is unchanged. The analysis JSON is byte-identical. The worker
+  thread now waits on the FFT thread (about 50 ms per build on PC, against
+  7 ms before), so on PC the FFT thread is the longer of the two.
 - Of the FFT thread's ~9.4 s on the Pi (49 ms per 64-window chunk), the FFT
   itself (pyFFTW, float32) is ~1.8 s; the rest is elementwise passes (int16
   to g, mean, window, magnitude, the float64 combine). The combine squares
@@ -88,9 +103,11 @@ path caps the loop's duty cycle at 50%. Even at a 5–10× slower Raspberry Pi
   3.7 s on the Pi, and a `sliding_window_view` of a sensor's whole buffer is
   refused on the Pi's 32-bit numpy. The strength batch size does not change
   peak memory, nor does reusing one block buffer. Raising
-  `sys.setswitchinterval` would hit the live server too. A per-row `argsort`
-  for strength peak candidates was left alone: its tie order would have to
-  match the stable sort's.
+  `sys.setswitchinterval` would hit the live server too. Equal peak
+  candidates rank the higher bin first; the per-row `argsort` this replaced
+  left their order to the platform's sort (it differed between AVX-512 and
+  scalar builds). Taking each peak's rank in one array step instead of the
+  greedy separation loop was slower on PC.
 - Order matching tests each hypothesis (about ten) against every window. What
   every hypothesis reads of a window the same way (its sensor, speed bin,
   driving phase, floor, cell, speed and time) is worked out once per drive

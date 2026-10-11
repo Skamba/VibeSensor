@@ -191,6 +191,6 @@ def test_spectra_taken_together_are_each_taken_as_alone() -> None:
         for row in spectra
     ]
 
-    assert together == alone
-    assert not together[3]["top_peaks"]
-    assert sum(len(metrics["top_peaks"]) for metrics in together) > 100
+    assert [together.metrics(row) for row in range(len(spectra))] == alone
+    assert not alone[3]["top_peaks"]
+    assert together.peak_row.size > 100
