@@ -70,6 +70,14 @@ path caps the loop's duty cycle at 50%. Even at a 5–10× slower Raspberry Pi
   on the Pi, no faster than FFTW_ESTIMATE, not bit-identical), scipy.fft on
   float32 (14.7 ms per chunk against FFTW's 10.7 ms) and float64 FFTs (FFTW
   20.3 ms, scipy.fft 20.4 ms, numpy 17.8 ms; not bit-identical either).
+- pyFFTW is imported on the first FFT without its scipy interfaces
+  (`_import_pyfftw`): its package otherwise imports `scipy.fftpack` and
+  `scipy.fft` (about 140 scipy modules, plus numpy.testing and unittest) only
+  to offer drop-in scipy functions the server does not use. On the Pi the
+  process with the analysis modules and pyFFTW loaded went from 56 MB to
+  39 MB resident, the first FFT's import from 1.3 s to 0.04 s, and
+  post-analysis peak RSS from 162 MB to 146 MB at the same time; the FFT
+  outputs and the analysis JSON are bit-identical.
 - Tried and not kept for the replay: each step's numpy calls on the FFT
   thread wait for the GIL while the worker thread runs Python (5 ms switch
   interval), so fewer, larger calls are what helped; 32 windows per FFT
@@ -154,8 +162,8 @@ path caps the loop's duty cycle at 50%. Even at a 5–10× slower Raspberry Pi
 
 | Host | CPU time | Peak RSS |
 |------|----------|----------|
-| x86 dev host | ~5.4 s | ~223 MB |
-| Raspberry Pi 3 A+ (`nice -n 10`) | ~39 s | ~162 MB |
+| x86 dev host | ~5.4 s | ~197 MB |
+| Raspberry Pi 3 A+ (`nice -n 10`) | ~39 s | ~146 MB |
 
 ### 64-bit, numba and free-threading (measured, not kept)
 
