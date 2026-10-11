@@ -14,7 +14,12 @@ from dataclasses import replace
 
 import numpy as np
 import pytest
-from test_support.analysis import run_analysis, sample_columns_of, sample_peaks_of
+from test_support.analysis import (
+    matched_windows,
+    run_analysis,
+    sample_columns_of,
+    sample_peaks_of,
+)
 from test_support.core import standard_metadata, wheel_hz
 from test_support.synthetic_samples import make_sample
 
@@ -25,7 +30,6 @@ from vibesensor.analysis.orders.matching import (
     OrderMatchAccumulator,
     _clear_shares,
     _corroboration,
-    _LinePoint,
     _off_the_line,
     _sensors_that_hear,
 )
@@ -462,8 +466,7 @@ def _accumulator(
     )
     return OrderMatchAccumulator(
         possible=_WINDOWS * len(_LOCATIONS),
-        matched_points=points,
-        matched_floor=[_FLOOR_G] * len(points),
+        matches=matched_windows(points, [_FLOOR_G] * len(points)),
         ref_sources={"speed+tire"},
         possible_by_speed_bin={},
         matched_by_speed_bin={},
@@ -482,7 +485,7 @@ def test_an_order_heard_nowhere_is_judged_on_all_its_matches() -> None:
     # Nothing stands out of the floor: its floor-level matches are all there is.
     match = _accumulator({})
 
-    assert [point for point, _floor in match.evidence] == match.matched_points
+    assert match.evidence.observations() == match.matches.observations()
 
 
 def test_the_match_rate_is_taken_where_the_order_is_heard() -> None:
@@ -568,8 +571,7 @@ def _heard_half_the_drive(*, floor_matches: bool) -> OrderMatchAccumulator:
         )
     return OrderMatchAccumulator(
         possible=_WINDOWS * len(_LOCATIONS),
-        matched_points=points,
-        matched_floor=[_FLOOR_G if point.heard else 0.003 for point in points],
+        matches=matched_windows(points, [_FLOOR_G if point.heard else 0.003 for point in points]),
         ref_sources={"speed+tire"},
         possible_by_speed_bin={},
         matched_by_speed_bin={},
@@ -655,15 +657,23 @@ def test_only_peaks_on_one_line_are_an_order(
     ) == expected
 
 
-def _off(points: list[_LinePoint]) -> list[bool]:
-    return _off_the_line(points, SAMPLE_RATE_HZ / FFT_N, WHEEL_ORDER_PATH_COMPLIANCE)
+def _off(points: list[tuple[float, float]]) -> list[bool]:
+    """Which (predicted, matched peak) Hz matches, none under a pull, are off the line."""
+    predicted_hz, matched_hz = np.array(points).T
+    return _off_the_line(
+        predicted_hz,
+        matched_hz,
+        np.zeros(len(points), dtype=np.bool_),
+        SAMPLE_RATE_HZ / FFT_N,
+        WHEEL_ORDER_PATH_COMPLIANCE,
+    ).tolist()
 
 
 # A wheel order's line from 12 Hz, in windows wide enough to place it in.
-_LINE = [_LinePoint(12.0 + step / 3.0, 12.0 + step / 3.0) for step in range(12)]
+_LINE = [(12.0 + step / 3.0, 12.0 + step / 3.0) for step in range(12)]
 # Road noise that overlapping spectra hold at 5.47 Hz while the prediction
 # sweeps 5.06-6.0 Hz, in windows too narrow to place a line in (under 8 Hz).
-_HELD = [_LinePoint(predicted_hz, 5.47) for predicted_hz in (5.06, 5.47, 5.8, 6.0)]
+_HELD = [(predicted_hz, 5.47) for predicted_hz in (5.06, 5.47, 5.8, 6.0)]
 
 
 def test_a_placed_line_holds_the_narrow_window_matches_too() -> None:
@@ -675,7 +685,7 @@ def test_narrow_window_matches_off_the_line_count_against_it() -> None:
     # Seven of the twelve wide windows on a line by chance, and the narrow
     # windows' held peaks off it: under half on the line, so no line at all.
     chance = [
-        _LinePoint(point.predicted_hz, point.matched_hz * (1.0 if index < 7 else 1.05))
-        for index, point in enumerate(_LINE)
+        (predicted_hz, matched_hz * (1.0 if index < 7 else 1.05))
+        for index, (predicted_hz, matched_hz) in enumerate(_LINE)
     ]
     assert _off([*chance, *_HELD, *_HELD]) == [True] * (len(chance) + 2 * len(_HELD))

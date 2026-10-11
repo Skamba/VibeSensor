@@ -47,7 +47,7 @@ def assemble_order_finding(
         evidence["_suffix"] = f" {score.location_line}"
 
     phase_evidence = compute_matched_speed_phase_evidence(
-        match.matched_points,
+        match.matches,
         match.evidence,
         focused_speed_band=context.focused_speed_band,
         hotspot_speed_band=score.hotspot_speed_band,
@@ -69,7 +69,7 @@ def assemble_order_finding(
         vibration_strength_db=score.absolute_strength_db,
         cruise_fraction=phase_evidence.cruise_fraction,
         phases_detected=phase_evidence.phases_detected,
-        matched_points=tuple(match.matched_points),
+        matched_points=match.matches.observations(),
         sensor_levels=match.sensor_levels,
         evidence=FindingEvidence(
             match_rate=context.effective_match_rate,

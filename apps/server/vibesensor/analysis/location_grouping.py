@@ -2,59 +2,68 @@
 
 from __future__ import annotations
 
-from collections import defaultdict
-from collections.abc import Collection, Mapping, Sequence
+from collections.abc import Collection, Mapping
+from typing import TYPE_CHECKING
 
-from vibesensor.domain.finding import speed_bin_label
-from vibesensor.domain.order_match import OrderMatchObservation
+import numpy as np
+import numpy.typing as npt
+
+if TYPE_CHECKING:
+    from vibesensor.analysis.orders.matching import MatchedWindows
 
 
 def group_matches_by_speed_bin(
-    matches: Sequence[OrderMatchObservation],
+    matches: MatchedWindows,
     *,
     relevant_speed_bins: Collection[str] | None = None,
-) -> dict[str, list[OrderMatchObservation]]:
-    """Group typed order matches into speed bins used for localization.
+) -> dict[str, npt.NDArray[np.intp]]:
+    """Each speed bin's matches used for localization (positions in *matches*, in order).
 
-    A match at no amplitude (a quiet sensor's, ``scoring._at_tracked_levels``)
-    is kept: it counts its sensor among those the order matched in its bin.
+    The bins come in the order their first match does. A match at no
+    amplitude (a quiet sensor's, ``scoring._at_tracked_levels``) is kept: it
+    counts its sensor among those the order matched in its bin. A match
+    while not moving, at a negative amplitude or with no sensor is not.
     """
     allowed_bins = {
         str(bin_label).strip()
         for bin_label in (relevant_speed_bins or [])
         if str(bin_label).strip()
     }
-    grouped: dict[str, list[OrderMatchObservation]] = defaultdict(list)
-    for match in matches:
-        speed = match.speed_kmh
-        location = match.location.strip()
-        if speed is None or speed <= 0 or match.amp < 0 or not location:
-            continue
-        speed_bin = speed_bin_label(speed)
-        if allowed_bins and speed_bin not in allowed_bins:
-            continue
-        grouped[speed_bin].append(match)
-    return grouped
+    usable_bin = np.array(
+        [
+            label is not None and (not allowed_bins or label in allowed_bins)
+            for label in matches.speed_bins
+        ],
+        dtype=np.bool_,
+    )
+    located = np.array([bool(name.strip()) for name in matches.locations], dtype=np.bool_)
+    kept = np.flatnonzero(
+        usable_bin[matches.speed_bin] & located[matches.location] & ~(matches.amp < 0)
+    )
+    speed_bin = matches.speed_bin[kept]
+    codes, first = np.unique(speed_bin, return_index=True)
+    return {
+        str(matches.speed_bins[code]): kept[speed_bin == code]
+        for code in codes[np.argsort(first, kind="stable")].tolist()
+    }
 
 
 def location_speed_weight_pairs(
-    grouped: Mapping[str, Sequence[OrderMatchObservation]],
+    matches: MatchedWindows,
+    grouped: Mapping[str, npt.NDArray[np.intp]],
     *,
     location: str,
 ) -> list[tuple[float, float]]:
-    """Collect (speed, amplitude) pairs for one winning location."""
-    location = location.strip()
-    pairs = [
-        (match.speed_kmh or 0.0, match.amp)
-        for rows in grouped.values()
-        for match in rows
-        if match.location.strip() == location and match.speed_kmh is not None and match.amp > 0
-    ]
-    if pairs:
-        return pairs
-    return [
-        (match.speed_kmh or 0.0, match.amp)
-        for rows in grouped.values()
-        for match in rows
-        if match.speed_kmh is not None and match.amp > 0
-    ]
+    """Collect (speed, amplitude) pairs of the grouped matches for one winning location.
+
+    Every location's where the winner has none at an amplitude.
+    """
+    rows = np.concatenate(list(grouped.values()))
+    loud = matches.amp[rows] > 0
+    at_location = np.array(
+        [name.strip() == location.strip() for name in matches.locations], dtype=np.bool_
+    )[matches.location[rows]]
+    pairs = rows[loud & at_location]
+    if not pairs.size:
+        pairs = rows[loud]
+    return list(zip(matches.speed_kmh[pairs].tolist(), matches.amp[pairs].tolist(), strict=True))

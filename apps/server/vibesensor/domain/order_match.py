@@ -5,24 +5,20 @@ from __future__ import annotations
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
-from itertools import combinations
 from math import floor
 from statistics import median
 
 __all__ = [
     "OrderMatchObservation",
     "SensorOrderLevel",
-    "frequency_tracking_slope",
     "heard_speed_range",
+    "moving_speed_range",
     "trend_moves",
 ]
 
 # The order-match tolerance is several percent wide, so a speed that moves less
 # than this cannot tell an order from a fixed tone it passes.
 _MIN_TRACKING_SPAN = 0.1
-_MIN_TRACKING_POINTS = 4
-# Pairwise slopes grow quadratically; an evenly spaced subset keeps it cheap.
-_MAX_TRACKING_POINTS = 200
 _TRACKING_TREND_BIN_S = 2.0
 _MIN_TREND_TO_NOISE = 2.0
 # The speeds an order was heard across leave out this share at each end: a few
@@ -57,20 +53,6 @@ class OrderMatchObservation:
         if self.rel_error < 0:
             raise ValueError("rel_error must be >= 0")
 
-    def with_amp(self, amp: float) -> OrderMatchObservation:
-        """This observation at amplitude *amp*: ``dataclasses.replace``, a few times quicker."""
-        return OrderMatchObservation(
-            self.predicted_hz,
-            self.matched_hz,
-            self.rel_error,
-            amp,
-            self.location,
-            self.t_s,
-            self.speed_kmh,
-            self.phase,
-            self.heard,
-        )
-
 
 @dataclass(frozen=True, slots=True)
 class SensorOrderLevel:
@@ -91,27 +73,6 @@ class SensorOrderLevel:
     floor_g: float
     windows: int
     read_g: float = 0.0
-
-
-def frequency_tracking_slope(points: Sequence[OrderMatchObservation]) -> float | None:
-    """How the matched frequency moves with the predicted one (robust Theil-Sen slope).
-
-    An order's peaks follow its prediction (slope near 1); a fixed-frequency tone
-    that the prediction sweeps past stays put (slope near 0). Only meaningful
-    when the speed really changed over the windows judged (``trend_moves``): at a
-    steady speed an order and a fixed tone look the same, and speed-reading noise
-    flattens the slope. ``None`` with too few points.
-    """
-    if len(points) < _MIN_TRACKING_POINTS:
-        return None
-    step = -(-len(points) // _MAX_TRACKING_POINTS)
-    sample = points[::step]
-    slopes = [
-        (b.matched_hz - a.matched_hz) / (b.predicted_hz - a.predicted_hz)
-        for a, b in combinations(sample, 2)
-        if b.predicted_hz != a.predicted_hz
-    ]
-    return median(slopes) if slopes else None
 
 
 def trend_moves(values_at: Iterable[tuple[float, float]]) -> bool:
@@ -136,17 +97,31 @@ def trend_moves(values_at: Iterable[tuple[float, float]]) -> bool:
 def heard_speed_range(points: Sequence[OrderMatchObservation]) -> tuple[float, float] | None:
     """The speeds the order was heard across (all matches when none is heard).
 
-    The 5th to 95th percentile of the matches' moving speeds: the range the
-    report gives as "present across", and the speeds its strongest speed band
-    is picked from. ``None`` without a moving match.
+    ``moving_speed_range`` of the matches' speeds: the range the report gives
+    as "present across", and the speeds its strongest speed band is picked
+    from. ``None`` without a moving match.
     """
     heard = [point for point in points if point.heard] or points
-    speeds = sorted(
-        point.speed_kmh for point in heard if point.speed_kmh is not None and point.speed_kmh > 0
+    return moving_speed_range(
+        sorted(
+            point.speed_kmh
+            for point in heard
+            if point.speed_kmh is not None and point.speed_kmh > 0
+        )
     )
-    if not speeds:
+
+
+def moving_speed_range(sorted_speeds: Sequence[float]) -> tuple[float, float] | None:
+    """The 5th to 95th percentile of *sorted_speeds* (the moving ones, ascending).
+
+    ``None`` without one.
+    """
+    if not sorted_speeds:
         return None
-    return _percentile(speeds, _SPEED_RANGE_TRIM), _percentile(speeds, 1.0 - _SPEED_RANGE_TRIM)
+    return (
+        _percentile(sorted_speeds, _SPEED_RANGE_TRIM),
+        _percentile(sorted_speeds, 1.0 - _SPEED_RANGE_TRIM),
+    )
 
 
 def _percentile(sorted_values: Sequence[float], q: float) -> float:

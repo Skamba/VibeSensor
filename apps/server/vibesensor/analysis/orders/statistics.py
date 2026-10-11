@@ -7,8 +7,9 @@ amplitude/error aggregation, and speed-phase evidence derivation.
 from __future__ import annotations
 
 from collections import Counter
-from collections.abc import Sequence
 from dataclasses import dataclass
+
+import numpy as np
 
 from vibesensor.analysis.constants import (
     LIGHT_STRENGTH_MAX_DB,
@@ -16,10 +17,11 @@ from vibesensor.analysis.constants import (
     ORDER_MIN_MATCH_POINTS,
 )
 from vibesensor.analysis.math_utils import _corr_abs_clamped, _mean, _ramp
+from vibesensor.analysis.orders.matching import MatchedWindows
 from vibesensor.analysis.orders.settings import ORDER_CONFIDENCE_SETTINGS
 from vibesensor.analysis.phase_segmentation import DrivingPhase
 from vibesensor.analysis.speed_profile_helpers import _speed_profile_from_points
-from vibesensor.domain.order_match import OrderMatchObservation, heard_speed_range
+from vibesensor.domain.order_match import moving_speed_range
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Statistical evidence functions
@@ -340,40 +342,45 @@ class OrderPhaseEvidence:
 
 
 def compute_matched_speed_phase_evidence(
-    matched_points: Sequence[OrderMatchObservation],
-    evidence: Sequence[tuple[OrderMatchObservation, float]],
+    matches: MatchedWindows,
+    evidence: MatchedWindows,
     *,
     focused_speed_band: str | None,
     hotspot_speed_band: str,
 ) -> OrderPhaseEvidence:
-    """Derive speed-profile and phase-evidence from matched points.
+    """Derive speed-profile and phase-evidence from the matched windows.
 
-    Where the order shakes hardest comes from its *evidence* (the heard matches
-    with their window floors, ``OrderMatchAccumulator.evidence``), by amplitude
-    over each window's floor: a floor-level match the matcher landed on in road
-    noise says nothing about the order's level, and road noise grows with speed
-    on its own. Only speeds inside the range it was heard across count (as the
+    Where the order shakes hardest comes from its *evidence* (the heard matches,
+    ``OrderMatchAccumulator.evidence``), by amplitude over each window's floor:
+    a floor-level match the matcher landed on in road noise says nothing about
+    the order's level, and road noise grows with speed on its own. Only speeds
+    inside the range it was heard across count (``moving_speed_range``, as the
     report states that range), so a few matches at its edge cannot name it. The
     phases come from every match.
     """
     cruise_value = DrivingPhase.CRUISE.value
-    heard_range = heard_speed_range(matched_points)
-    speed_points: list[tuple[float, float]] = []
-    speed_phase_weights: list[float] = []
-    for point, floor_amp in evidence:
-        point_speed = point.speed_kmh
-        if point_speed is None or (
-            heard_range is not None and not heard_range[0] <= point_speed <= heard_range[1]
-        ):
-            continue
-        speed_points.append((point_speed, point.amp - floor_amp))
-        phase = str(point.phase or "")
-        if phase == cruise_value:
-            speed_phase_weights.append(3.0)
-        elif phase in _PHASE_ONSET_RELEVANT:
-            speed_phase_weights.append(0.3)
-        else:
-            speed_phase_weights.append(1.0)
+    heard = matches.heard if matches.heard.any() else np.ones(len(matches), dtype=np.bool_)
+    heard_speeds = matches.speed_kmh[heard]
+    heard_range = moving_speed_range(np.sort(heard_speeds[heard_speeds > 0]).tolist())
+    phase_names = [str(phase or "") for phase in matches.phases]
+    phase_weight = np.array(
+        [
+            3.0 if name == cruise_value else 0.3 if name in _PHASE_ONSET_RELEVANT else 1.0
+            for name in phase_names
+        ]
+    )
+    speed = evidence.speed_kmh
+    inside = ~np.isnan(speed)
+    if heard_range is not None:
+        inside &= (heard_range[0] <= speed) & (speed <= heard_range[1])
+    speed_points = list(
+        zip(
+            speed[inside].tolist(),
+            (evidence.amp - evidence.floor)[inside].tolist(),
+            strict=True,
+        )
+    )
+    speed_phase_weights = phase_weight[evidence.phase[inside]].tolist()
 
     peak_speed_kmh, speed_window_kmh, strongest_speed_band = _speed_profile_from_points(
         speed_points,
@@ -385,15 +392,24 @@ def compute_matched_speed_phase_evidence(
     if focused_speed_band and not strongest_speed_band:
         strongest_speed_band = focused_speed_band
 
-    matched_phase_strs = [str(point.phase or "") for point in matched_points if point.phase]
-    cruise_matched = sum(1 for phase in matched_phase_strs if phase == cruise_value)
-    cruise_fraction = cruise_matched / len(matched_phase_strs) if matched_phase_strs else 0.0
-    phases_detected = tuple(sorted(set(matched_phase_strs)))
+    # Each named phase's matches, in the order the phases first match.
+    codes, first, counts = np.unique(matches.phase, return_index=True, return_counts=True)
+    in_order = np.argsort(first, kind="stable")
+    by_phase = [
+        (phase_names[code], count)
+        for code, count in zip(codes[in_order].tolist(), counts[in_order].tolist(), strict=True)
+        if phase_names[code]
+    ]
+    named = sum(count for _phase, count in by_phase)
+    cruise_matched = sum(count for phase, count in by_phase if phase == cruise_value)
+    cruise_fraction = cruise_matched / named if named else 0.0
+    phases_detected = tuple(sorted(phase for phase, _count in by_phase))
     dominant_phase: str | None = None
-    onset_phase_labels = [phase for phase in matched_phase_strs if phase in _PHASE_ONSET_RELEVANT]
-    if onset_phase_labels and len(onset_phase_labels) >= max(2, len(matched_points) // 2):
-        top_phase, top_count = Counter(onset_phase_labels).most_common(1)[0]
-        if top_count / len(matched_points) >= 0.50:
+    onset = [(phase, count) for phase, count in by_phase if phase in _PHASE_ONSET_RELEVANT]
+    onset_matched = sum(count for _phase, count in onset)
+    if onset_matched and onset_matched >= max(2, len(matches) // 2):
+        top_phase, top_count = max(onset, key=lambda item: item[1])
+        if top_count / len(matches) >= 0.50:
             dominant_phase = top_phase
 
     return OrderPhaseEvidence(
@@ -457,21 +473,17 @@ def compute_phase_stats(
 
 
 def compute_amplitude_and_error_stats(
-    evidence: Sequence[tuple[OrderMatchObservation, float]],
+    evidence: MatchedWindows,
     *,
     constant_speed: bool,
 ) -> tuple[float, float, float, float, float | None]:
-    """Amplitude, floor, relative-error and correlation statistics of (match, floor) pairs."""
-    points = [point for point, _floor in evidence]
-    floors = [floor for _point, floor in evidence]
-    mean_amp = _mean([point.amp for point in points])
-    mean_floor = _mean(floors)
-    mean_rel_err = _mean([point.rel_error for point in points]) if points else 1.0
+    """Amplitude, floor, relative-error and correlation statistics of the matched windows."""
+    mean_amp = _mean(evidence.amp.tolist())
+    mean_floor = _mean(evidence.floor.tolist())
+    mean_rel_err = _mean(evidence.rel_error.tolist()) if len(evidence) else 1.0
     corr = (
-        _corr_abs_clamped(
-            [point.predicted_hz for point in points], [point.matched_hz for point in points]
-        )
-        if len(points) >= 3 and not constant_speed
+        _corr_abs_clamped(evidence.predicted_hz.tolist(), evidence.matched_hz.tolist())
+        if len(evidence) >= 3 and not constant_speed
         else None
     )
     corr_val = corr if corr is not None else 0.0

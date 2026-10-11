@@ -53,10 +53,10 @@ from vibesensor.analysis.orders.scoring import (
     score_order_finding,
 )
 from vibesensor.analysis.orders.settings import ORDER_CONFIDENCE_SETTINGS
-from vibesensor.analysis.orders.tracking import window_duration_s
+from vibesensor.analysis.orders.tracking import frequency_tracking_slope, window_duration_s
 from vibesensor.domain.finding import Finding as DomainFinding
 from vibesensor.domain.finding_types import VibrationSource
-from vibesensor.domain.order_match import frequency_tracking_slope, trend_moves
+from vibesensor.domain.order_match import trend_moves
 from vibesensor.dsp.fixed_tones import RingingTone
 from vibesensor.dsp.order_bands import ORDER_TOLERANCE_REL
 from vibesensor.recording.run_schema import RunMetadata
@@ -108,30 +108,26 @@ def _rides_on(match: OrderMatchAccumulator, others: Sequence[OrderMatchAccumulat
     order did not follow, this order is their tone passing by, not a fault of
     its own.
     """
-    if not others or not match.matched_points:
+    windows = match.matches
+    if not others or not len(windows):
         return False
-    on_others: set[int] = set()
+    on_others = np.zeros(len(windows), dtype=np.bool_)
     others_on_match = others_points = 0
     for other in others:
-        other_hz = dict(
-            zip(
-                other.matched_sample_indices,
-                (point.matched_hz for point in other.matched_points),
-                strict=True,
-            )
+        _common, at, other_at = np.intersect1d(
+            windows.sample, other.matches.sample, assume_unique=True, return_indices=True
         )
-        shared = {
-            index
-            for index, point in zip(match.matched_sample_indices, match.matched_points, strict=True)
-            if (hz := other_hz.get(index)) is not None
-            and abs(hz - point.predicted_hz) <= point.predicted_hz * ORDER_TOLERANCE_REL
-        }
-        on_others |= shared
-        others_on_match += len(shared)
-        others_points += len(other.matched_points)
+        predicted_hz = windows.predicted_hz[at]
+        shared = at[
+            np.abs(other.matches.matched_hz[other_at] - predicted_hz)
+            <= predicted_hz * ORDER_TOLERANCE_REL
+        ]
+        on_others[shared] = True
+        others_on_match += int(shared.size)
+        others_points += len(other.matches)
     fraction = ORDER_CONFIDENCE_SETTINGS.wheel_alias_shared_peak_fraction
     return (
-        len(on_others) / len(match.matched_points) >= fraction
+        int(np.count_nonzero(on_others)) / len(windows) >= fraction
         and others_on_match / others_points < fraction
     )
 
@@ -379,20 +375,16 @@ class OrderAnalysisSession:
         spectrum; a driveline fault near one of them does neither. (T2 cannot
         stand in for T1: an engine's E1 can run at twice the wheel's rhythm.)
         """
-        fundamental_hz = {
-            index: point.matched_hz
-            for hypothesis, match in matches
-            if hypothesis.key == "wheel_1x"
-            for index, point in zip(match.matched_sample_indices, match.matched_points, strict=True)
-            if point.heard
-        }
-        if not fundamental_hz:
+        fundamentals = next(
+            (match.matches for hypothesis, match in matches if hypothesis.key == "wheel_1x"), None
+        )
+        if fundamentals is None or not fundamentals.heard.any():
             return frozenset()
+        fundamentals = fundamentals.take(fundamentals.heard)
         bin_hz = fft_bin_hz(self._context)
-        return frozenset(
-            (index, peak_hz)
-            for hypothesis in WHEEL_HARMONIC_HYPOTHESES
-            for index, peak_hz in matched_peaks_for_hypothesis(
+        peaks: set[tuple[int, float]] = set()
+        for hypothesis in WHEEL_HARMONIC_HYPOTHESES:
+            sample, peak_hz = matched_peaks_for_hypothesis(
                 self._speed_following_peaks["road"],
                 self._speed_following_tones["road"],
                 hypothesis,
@@ -400,9 +392,19 @@ class OrderAnalysisSession:
                 self._reference_hz(hypothesis.order_label_base),
                 self._facts,
             )
-            if index in fundamental_hz
-            and is_harmonic_of(peak_hz, fundamental_hz[index], int(hypothesis.order), bin_hz)
-        )
+            common, at, fundamental_at = np.intersect1d(
+                sample, fundamentals.sample, assume_unique=True, return_indices=True
+            )
+            harmonic = is_harmonic_of(
+                peak_hz[at],
+                fundamentals.matched_hz[fundamental_at],
+                int(hypothesis.order),
+                bin_hz,
+            )
+            peaks.update(
+                zip(common[harmonic].tolist(), peak_hz[at][harmonic].tolist(), strict=True)
+            )
+        return frozenset(peaks)
 
     def _should_test(self, hypothesis: OrderHypothesis) -> bool:
         """Whether to test this hypothesis given available references."""
@@ -484,7 +486,7 @@ class OrderAnalysisSession:
         if effective_match_rate < min_match_rate:
             return None
         slope = (
-            frequency_tracking_slope([point for point, _floor in match.evidence])
+            frequency_tracking_slope(match.evidence.predicted_hz, match.evidence.matched_hz)
             if self._speed_moves
             else None
         )

@@ -7,11 +7,15 @@ these are the properties the simulator benchmark cannot isolate.
 
 from __future__ import annotations
 
+import statistics
+from collections.abc import Sequence
+
 import numpy as np
 import pytest
 
-from vibesensor.analysis.orders.tracking import TrackedCells
+from vibesensor.analysis.orders.tracking import CellReads, TrackedCells
 from vibesensor.dsp.fft_analysis import SpectralAnalysisComputer
+from vibesensor.dsp.line_significance import group_medians
 from vibesensor.dsp.window_spectrum import (
     LineRead,
     WindowSpectrum,
@@ -185,17 +189,71 @@ def test_a_line_at_the_edge_of_the_spectrum_reads_the_flank_it_has() -> None:
     assert spectrum.line_read(5.4, 0.0) is None
 
 
+@pytest.mark.parametrize("big", [False, True])
+def test_the_middle_of_many_groups_of_reads_is_each_group_s_median(big: bool) -> None:
+    # The drive's reads are judged by group (a cell's, a sensor's, a block's)
+    # all at once; each group's middle is exactly the one ``statistics.median``
+    # takes of its reads, odd or even, however many groups and however large.
+    rng = np.random.default_rng(7)
+    sizes = rng.integers(0, 12, 300)
+    if big:
+        sizes[17] = 5001
+    group = np.repeat(np.arange(sizes.size), sizes)
+    rng.shuffle(group)
+    values = rng.normal(0.0, 1.0, group.size) ** 3
+
+    medians, counts = group_medians(values, group, sizes.size + 1)
+
+    assert counts.tolist() == [*sizes.tolist(), 0]
+    assert np.isnan(medians[-1])
+    for index, size in enumerate(sizes.tolist()):
+        expected = statistics.median(values[group == index].tolist()) if size else None
+        assert (medians[index] if size else None) == expected
+
+
+type _Key = tuple[str, str, str]
+
+
+def _tracked(
+    reads: Sequence[tuple[_Key, float, float, float]],
+    controls: Sequence[tuple[_Key, float, float]] = (),
+    *,
+    braking_alone: bool = False,
+) -> TrackedCells:
+    """``TrackedCells`` of reads (cell, excess, flanks, t_s) and controls (cell, excess, flanks)."""
+    keys = list(dict.fromkeys([key for key, *_ in reads] + [key for key, *_ in controls]))
+
+    def columns(rows: Sequence[tuple[_Key, float, float]], t_s: list[float] | None) -> CellReads:
+        return CellReads(
+            np.array([keys.index(row[0]) for row in rows], dtype=np.intp),
+            np.array([row[1] for row in rows], dtype=np.float64),
+            np.array([row[2] for row in rows], dtype=np.float64),
+            None if t_s is None else np.array(t_s, dtype=np.float64),
+        )
+
+    return TrackedCells(
+        2.56,
+        keys,
+        columns(
+            [(key, excess, flanks) for key, excess, flanks, _t in reads], [t for *_, t in reads]
+        ),
+        columns(controls, None),
+        braking_alone=braking_alone,
+    )
+
+
 def test_an_order_heard_only_while_braking_reads_its_level_over_the_stops_alone() -> None:
     # Brake judder at one sensor through 10 braking windows, absent from the 30
     # cruising windows at the same speed: over both it reads half its level.
     rng = np.random.default_rng(13)
-    cells = TrackedCells(window_s=2.56, braking_alone=True)
-    for index in range(10):
-        read = LineRead(excess=1e-4 + rng.normal(0.0, 1e-6), flanks=1e-6)
-        cells.add(("front_left", "60-70", "braking"), read, 3.0 * index)
-    for index in range(30):
-        read = LineRead(excess=rng.normal(0.0, 1e-6), flanks=1e-6)
-        cells.add(("front_left", "60-70", ""), read, 30 + 3.0 * index)
+    reads = [
+        (("front_left", "60-70", "braking"), 1e-4 + rng.normal(0.0, 1e-6), 1e-6, 3.0 * index)
+        for index in range(10)
+    ] + [
+        (("front_left", "60-70", ""), rng.normal(0.0, 1e-6), 1e-6, 30 + 3.0 * index)
+        for index in range(30)
+    ]
+    cells = _tracked(reads, braking_alone=True)
 
     (whole,) = cells.sensor_levels({"60-70"})
     (braking,) = cells.sensor_levels({"60-70"}, ("braking",))
@@ -213,15 +271,22 @@ def test_a_cell_hears_an_order_only_in_a_driving_phase_its_sensor_hears_it_in() 
     # ones; the three cruising windows of one speed bin happen to stand
     # clear: that bin does not hear the judder, as the cruising reads do not.
     rng = np.random.default_rng(31)
-    cells = TrackedCells(window_s=2.56, braking_alone=True)
-    for index in range(20):
-        read = LineRead(excess=1e-4 + rng.normal(0.0, 1e-6), flanks=1e-6)
-        cells.add(("front_left", "60-70", "braking"), read, 3.0 * index)
-    for index in range(57):
-        read = LineRead(excess=rng.normal(0.0, 1e-6), flanks=1e-6)
-        cells.add(("front_left", ("50-60", "70-80")[index % 2], ""), read, 100 + 3.0 * index)
-    for index in range(3):
-        cells.add(("front_left", "40-50", ""), LineRead(1e-5, 1e-6), 300 + 3.0 * index)
+    reads = [
+        (("front_left", "60-70", "braking"), 1e-4 + rng.normal(0.0, 1e-6), 1e-6, 3.0 * index)
+        for index in range(20)
+    ]
+    reads += [
+        (
+            ("front_left", ("50-60", "70-80")[index % 2], ""),
+            rng.normal(0.0, 1e-6),
+            1e-6,
+            100 + 3.0 * index,
+        )
+        for index in range(57)
+    ]
+    reads += [(("front_left", "40-50", ""), 1e-5, 1e-6, 300 + 3.0 * index) for index in range(3)]
+
+    cells = _tracked(reads, braking_alone=True)
 
     assert cells.heard_cells().keys() == {("front_left", "60-70", "braking")}
 
@@ -234,10 +299,12 @@ def test_a_level_is_read_only_where_it_stands_out_of_the_reads_scatter(
     # about a faint order 0.2 of it: over 200 independent windows the order
     # stands out; over 200 windows 0.25 s apart, overlapping so much that they
     # read the floor as about 40 independent ones would, it does not.
-    cells = TrackedCells(window_s=2.56)
-    for index in range(200):
-        excess = 0.2 + 0.4 * (-1) ** index
-        cells.add(("rear_left", "90-100", ""), LineRead(excess=excess, flanks=1.0), hop_s * index)
+    cells = _tracked(
+        [
+            (("rear_left", "90-100", ""), 0.2 + 0.4 * (-1) ** index, 1.0, hop_s * index)
+            for index in range(200)
+        ]
+    )
 
     (level,) = cells.sensor_levels(())
 
@@ -251,10 +318,17 @@ def test_a_few_impacts_do_not_hide_an_order_from_the_sensor_that_hears_it() -> N
     # the spread of all reads the impacts would hide it, by their middle
     # spread they do not, and they do not lift its level.
     rng = np.random.default_rng(17)
-    cells = TrackedCells(window_s=2.56)
-    for index in range(44):
-        excess = 1600.0 if index % 11 == 5 else 4.0 + rng.normal(0.0, 1.0)
-        cells.add(("rear_left", "50-60", ""), LineRead(excess, 1.0), 2.56 * index)
+    cells = _tracked(
+        [
+            (
+                ("rear_left", "50-60", ""),
+                1600.0 if index % 11 == 5 else 4.0 + rng.normal(0.0, 1.0),
+                1.0,
+                2.56 * index,
+            )
+            for index in range(44)
+        ]
+    )
 
     (level,) = cells.sensor_levels(())
 
@@ -267,16 +341,16 @@ def test_an_order_is_heard_where_it_stands_clear_at_a_sensor_that_hears_it_over_
     # it, and every speed bin where it stands 6 dB clear of the floor beside
     # it hears it; the speed bin where it fades under that does not. A
     # sensor whose reads scatter about zero hears it nowhere.
-    cells = TrackedCells(window_s=2.56)
+    reads = []
     for bin_index, middle in enumerate((6.0, 5.0, 4.0, 1.0)):
         speed_bin = f"{60 + 10 * bin_index}-{70 + 10 * bin_index}"
         for index in range(8):
             t_s = 100.0 * bin_index + 2.56 * index
             spread = 3.0 * (-1) ** index
-            cells.add(("rear_right", speed_bin, ""), LineRead(middle + spread, 1.0), t_s)
-            cells.add(("rear_left", speed_bin, ""), LineRead(0.1 + spread / 4, 1.0), t_s)
+            reads.append((("rear_right", speed_bin, ""), middle + spread, 1.0, t_s))
+            reads.append((("rear_left", speed_bin, ""), 0.1 + spread / 4, 1.0, t_s))
 
-    heard = cells.heard_cells()
+    heard = _tracked(reads).heard_cells()
 
     assert sorted(key[1] for key in heard) == ["60-70", "70-80", "80-90"]
     assert {key[0] for key in heard} == {"rear_right"}
@@ -288,10 +362,17 @@ def test_an_order_there_part_of_the_drive_reads_its_level_while_there() -> None:
     # cruise and gone in the second: its level is read over the stretches it
     # is there, not halved by the stretches it is not.
     rng = np.random.default_rng(29)
-    cells = TrackedCells(window_s=2.56)
-    for index in range(80):
-        excess = (4.0 if index < 40 else 0.0) + rng.normal(0.0, 0.5)
-        cells.add(("engine_bay", "70-80", ""), LineRead(excess, 1.0), 1.0 * index)
+    cells = _tracked(
+        [
+            (
+                ("engine_bay", "70-80", ""),
+                (4.0 if index < 40 else 0.0) + rng.normal(0.0, 0.5),
+                1.0,
+                1.0 * index,
+            )
+            for index in range(80)
+        ]
+    )
 
     (level,) = cells.sensor_levels(())
 
@@ -302,28 +383,21 @@ def test_an_order_is_judged_by_the_floor_scatter_beside_its_line() -> None:
     # A faint order whose reads beat widely with the floor under it (a
     # strong neighbouring line in the same band): judged by its own reads'
     # scatter it is lost, judged by the control reads beside the line, which
-    # scatter as the floor alone does, it stands out. The verdict is taken
-    # again once the control reads are in.
-    cells = TrackedCells(window_s=2.56)
+    # scatter as the floor alone does, it stands out.
     key = ("front_left", "80-90", "")
-    for index in range(60):
-        cells.add(key, LineRead(1.0 + 3.0 * (-1) ** index, 1.0), 2.56 * index)
+    reads = [(key, 1.0 + 3.0 * (-1) ** index, 1.0, 2.56 * index) for index in range(60)]
+    controls = [(key, 0.3 * (-1) ** index, 1.0) for index in range(60)]
 
-    assert cells.heard_sensors() == set()
-
-    controls = [0.3 * (-1) ** index for index in range(60)]
-    cells.add_reads(key, [], [], [], [], controls, [1.0] * len(controls))
-
-    assert cells.heard_sensors() == {"front_left"}
+    assert _tracked(reads).heard_sensors() == set()
+    assert _tracked(reads, controls).heard_sensors() == {"front_left"}
 
 
 def test_a_sensor_with_too_few_reads_places_no_level() -> None:
     # A sensor that dropped out after two windows reads no level, not a level
     # of 0 that would place the order elsewhere.
-    cells = TrackedCells(window_s=2.56)
-    for index in range(30):
-        cells.add(("rear_left", "60-70", ""), LineRead(4.0, 1.0), 2.56 * index)
-    for index in range(1):
-        cells.add(("rear_right", "60-70", ""), LineRead(0.0, 1.0), 2.56 * index)
+    cells = _tracked(
+        [(("rear_left", "60-70", ""), 4.0, 1.0, 2.56 * index) for index in range(30)]
+        + [(("rear_right", "60-70", ""), 0.0, 1.0, 0.0)]
+    )
 
     assert [level.location for level in cells.sensor_levels(())] == ["rear_left"]

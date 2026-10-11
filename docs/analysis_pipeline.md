@@ -188,6 +188,24 @@ a float or breaks ties by order, so the stored analysis stays byte-identical
 to the per-sample code they replaced. `SensorFrame` stays the live and
 recording side's sample.
 
+### Order matches as columns
+
+Order matching stays on columns past the drive table: each hypothesis keeps
+its windows (`_Windows`) and its matched windows (`MatchedWindows` in
+`analysis/orders/matching.py`) as one array per field, its line reads as
+`CellReads` (`TrackedCells` in `analysis/orders/tracking.py`), and works out
+the line's placement, the windows off it, the cells' medians and scatter
+(`dsp/line_significance.py`), the tracking slope, the location scoring
+(`location_analysis.py`) and the speed and phase evidence from those arrays.
+Only a finding's matches become `OrderMatchObservation`s (its
+`matched_points`), their time and speed taken by sample from the drive's
+values (`DriveFacts.sample_t_s`, `sample_speed_kmh`), which every finding
+shares. `np.median` is `statistics.median` to the bit, groups are
+met in first-seen order and float sums stay Python `sum` over lists in that
+order, so the stored analysis is byte-identical to the per-window code it
+replaced (see "Order-tracked reads" and "Heard matches" in
+`docs/order_tracking.md`).
+
 ## Data Flow
 
 Summary analysis flow:

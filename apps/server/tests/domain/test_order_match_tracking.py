@@ -1,41 +1,31 @@
 from __future__ import annotations
 
+import numpy as np
 import pytest
 
-from vibesensor.domain.order_match import (
-    OrderMatchObservation,
-    frequency_tracking_slope,
-    trend_moves,
-)
+from vibesensor.analysis.orders.tracking import frequency_tracking_slope
+from vibesensor.domain.order_match import trend_moves
 
 
-def _points(pairs: list[tuple[float, float]]) -> list[OrderMatchObservation]:
-    return [
-        OrderMatchObservation(
-            predicted_hz=predicted,
-            matched_hz=matched,
-            rel_error=abs(matched - predicted) / predicted,
-            amp=0.01,
-            location="front-left",
-        )
-        for predicted, matched in pairs
-    ]
+def _slope(pairs: list[tuple[float, float]]) -> float | None:
+    predicted_hz, matched_hz = np.array(pairs).T
+    return frequency_tracking_slope(predicted_hz, matched_hz)
 
 
 def test_order_that_follows_its_prediction_has_slope_one() -> None:
     sweep = [(10.0 + 0.2 * i, 10.0 + 0.2 * i + (0.05 if i % 2 else -0.05)) for i in range(20)]
-    assert frequency_tracking_slope(_points(sweep)) == pytest.approx(1.0, abs=0.1)
+    assert _slope(sweep) == pytest.approx(1.0, abs=0.1)
 
 
 def test_fixed_tone_crossed_by_the_prediction_has_slope_zero() -> None:
     crossing = [(12.0 + 0.1 * i, 12.9) for i in range(20)]
     # A couple of stray matches elsewhere do not move the robust slope.
     stray = [(10.0, 10.2), (14.5, 14.4)]
-    assert frequency_tracking_slope(_points(crossing + stray)) == pytest.approx(0.0, abs=0.05)
+    assert _slope(crossing + stray) == pytest.approx(0.0, abs=0.05)
 
 
 def test_too_few_matches_have_no_slope() -> None:
-    assert frequency_tracking_slope(_points([(12.0, 12.0), (13.0, 12.9), (14.0, 14.1)])) is None
+    assert _slope([(12.0, 12.0), (13.0, 12.9), (14.0, 14.1)]) is None
 
 
 @pytest.mark.parametrize(

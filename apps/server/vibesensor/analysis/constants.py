@@ -57,7 +57,7 @@ MIN_ORDER_TRACKING_SLOPE: Final[float] = 0.5
 An order's peaks move one-for-one with its prediction as speed changes; a
 fixed-frequency tone (body resonance, engine idle in neutral) that the
 prediction sweeps past stays put, giving a slope near 0 (see
-``domain.order_match.frequency_tracking_slope``). Judged only when the speed
+``analysis.orders.tracking.frequency_tracking_slope``). Judged only when the speed
 really changed (``domain.order_match.trend_moves``): order hypotheses over the
 whole run, the guided coast-down test inside the coast-down."""
 

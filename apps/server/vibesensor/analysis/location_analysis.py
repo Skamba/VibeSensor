@@ -5,6 +5,9 @@ from __future__ import annotations
 from collections.abc import Collection, Set
 from dataclasses import replace
 from math import pow
+from typing import TYPE_CHECKING
+
+import numpy as np
 
 from vibesensor.analysis.constants import MULTI_SENSOR_CORROBORATION_DB
 from vibesensor.analysis.location_grouping import (
@@ -18,21 +21,29 @@ from vibesensor.analysis.location_scoring import (
     weighted_speed_window_label,
 )
 from vibesensor.common.json_utils import i18n_ref
-from vibesensor.domain.order_match import OrderMatchObservation
+
+if TYPE_CHECKING:
+    from vibesensor.analysis.orders.matching import MatchedWindows
 
 
 def summarize_order_match_locations(
-    matches: Collection[OrderMatchObservation],
+    matches: MatchedWindows,
     lang: str,
     relevant_speed_bins: Collection[str] | None = None,
     connected_locations: Set[str] | None = None,
     suspected_source: str | None = None,
     quiet_locations: Set[str] = frozenset(),
 ) -> tuple[object, LocationAnalysisResult | None]:
-    """Return strongest location summary, optionally restricted to specific speed bins."""
+    """Return strongest location summary, optionally restricted to specific speed bins.
+
+    A sensor is named without surrounding blanks.
+    """
     del lang  # localization happens through i18n keys, not by branching here
-    typed_matches = tuple(matches)
-    grouped = group_matches_by_speed_bin(typed_matches, relevant_speed_bins=relevant_speed_bins)
+    names = [name.strip() for name in matches.locations]
+    locations = list(dict.fromkeys(names))
+    code_of = np.array([locations.index(name) for name in names], dtype=np.intp)
+    matches = replace(matches, location=code_of[matches.location], locations=locations)
+    grouped = group_matches_by_speed_bin(matches, relevant_speed_bins=relevant_speed_bins)
     if not grouped:
         return "", None
 
@@ -43,6 +54,7 @@ def summarize_order_match_locations(
         if (
             candidate := score_locations_in_bin(
                 bin_label,
+                matches,
                 rows,
                 corroboration_amp_multiplier=corroboration_amp_multiplier,
                 connected_locations=connected_locations,
@@ -56,7 +68,7 @@ def summarize_order_match_locations(
     if best is None:
         return "", None
 
-    speed_weight_pairs = location_speed_weight_pairs(grouped, location=best.top_location)
+    speed_weight_pairs = location_speed_weight_pairs(matches, grouped, location=best.top_location)
     weighted_speed_window = weighted_speed_window_label(speed_weight_pairs)
     if weighted_speed_window:
         best = replace(best, speed_range=weighted_speed_window)

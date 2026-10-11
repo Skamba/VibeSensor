@@ -6,11 +6,16 @@ import math
 from collections.abc import Mapping, Sequence
 from typing import Any
 
+import numpy as np
+
 from test_support.core import standard_metadata
 from vibesensor.analysis._run_input import build_diagnostics_run_input
+from vibesensor.analysis.orders.matching import MatchedWindows
 from vibesensor.analysis.post_analysis_loader import StoredPeaksReader
 from vibesensor.analysis.run_analysis import RunAnalysis
 from vibesensor.analysis.summary_payload import analysis_result_to_summary
+from vibesensor.domain.finding import speed_bin_label
+from vibesensor.domain.order_match import OrderMatchObservation
 from vibesensor.recording.run_metadata import run_metadata_from_mapping
 from vibesensor.recording.run_schema import RunMetadata
 from vibesensor.recording.sample_columns import (
@@ -148,3 +153,53 @@ def top_confidence(summary: dict[str, Any]) -> float:
     """Return the confidence (0–1) of the top cause, or 0.0 if none."""
     top = extract_top(summary)
     return float(top.get("confidence", 0.0)) if top else 0.0
+
+
+def matched_windows(
+    points: Sequence[OrderMatchObservation],
+    floors: Sequence[float],
+    *,
+    locations: Sequence[str] = (),
+    samples: Sequence[int] | None = None,
+) -> MatchedWindows:
+    """*points*, matched in *samples* (0, 1, ...) at window *floors*, as ``MatchedWindows``.
+
+    Its sensors are *locations* and then the points' others, in the order they come.
+    """
+    sample = np.arange(len(points)) if samples is None else np.array(samples)
+    sample_t_s: list[float | None] = [None] * (int(sample.max(initial=-1)) + 1)
+    sample_speed_kmh = list(sample_t_s)
+    for at, point in zip(sample.tolist(), points, strict=True):
+        sample_t_s[at] = point.t_s
+        sample_speed_kmh[at] = point.speed_kmh
+    names = list(dict.fromkeys([*locations, *(point.location for point in points)]))
+    phases = list(dict.fromkeys(point.phase for point in points))
+    bins = [
+        speed_bin_label(point.speed_kmh)
+        if point.speed_kmh is not None and point.speed_kmh > 0
+        else None
+        for point in points
+    ]
+    speed_bins = list(dict.fromkeys(bins))
+
+    def known(value: float | None) -> float:
+        return math.nan if value is None else value
+
+    return MatchedWindows(
+        sample=sample.astype(np.intp),
+        speed_kmh=np.array([known(point.speed_kmh) for point in points], dtype=np.float64),
+        predicted_hz=np.array([point.predicted_hz for point in points], dtype=np.float64),
+        matched_hz=np.array([point.matched_hz for point in points], dtype=np.float64),
+        rel_error=np.array([point.rel_error for point in points], dtype=np.float64),
+        amp=np.array([point.amp for point in points], dtype=np.float64),
+        floor=np.array(floors, dtype=np.float64),
+        location=np.array([names.index(point.location) for point in points], dtype=np.intp),
+        phase=np.array([phases.index(point.phase) for point in points], dtype=np.intp),
+        speed_bin=np.array([speed_bins.index(label) for label in bins], dtype=np.intp),
+        heard=np.array([point.heard for point in points], dtype=np.bool_),
+        locations=names,
+        phases=phases,
+        speed_bins=speed_bins,
+        sample_t_s=sample_t_s,
+        sample_speed_kmh=sample_speed_kmh,
+    )
