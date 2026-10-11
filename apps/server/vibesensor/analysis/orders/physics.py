@@ -7,19 +7,19 @@ driveshaft orders, and the engine orders the car's engine profile excites.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from functools import cache
 
-from vibesensor.analysis._reference_resolution import (
-    _effective_engine_rpm,
-    _order_reference_spec_from_context,
-)
-from vibesensor.analysis._types import Sample
+import numpy as np
+import numpy.typing as npt
+
+from vibesensor.analysis._reference_resolution import effective_engine_rpm, wheel_hz_columns
+from vibesensor.analysis.drive_table import DriveTable, first_seen
 from vibesensor.common.units import SECONDS_PER_MINUTE
 from vibesensor.domain.engine_profile import EngineProfile, engine_orders
 from vibesensor.domain.finding_types import VibrationSource
 from vibesensor.domain.locations import wheel_axle
-from vibesensor.domain.order_reference import OrderReferenceSpec, wheel_hz_from_speed_kmh
 from vibesensor.dsp.order_bands import (
     RIGID_ORDER_PATH_COMPLIANCE,
     WHEEL_ORDER_PATH_COMPLIANCE,
@@ -27,83 +27,104 @@ from vibesensor.dsp.order_bands import (
 from vibesensor.recording.run_schema import RunMetadata
 
 # ═══════════════════════════════════════════════════════════════════════════
-# Hz helpers
+# Reference frequencies
 # ═══════════════════════════════════════════════════════════════════════════
 
 
-def _wheel_hz(
-    sample: Sample,
-    tire_circumference_m: float | None,
-    context: RunMetadata | None = None,
-    order_reference_spec: OrderReferenceSpec | None = None,
-    *,
-    own_axle: bool = False,
-) -> float | None:
-    """Return wheel rotational frequency from speed plus optional reference data.
+@dataclass(frozen=True, slots=True)
+class ReferenceColumns:
+    """Each sample's ``reference_columns`` for the orders of one rotation, as columns.
 
-    With *own_axle*, a wheel sensor's sample turns with the tires on its own
-    axle (staggered tires turn the front and rear wheels at different rates);
-    any other sensor, and the driveline, take the effective tire.
+    Its frequency (NaN where there is none), whether it has one, and its
+    source (an index into *source_names*).
     """
-    speed_kmh = sample.speed_kmh
-    if speed_kmh is None or speed_kmh <= 0:
-        return None
-    spec = order_reference_spec
-    if spec is None and context is not None:
-        spec = _order_reference_spec_from_context(context, sample)
+
+    hz: npt.NDArray[np.float64]
+    known: npt.NDArray[np.bool_]
+    source: npt.NDArray[np.intp]
+    source_names: Sequence[str]
+
+
+def _wheel_hz(
+    table: DriveTable,
+    context: RunMetadata,
+    tire_circumference_m: float | None,
+    *,
+    own_axle: bool,
+) -> npt.NDArray[np.float64]:
+    """Each sample's wheel rotational frequency from its speed (NaN where there is none).
+
+    From the car's tires where its order reference has them, else from
+    *tire_circumference_m*. With *own_axle*, a wheel sensor's sample turns
+    with the tires on its own axle (staggered tires turn the front and rear
+    wheels at different rates); any other sensor, and the driveline, take the
+    effective tire.
+    """
+    spec = context.order_reference_spec
     if spec is not None and spec.supports_wheel_reference:
-        axle = wheel_axle(sample.location) if own_axle else None
-        return spec.wheel_hz_from_speed_kmh(speed_kmh, axle)
+        if not own_axle:
+            return wheel_hz_columns(table.speed_kmh, spec.tire_circumference_m)
+        circumference_m = np.array(
+            [
+                spec.tire_setup.axle_tire_circumference_m(wheel_axle(location))
+                for location, _name, _client in table.sensors
+            ],
+            dtype=np.float64,
+        )
+        return wheel_hz_columns(table.speed_kmh, circumference_m[table.sensor_of])
     if tire_circumference_m is None:
-        return None
-    return wheel_hz_from_speed_kmh(speed_kmh, tire_circumference_m)
+        return np.full(table.size, np.nan)
+    return wheel_hz_columns(table.speed_kmh, tire_circumference_m)
 
 
 def _driveshaft_hz(
-    sample: Sample,
+    table: DriveTable,
     context: RunMetadata,
     tire_circumference_m: float | None,
-) -> float | None:
-    """Return driveshaft frequency from the best available wheel/final-drive inputs."""
-    speed_kmh = sample.speed_kmh
-    spec = _order_reference_spec_from_context(context, sample)
-    if (
-        speed_kmh is not None
-        and speed_kmh > 0
-        and spec is not None
-        and spec.supports_driveshaft_reference
-    ):
-        return spec.driveshaft_hz_from_speed_kmh(speed_kmh)
-    whz = _wheel_hz(
-        sample,
-        tire_circumference_m,
-        context,
-        order_reference_spec=spec,
-    )
-    fd = (
-        sample.final_drive_ratio
-        if sample.final_drive_ratio is not None
-        else context.final_drive_ratio
-    )
-    if whz is None or fd is None or fd <= 0:
-        return None
-    return float(whz * fd)
+) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.bool_]]:
+    """Each sample's driveshaft frequency, and whether it has one.
 
-
-def _engine_hz(
-    sample: Sample,
-    context: RunMetadata,
-    tire_circumference_m: float | None,
-) -> tuple[float | None, str]:
-    """Return engine rotational frequency plus the source label used to derive it."""
-    rpm, src = _effective_engine_rpm(
-        sample,
-        context,
-        tire_circumference_m,
+    From the car's order reference at the sample's own final drive where that
+    has the driveline, else from its wheel frequency and the sample's or the
+    run's final drive.
+    """
+    speed = table.speed_kmh
+    hz = np.full(table.size, np.nan)
+    known = np.zeros(table.size, dtype=np.bool_)
+    spec = context.order_reference_spec
+    if spec is not None:
+        final_drive = np.where(
+            table.has_final_drive_ratio, table.final_drive_ratio, spec.final_drive_ratio
+        )
+        via_spec = (
+            table.has_speed & (speed > 0) & spec.supports_wheel_reference & (final_drive > 0.0)
+        )
+        wheel_hz = wheel_hz_columns(speed, spec.tire_circumference_m)
+        with np.errstate(all="ignore"):
+            from_spec = wheel_hz * final_drive
+        placed = via_spec & ~np.isnan(wheel_hz) & np.isfinite(from_spec)
+        hz[placed] = from_spec[placed]
+        known[placed] = True
+    else:
+        via_spec = np.zeros(table.size, dtype=np.bool_)
+    context_drive = context.final_drive_ratio
+    final_drive = np.where(
+        table.has_final_drive_ratio,
+        table.final_drive_ratio,
+        context_drive if context_drive is not None else np.nan,
     )
-    if rpm is None or rpm <= 0:
-        return None, src
-    return float(rpm / SECONDS_PER_MINUTE), src
+    wheel_hz = _wheel_hz(table, context, tire_circumference_m, own_axle=False)
+    with np.errstate(all="ignore"):
+        from_wheel = wheel_hz * final_drive
+    placed = (
+        ~via_spec
+        & ~np.isnan(wheel_hz)
+        & (table.has_final_drive_ratio | (context_drive is not None))
+        & ~(final_drive <= 0)
+    )
+    hz[placed] = from_wheel[placed]
+    known[placed] = True
+    return hz, known
 
 
 def _order_label(order: float, base: str) -> str:
@@ -130,26 +151,40 @@ class OrderHypothesis:
     path_compliance: float = 1.0
 
 
-def reference_hz(
+def reference_columns(
     order_label_base: str,
-    sample: Sample,
+    table: DriveTable,
     context: RunMetadata,
     tire_circumference_m: float | None,
-) -> tuple[float | None, str]:
-    """The rotation's frequency an order of *order_label_base* is a multiple of, and its source.
+) -> ReferenceColumns:
+    """Each sample's frequency of the rotation an order of *order_label_base* is a multiple of.
 
     The same for every order of one rotation (a wheel's T1 to T6), so it is
-    worked out once per sample for all of them.
+    worked out once per drive for all of them, with its source.
     """
-    if order_label_base == "wheel":
-        base = _wheel_hz(sample, tire_circumference_m, context, own_axle=True)
-        return (base, "speed+tire") if base is not None else (None, "missing")
-    if order_label_base == "driveshaft":
-        base = _driveshaft_hz(sample, context, tire_circumference_m)
-        return (base, "speed+tire+final_drive") if base is not None else (None, "missing")
     if order_label_base == "engine":
-        return _engine_hz(sample, context, tire_circumference_m)
-    return None, "missing"
+        engine = effective_engine_rpm(table, context, tire_circumference_m)
+        known = engine.known & ~(engine.rpm <= 0)
+        return ReferenceColumns(
+            hz=np.where(known, engine.rpm / SECONDS_PER_MINUTE, np.nan),
+            known=known,
+            source=engine.source_of,
+            source_names=engine.sources,
+        )
+    if order_label_base == "wheel":
+        hz = _wheel_hz(table, context, tire_circumference_m, own_axle=True)
+        known = ~np.isnan(hz) & table.has_speed & ~(table.speed_kmh <= 0)
+        source_name = "speed+tire"
+    elif order_label_base == "driveshaft":
+        hz, known = _driveshaft_hz(table, context, tire_circumference_m)
+        source_name = "speed+tire+final_drive"
+    else:
+        hz, known = np.full(table.size, np.nan), np.zeros(table.size, dtype=np.bool_)
+        source_name = "missing"
+    source, source_names = first_seen(
+        np.where(known, 0, 1).astype(np.intp), [source_name, "missing"]
+    )
+    return ReferenceColumns(hz=hz, known=known, source=source, source_names=source_names)
 
 
 # The road-speed orders, the same for every car. Wheel orders travel through

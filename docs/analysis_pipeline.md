@@ -118,7 +118,7 @@ run's persisted analysis.
 |---|------|-----------------|--------|---------|
 | 1 | Validation | `_validate_required_strength_metrics` | `run_analysis.py` | Validate samples contain required strength metrics |
 | 2 | Context preparation | `prepare_analysis_context` | `prepared_analysis_context.py` | Assemble the canonical typed `PreparedAnalysisContext` (sensor analysis, run suitability) from run metadata and prepared run data |
-| 3 | Run preparation | `prepare_run_data`, `compute_run_timing`, `_run_noise_baseline_g` | run_data_preparation, statistics, `_sample_metrics.py` | Extract timing, speed stats, phase segmentation, and speed context |
+| 3 | Run preparation | `prepare_run_data`, `compute_run_timing`, `build_drive_table`, `_run_noise_baseline_g` | run_data_preparation, statistics, `drive_table.py`, `_sample_metrics.py` | Extract timing, speed stats, phase segmentation, and speed context; build the drive table (below) |
 | 4 | Phase segmentation | `segment_run_phases`, `_phase_summary`, `_speed_stats_by_phase` | phase_segmentation | Classify each sample into a driving phase (IDLE / ACCEL / CRUISE / DECEL / BRAKING / COAST_DOWN / SPEED_UNKNOWN); see "Braking" below |
 | 5 | Acceleration statistics | `compute_accel_statistics` | statistics | Per-axis and magnitude accel stats, saturation detection |
 | 6 | Findings bundle | `build_findings_bundle` → `_build_findings` | `findings_bundle.py`, `_analysis_models.py`, findings, `peaks/findings.py`, `orders/pipeline.py` | Order tracking, pattern matching, scoring, localisation, and top-cause candidates via typed request/bundle contracts |
@@ -130,6 +130,29 @@ run's persisted analysis.
 | 12 | Peak table | `top_peaks_table_rows`, `annotate_peak_rows_with_order_labels` | `peaks/table.py` | Rank persistent spectral peaks and label them with matched order findings; persisted as `plots.peaks_table` for the PDF report |
 | 13 | Boundary serialization | `analysis_result_to_summary` | `analysis/summary_payload.py` | Convert the app-level `AnalysisResult` into the persisted `AnalysisSummary` payload only at explicit edges |
 
+### Drive table
+
+`prepare_run_data` builds the drive's samples once as columns
+(`build_drive_table` in `analysis/drive_table.py`, kept as
+`PreparedRunData.drive_table`): one NumPy array per field (time, speed, the
+floor estimate, engine RPM and its source, gear, final drive, the sensor, its
+label and client, the speed bin) and the analysed peaks (each sample's ranked
+peaks above the analysis floor) as one flat table, with where each sample's
+run of peaks starts. The stages that walk the samples' peaks, floors, speeds
+and sensors read it instead of the samples: the noise baseline, the engine
+reference coverage (`effective_engine_rpm`, also the order session's engine
+reference and the diagnosis's RPM readings), the order session (drive facts,
+reference frequencies, fixed and ringing tones, peak tables), the persistent
+peak bins and the peak table. The findings take the IDLE-filtered rows with
+`DriveTable.subset`.
+
+A text column keeps its distinct values once, in the order the samples first
+give them, and every grouping over the table (`first_seen`,
+`groups_in_order`, `counts_by_group`) meets its groups in the order a pass
+over the samples does; sums stay Python `sum` or a sequential `np.bincount`
+where values were added one at a time. That keeps the stored analysis
+byte-identical to the per-sample code it replaced.
+
 ## Data Flow
 
 Summary analysis flow:
@@ -140,6 +163,7 @@ Input: PostAnalysisRunInput (summary rows, FFT peaks recomputed from raw capture
   ├─ _run_input.build_diagnostics_run_input() → typed metadata + samples
   │
   ├─ run_data_preparation.prepare_run_data() → PreparedRunData
+  │    ├─ drive_table.build_drive_table() → DriveTable (samples as columns, analysed peaks)
   │    ├─ timing, speed stats, noise baseline
   │    └─ phase_segmentation → phases + phase summaries
   │

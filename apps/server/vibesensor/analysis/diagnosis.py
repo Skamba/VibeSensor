@@ -14,12 +14,14 @@ from math import floor, log
 from statistics import median
 from typing import TYPE_CHECKING, cast
 
+import numpy as np
+
 from vibesensor.analysis._reference_findings import SPEED_REFERENCE_FINDING_ID
 from vibesensor.analysis._reference_resolution import (
     ENGINE_OFF_RPM_SOURCE,
     ESTIMATED_RPM_SOURCE,
-    _effective_engine_rpm,
     _tire_reference_from_context,
+    effective_engine_rpm,
 )
 from vibesensor.analysis._sample_metrics import (
     _estimate_strength_floor_amp_g,
@@ -93,6 +95,7 @@ from vibesensor.summary.diagnosis_contracts import (
 
 if TYPE_CHECKING:
     from vibesensor.analysis._types import Sample
+    from vibesensor.analysis.drive_table import DriveTable
     from vibesensor.domain.test_run import TestRun
     from vibesensor.domain.tire_spec import AxleTireSetup
     from vibesensor.recording.run_schema import RunGuidedPhase, RunMetadata
@@ -174,11 +177,15 @@ def build_diagnosis(
     *,
     test_run: TestRun,
     samples: Sequence[Sample],
+    drive_table: DriveTable,
     metadata: RunMetadata,
     sensor_count: int,
     loose_locations: frozenset[str] = frozenset(),
 ) -> DiagnosisPayload:
-    """Build the persisted diagnosis block for one analysed run."""
+    """Build the persisted diagnosis block for one analysed run.
+
+    *drive_table* is *samples* as columns (``build_drive_table``).
+    """
     # The top cause names the source and its confidence; the order shown (label,
     # amplitudes, frequency) is that source's dominant order, which workshops act on.
     top_cause = test_run.diagnosis_candidate
@@ -193,6 +200,7 @@ def build_diagnosis(
     refs = _references(
         metadata,
         samples,
+        drive_table,
         speed_missing=any(
             finding.finding_id == SPEED_REFERENCE_FINDING_ID for finding in test_run.findings
         ),
@@ -529,13 +537,17 @@ class _References:
 
 
 def _references(
-    metadata: RunMetadata, samples: Sequence[Sample], *, speed_missing: bool
+    metadata: RunMetadata,
+    samples: Sequence[Sample],
+    drive_table: DriveTable,
+    *,
+    speed_missing: bool,
 ) -> _References:
     status = metadata.car.order_reference_status if metadata.car is not None else None
     tire = metadata.tire_circumference_m
     final_drive = _positive(metadata.final_drive_ratio)
     gear = _positive(metadata.current_gear_ratio)
-    rpm_source, engine_ran = _rpm_readings(metadata, samples)
+    rpm_source, engine_ran = _rpm_readings(metadata, drive_table)
     spec = metadata.order_reference_spec
     return _References(
         tire_circumference_m=tire,
@@ -1636,26 +1648,26 @@ def _contradicts_coast_test(
     )
 
 
-def _rpm_readings(metadata: RunMetadata, samples: Sequence[Sample]) -> tuple[RpmSourceValue, bool]:
+def _rpm_readings(metadata: RunMetadata, table: DriveTable) -> tuple[RpmSourceValue, bool]:
     """Where the engine RPM the analysis used came from, and whether the engine ran.
 
-    Per sample as the order analysis resolves it (``_effective_engine_rpm``): a
+    Per sample as the order analysis resolves it (``effective_engine_rpm``): a
     plug-in hybrid's measured 0 rpm (engine off) counts as measured RPM; a
     combustion car's 0 rpm reading is a bad one, estimated from speed instead.
     """
     tire_circumference_m, _ = _tire_reference_from_context(metadata)
-    measured = estimated = running = 0
-    for sample in samples:
-        rpm, source = _effective_engine_rpm(sample, metadata, tire_circumference_m)
-        if source == ENGINE_OFF_RPM_SOURCE:
-            measured += 1
-        elif rpm is None or rpm <= 0:
-            continue
-        elif source.strip().lower() in _MEASURED_RPM_EXCLUDED:
-            estimated += 1
-        else:
-            measured += 1
-            running += 1
+    engine = effective_engine_rpm(table, metadata, tire_circumference_m)
+    off = np.array([source == ENGINE_OFF_RPM_SOURCE for source in engine.sources], dtype=np.bool_)[
+        engine.source_of
+    ]
+    excluded = np.array(
+        [source.strip().lower() in _MEASURED_RPM_EXCLUDED for source in engine.sources],
+        dtype=np.bool_,
+    )[engine.source_of]
+    turning = ~off & engine.known & ~(engine.rpm <= 0)
+    running = int(np.count_nonzero(turning & ~excluded))
+    estimated = int(np.count_nonzero(turning & excluded))
+    measured = int(np.count_nonzero(off)) + running
     engine_ran = bool(measured) and 100.0 * running / measured >= SPEED_COVERAGE_MIN_PCT
     if measured and measured >= estimated:
         return "measured", engine_ran

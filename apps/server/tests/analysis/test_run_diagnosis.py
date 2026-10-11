@@ -12,6 +12,7 @@ from test_support.findings import make_finding
 from test_support.synthetic_samples import make_engine_order_samples, make_sample
 
 from vibesensor.analysis.diagnosis import build_diagnosis
+from vibesensor.analysis.drive_table import build_drive_table
 from vibesensor.analysis.orders.tracking import window_duration_s
 from vibesensor.domain.finding import Finding
 from vibesensor.domain.finding_evidence import FindingEvidence
@@ -78,6 +79,7 @@ def _diagnosis(*findings: Finding, metadata: dict[str, Any] | None = None) -> An
     return build_diagnosis(
         test_run=test_run,
         samples=[],
+        drive_table=build_drive_table([]),
         metadata=run_metadata_from_mapping(
             {"run_id": "run-1", **(metadata or standard_metadata())}
         ),
@@ -182,6 +184,7 @@ def test_an_order_rows_db_is_over_its_locations_floor_as_every_other_db() -> Non
             capture=RunCapture(run_id="run-1"), findings=(finding,), top_causes=(finding,)
         ),
         samples=samples,
+        drive_table=build_drive_table(samples),
         metadata=metadata,
         sensor_count=1,
     )
@@ -237,6 +240,7 @@ def test_one_sensor_is_always_said_and_caps_a_corner_fault_at_moderate(
     diagnosis = build_diagnosis(
         test_run=test_run,
         samples=[],
+        drive_table=build_drive_table([]),
         metadata=run_metadata_from_mapping({"run_id": "run-1", **standard_metadata()}),
         sensor_count=1,
     )

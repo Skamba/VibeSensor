@@ -11,16 +11,7 @@ from typing import NamedTuple, cast
 import numpy as np
 import numpy.typing as npt
 
-from vibesensor.analysis._sample_metrics import (
-    _estimate_strength_floor_amp_g,
-)
-from vibesensor.analysis._sensor_locations import (
-    _location_label,
-)
-from vibesensor.analysis._types import (
-    PhaseLabels,
-    Sample,
-)
+from vibesensor.analysis._types import PhaseLabels
 from vibesensor.analysis.constants import (
     MIN_ANALYSIS_FREQ_HZ,
     ORDER_LINE_MIN_POINTS,
@@ -34,10 +25,10 @@ from vibesensor.analysis.constants import (
     ORDER_MIN_MATCH_POINTS,
     ORDER_VARIABLE_MIN_CORRELATION,
     ORDER_VARIABLE_MIN_MATCHED_SPEED_BINS,
-    SPEED_BIN_WIDTH_KMH,
 )
+from vibesensor.analysis.drive_table import DriveTable, coded, first_seen
 from vibesensor.analysis.math_utils import _corr_abs_clamped, _ramp
-from vibesensor.analysis.orders.physics import OrderHypothesis
+from vibesensor.analysis.orders.physics import OrderHypothesis, ReferenceColumns
 from vibesensor.analysis.orders.settings import ORDER_CONFIDENCE_SETTINGS
 from vibesensor.analysis.orders.tracking import (
     TrackedCells,
@@ -46,7 +37,6 @@ from vibesensor.analysis.orders.tracking import (
 )
 from vibesensor.analysis.speed_profile_helpers import _phase_to_str
 from vibesensor.domain.driving_segment import DrivingPhase
-from vibesensor.domain.finding import speed_bin_label
 from vibesensor.domain.order_match import OrderMatchObservation, SensorOrderLevel
 from vibesensor.dsp.constants import FFT_N, SAMPLE_RATE_HZ
 from vibesensor.dsp.fixed_tones import RingingTone
@@ -235,47 +225,20 @@ class PeakTable:
     any: npt.NDArray[np.bool_]
 
 
-def peak_table(peaks: Sequence[Sequence[tuple[float, float]]]) -> PeakTable:
-    """The rows of *peaks*, one per sample, padded to the longest with infinite frequencies."""
-    width = max(1, max((len(sample_peaks) for sample_peaks in peaks), default=0))
-    hz = np.full((len(peaks), width), np.inf)
-    amp = np.zeros((len(peaks), width))
-    for row, sample_peaks in enumerate(peaks):
-        if sample_peaks:
-            hz[row, : len(sample_peaks)], amp[row, : len(sample_peaks)] = zip(
-                *sample_peaks, strict=True
-            )
-    return PeakTable(hz, amp, np.array([bool(sample_peaks) for sample_peaks in peaks]))
+def peak_table(table: DriveTable, kept: npt.NDArray[np.bool_]) -> PeakTable:
+    """The drive's analysed peaks *kept*, a row per sample in rank order, padded with infinities.
 
-
-@dataclass(frozen=True, slots=True)
-class ReferenceColumns:
-    """Each sample's ``reference_hz`` for the orders of one rotation, as columns.
-
-    Its frequency (NaN where there is none), whether it has one, and its
-    source (an index into *source_names*).
+    Padded to the most peaks any sample keeps.
     """
-
-    hz: npt.NDArray[np.float64]
-    known: npt.NDArray[np.bool_]
-    source: npt.NDArray[np.intp]
-    source_names: Sequence[str]
-
-
-def reference_columns(references: Sequence[tuple[float | None, str]]) -> ReferenceColumns:
-    """*references* (``reference_hz`` by sample) as ``ReferenceColumns``."""
-    names: dict[str, int] = {}
-    return ReferenceColumns(
-        hz=np.array(
-            [hz if hz is not None else float("nan") for hz, _source in references],
-            dtype=np.float64,
-        ),
-        known=np.array([hz is not None for hz, _source in references], dtype=np.bool_),
-        source=np.array(
-            [names.setdefault(source, len(names)) for _hz, source in references], dtype=np.intp
-        ),
-        source_names=list(names),
-    )
+    rows = table.peak_row[kept]
+    counts = np.bincount(rows, minlength=table.size)
+    width = max(1, int(counts.max(initial=0)))
+    column = np.arange(rows.size) - (np.cumsum(counts) - counts)[rows]
+    hz = np.full((table.size, width), np.inf)
+    amp = np.zeros((table.size, width))
+    hz[rows, column] = table.peak_hz[kept]
+    amp[rows, column] = table.peak_amp[kept]
+    return PeakTable(hz, amp, counts > 0)
 
 
 def _nearest_peaks(
@@ -461,27 +424,17 @@ def _masked(windows: _Windows, drive: DriveFacts, bin_hz: float, compliance: flo
 
 
 @dataclass(frozen=True, slots=True)
-class SampleFacts:
-    """What every hypothesis reads of one sample the same way, worked out once per drive."""
-
-    location: str
-    speed_bin: str | None
-    phase_key: str | None
-    floor: float
-    # The cell its line read is filed in: its sensor, speed bin and the
-    # driving phase it is grouped by (``_cell_phase``).
-    cell: tuple[str, str, str]
-
-
-@dataclass(frozen=True, slots=True)
 class DriveFacts:
-    """Each of a drive's samples' ``SampleFacts``, as columns, and the columns its line reads take.
+    """What every hypothesis reads of a drive's samples the same way, as columns.
 
-    Worked out once per drive: every hypothesis reads them the same way.
+    Worked out once per drive (``drive_facts``): every hypothesis reads them
+    the same way.
     """
 
-    # Each sample's location, speed bin and phase label, as an index into the
-    # drive's own (``locations``, ``speed_bins``, ``phases``), and its floor.
+    # Each sample's location, speed bin (``None`` where it is not moving) and
+    # phase label, as an index into the drive's own (``locations``,
+    # ``speed_bins``, ``phases``, each in the order they first come), and its
+    # floor (0 where it has none).
     location_of: npt.NDArray[np.intp]
     locations: Sequence[str]
     speed_bin_of: npt.NDArray[np.intp]
@@ -489,7 +442,9 @@ class DriveFacts:
     phase_of: npt.NDArray[np.intp]
     phases: Sequence[str | None]
     floor: npt.NDArray[np.float64]
-    # The drive's cells (``SampleFacts.cell``), and each sample's among them.
+    # The cell each sample's line read is filed in, its sensor, speed bin and
+    # the driving phase it is grouped by (``_cell_phases``): the drive's cells,
+    # in the order they first come, and each sample's among them.
     cells: Sequence[tuple[str, str, str]]
     cell_of: npt.NDArray[np.intp]
     # Each sample's speed (0 where unknown) and its rate of change (km/h per s).
@@ -501,87 +456,92 @@ class DriveFacts:
     # Each sample's time (NaN where unknown), and whether it is known.
     t_s: npt.NDArray[np.float64]
     timed: npt.NDArray[np.bool_]
+    # Each sample's time and speed as recorded (``None`` where it has none).
+    sample_t_s: Sequence[float | None]
+    sample_speed_kmh: Sequence[float | None]
 
 
 def drive_facts(
-    samples: Sequence[Sample],
+    table: DriveTable,
     context: RunMetadata,
     per_sample_phases: PhaseLabels | None,
-    lang: str,
 ) -> DriveFacts:
     """The drive's ``DriveFacts``."""
-    facts = _sample_facts(samples, context, per_sample_phases, lang)
-    location_of, locations = _coded([sample.location for sample in facts])
-    speed_bin_of, speed_bins = _coded([sample.speed_bin for sample in facts])
-    phase_of, phases = _coded([sample.phase_key for sample in facts])
-    cell_of, cells = _coded([sample.cell for sample in facts])
+    has_phases = per_sample_phases is not None and len(per_sample_phases) == table.size
+    phase_of, phases = coded(
+        [_phase_to_str(phase) for phase in per_sample_phases]
+        if has_phases and per_sample_phases is not None
+        else [None] * table.size
+    )
+    # Not moving (``None``) comes where it first comes, like any speed bin.
+    speed_bin_of, speed_bins = first_seen(
+        np.where(table.speed_bin_of >= 0, table.speed_bin_of, len(table.speed_bins)),
+        [*table.speed_bins, None],
+    )
+    cell_phase_of, cell_phases = _cell_phases(table, context, phase_of, phases)
+    cell_key = (table.location_of * (len(speed_bins) + 1) + speed_bin_of) * len(
+        cell_phases
+    ) + cell_phase_of
+    keys, first, key_of = np.unique(cell_key, return_index=True, return_inverse=True)
+    ordered = np.argsort(first, kind="stable")
+    cell_number = np.empty(keys.size, dtype=np.intp)
+    cell_number[ordered] = np.arange(keys.size)
+    speed = table.speed_kmh
     return DriveFacts(
-        location_of=location_of,
-        locations=locations,
+        location_of=table.location_of,
+        locations=table.locations,
         speed_bin_of=speed_bin_of,
         speed_bins=speed_bins,
         phase_of=phase_of,
         phases=phases,
-        floor=np.array([sample.floor for sample in facts], dtype=np.float64),
-        cell_of=cell_of,
-        cells=cells,
-        speed_kmh=np.array([sample.speed_kmh or 0.0 for sample in samples], dtype=np.float64),
-        speed_rate=np.array(speed_rates_kmh_per_s(samples), dtype=np.float64),
-        spectral=np.array([sample.spectrum is not None for sample in samples], dtype=np.bool_),
-        spectra=spectra_by_rows([sample.spectrum for sample in samples]),
-        t_s=np.array(
-            [sample.t_s if sample.t_s is not None else float("nan") for sample in samples],
-            dtype=np.float64,
-        ),
-        timed=np.array([sample.t_s is not None for sample in samples], dtype=np.bool_),
+        floor=table.floor_or_zero,
+        cells=[
+            (
+                table.locations[table.location_of[row]],
+                speed_bins[speed_bin_of[row]] or "",
+                cell_phases[cell_phase_of[row]],
+            )
+            for row in first[ordered].tolist()
+        ],
+        cell_of=cell_number[key_of.reshape(-1)],
+        # A speed of 0 or none is 0.
+        speed_kmh=np.where(table.has_speed & (speed != 0), speed, 0.0),
+        speed_rate=speed_rates_kmh_per_s(table),
+        spectral=np.array([spectrum is not None for spectrum in table.spectra], dtype=np.bool_),
+        spectra=spectra_by_rows(table.spectra),
+        t_s=table.t_s,
+        timed=table.timed,
+        sample_t_s=[
+            t_s if timed else None
+            for t_s, timed in zip(table.t_s.tolist(), table.timed.tolist(), strict=True)
+        ],
+        sample_speed_kmh=[
+            speed_kmh if known else None
+            for speed_kmh, known in zip(speed.tolist(), table.has_speed.tolist(), strict=True)
+        ],
     )
 
 
-def _coded[T](values: Sequence[T]) -> tuple[npt.NDArray[np.intp], list[T]]:
-    """Each of *values* as an index into the distinct values, which come in first-seen order."""
-    names: dict[T, int] = {}
-    codes = np.array([names.setdefault(value, len(names)) for value in values], dtype=np.intp)
-    return codes, list(names)
-
-
-def _sample_facts(
-    samples: Sequence[Sample],
+def _cell_phases(
+    table: DriveTable,
     context: RunMetadata,
-    per_sample_phases: PhaseLabels | None,
-    lang: str,
-) -> list[SampleFacts]:
-    """Each sample's ``SampleFacts``."""
-    has_phases = per_sample_phases is not None and len(per_sample_phases) == len(samples)
-    coasts = [
-        (step.start_t_s, step.end_t_s if step.end_t_s is not None else float("inf"))
-        for step in context.guided_phases
-        if step.phase == "coast_down"
-    ]
-    facts = []
-    for sample_idx, sample in enumerate(samples):
-        sample_speed = sample.speed_kmh
-        phase_key = (
-            _phase_to_str(per_sample_phases[sample_idx])
-            if has_phases and per_sample_phases is not None
-            else None
-        )
-        floor_amp = _estimate_strength_floor_amp_g(sample)
-        location = _location_label(sample, lang=lang)
-        speed_bin = (
-            speed_bin_label(sample_speed, bin_width=SPEED_BIN_WIDTH_KMH)
-            if sample_speed is not None and sample_speed > 0
-            else None
-        )
-        facts.append(
-            SampleFacts(
-                location=location,
-                speed_bin=speed_bin,
-                phase_key=phase_key,
-                floor=max(0.0, floor_amp if floor_amp is not None else 0.0),
-                cell=(location, speed_bin or "", _cell_phase(phase_key, sample, coasts)),
-            )
-        )
-    return facts
+    phase_of: npt.NDArray[np.intp],
+    phases: Sequence[str | None],
+) -> tuple[npt.NDArray[np.intp], tuple[str, str, str]]:
+    """The driving phase each sample's read is grouped by, as an index into the three.
+
+    Braking, or the rest of the drive (``_drive_phase``). The guided test's
+    coast-down in neutral is its own: the engine drops to idle there while
+    the road speed carries on, which is how the test tells an engine order
+    from a road-speed one at the same line.
+    """
+    braking = np.array([phase == BRAKING_PHASE for phase in phases], dtype=np.bool_)
+    cell_phase_of = braking[phase_of].astype(np.intp)
+    for step in context.guided_phases:
+        if step.phase == "coast_down":
+            end_t_s = step.end_t_s if step.end_t_s is not None else float("inf")
+            cell_phase_of[table.timed & (step.start_t_s <= table.t_s) & (table.t_s < end_t_s)] = 2
+    return cell_phase_of, (DRIVING_PHASE, BRAKING_PHASE, GUIDED_COAST_PHASE)
 
 
 @dataclass(frozen=True, slots=True)
@@ -608,7 +568,6 @@ class _Windows:
 
 
 def match_samples_for_hypothesis(
-    samples: Sequence[Sample],
     peaks: PeakTable,
     tones: Sequence[Sequence[RingingTone]],
     hypothesis: OrderHypothesis,
@@ -631,7 +590,7 @@ def match_samples_for_hypothesis(
     """
     compliance = getattr(hypothesis, "path_compliance", 1.0)
     windows, verdicts, cells, heard_cells = _match(
-        samples, peaks, tones, hypothesis, context, references, drive, compliance
+        peaks, tones, hypothesis, context, references, drive, compliance
     )
     sources, first = np.unique(references.source[windows.sample], return_index=True)
     ref_sources = {
@@ -678,8 +637,8 @@ def match_samples_for_hypothesis(
         possible=int(kept.size),
         matched_points=[
             OrderMatchObservation(
-                t_s=samples[sample_idx].t_s,
-                speed_kmh=samples[sample_idx].speed_kmh,
+                t_s=drive.sample_t_s[sample_idx],
+                speed_kmh=drive.sample_speed_kmh[sample_idx],
                 predicted_hz=window_hz,
                 matched_hz=peak_hz,
                 rel_error=error,
@@ -733,7 +692,6 @@ def match_samples_for_hypothesis(
 
 
 def matched_peaks_for_hypothesis(
-    samples: Sequence[Sample],
     peaks: PeakTable,
     tones: Sequence[Sequence[RingingTone]],
     hypothesis: OrderHypothesis,
@@ -743,7 +701,6 @@ def matched_peaks_for_hypothesis(
 ) -> frozenset[tuple[int, float]]:
     """``match_samples_for_hypothesis(...).matched_peaks``, without the rest of the accumulator."""
     windows, verdicts, _cells, _heard_cells = _match(
-        samples,
         peaks,
         tones,
         hypothesis,
@@ -763,7 +720,6 @@ def matched_peaks_for_hypothesis(
 
 
 def _match(
-    samples: Sequence[Sample],
     peaks: PeakTable,
     tones: Sequence[Sequence[RingingTone]],
     hypothesis: OrderHypothesis,
@@ -774,7 +730,7 @@ def _match(
 ) -> tuple[_Windows, _Verdicts, TrackedCells, dict[_CellKey, SensorOrderLevel]]:
     """One hypothesis's windows, their verdicts (``_tracked``), its line reads and heard cells."""
     # Each window: a sample with peaks or a spectrum, whose order is placed.
-    # Peaks under the analysis floor are dropped (``_sample_top_peaks``), so a
+    # Peaks under the analysis floor are not analysed (``DriveTable``), so a
     # window whose order lies there could never show it: it is not a chance
     # to hear the order (a wheel order at town speeds, the end of a stop).
     predicted_hz = references.hz * hypothesis.order
@@ -806,7 +762,6 @@ def _match(
     bin_hz = fft_bin_hz(context)
     masked = _masked(windows, drive, bin_hz, compliance)
     reads = _line_reads(
-        samples,
         windows,
         masked,
         _LineReadContext(
@@ -913,7 +868,6 @@ class _LineReads:
 
 
 def _line_reads(
-    samples: Sequence[Sample],
     windows: _Windows,
     masked: set[int],
     read: _LineReadContext,
@@ -1057,21 +1011,6 @@ def _swept_half_widths(
         hz[moving] * np.abs(rate_kmh_per_s[moving]) * window_s / (2.0 * speed_kmh[moving])
     )
     return half_width_hz
-
-
-def _cell_phase(
-    phase_key: str | None, sample: Sample, coasts: Sequence[tuple[float, float]]
-) -> str:
-    """The driving phase a window's read is grouped by.
-
-    The guided test's coast-down in neutral is its own: the engine drops to
-    idle there while the road speed carries on, which is how the test tells an
-    engine order from a road-speed one at the same line.
-    """
-    t_s = sample.t_s
-    if t_s is not None and any(start <= t_s < end for start, end in coasts):
-        return GUIDED_COAST_PHASE
-    return _drive_phase(phase_key)
 
 
 class _Verdicts(NamedTuple):

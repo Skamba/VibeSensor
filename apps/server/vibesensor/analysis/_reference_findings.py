@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+import numpy as np
 
-from vibesensor.analysis._reference_resolution import _effective_engine_rpm
-from vibesensor.analysis._types import Sample
+from vibesensor.analysis._reference_resolution import effective_engine_rpm
 from vibesensor.analysis.constants import SPEED_COVERAGE_MIN_PCT
+from vibesensor.analysis.drive_table import DriveTable
 from vibesensor.domain.finding import Finding as DomainFinding
 from vibesensor.domain.finding_types import FindingKind, VibrationSource
 from vibesensor.recording.run_schema import RunMetadata
@@ -42,7 +42,7 @@ def _reference_missing_finding(
 def build_reference_findings(
     *,
     context: RunMetadata,
-    samples: Sequence[Sample],
+    table: DriveTable,
     speed_sufficient: bool,
     tire_circumference_m: float | None,
     raw_sample_rate_hz: float | None,
@@ -68,7 +68,7 @@ def build_reference_findings(
     # An EV has no engine: its motor turns at the driveshaft order (the final
     # drive is the motor-to-wheel reduction), so engine orders are not tested.
     engine_ref_sufficient = not context.electric and has_engine_reference(
-        samples,
+        table,
         context=context,
         tire_circumference_m=tire_circumference_m,
     )
@@ -91,22 +91,21 @@ def build_reference_findings(
 
 
 def engine_reference_coverage_pct(
-    samples: Sequence[Sample],
+    table: DriveTable,
     *,
     context: RunMetadata,
     tire_circumference_m: float | None,
 ) -> float:
-    """Compute engine reference coverage percentage from samples and metadata."""
-    engine_ref_count = sum(
-        1
-        for sample in samples
-        if (_effective_engine_rpm(sample, context, tire_circumference_m)[0] or 0) > 0
-    )
-    return (engine_ref_count / len(samples) * 100.0) if samples else 0.0
+    """The share of the samples with an engine RPM over 0 (``effective_engine_rpm``), in %."""
+    if not table.size:
+        return 0.0
+    engine = effective_engine_rpm(table, context, tire_circumference_m)
+    engine_ref_count = int(np.count_nonzero(engine.known & (engine.rpm > 0)))
+    return engine_ref_count / table.size * 100.0
 
 
 def has_engine_reference(
-    samples: Sequence[Sample],
+    table: DriveTable,
     *,
     context: RunMetadata,
     tire_circumference_m: float | None,
@@ -114,7 +113,7 @@ def has_engine_reference(
     """Return whether the engine reference coverage is sufficient."""
     return bool(
         engine_reference_coverage_pct(
-            samples,
+            table,
             context=context,
             tire_circumference_m=tire_circumference_m,
         )

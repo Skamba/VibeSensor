@@ -6,6 +6,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 
 from vibesensor.analysis._types import AccelStatistics, PhaseLabels, Sample
+from vibesensor.analysis.drive_table import DriveTable
 from vibesensor.analysis.mount_tilt import LooseMount
 from vibesensor.analysis.run_data_preparation import PreparedRunData
 from vibesensor.domain.driving_segment import DrivingPhaseInterval
@@ -22,6 +23,8 @@ class FindingsBuildRequest:
 
     context: RunMetadata
     samples: Sequence[Sample]
+    # The samples as columns (``PreparedRunData.drive_table``).
+    table: DriveTable
     speed_sufficient: bool
     steady_speed: bool
     speed_steadiness: float
@@ -66,6 +69,7 @@ class PreparedAnalysisContext:
         return FindingsBuildRequest(
             context=self.context,
             samples=self.samples,
+            table=self.prepared.drive_table,
             speed_sufficient=self.prepared.speed_sufficient,
             steady_speed=self.prepared.is_steady_speed,
             speed_steadiness=self.prepared.speed_steadiness,

@@ -19,8 +19,11 @@ from collections.abc import Collection, Sequence
 from dataclasses import dataclass, field
 from math import sqrt
 from statistics import median
+from typing import TYPE_CHECKING
 
-from vibesensor.analysis._types import Sample
+import numpy as np
+import numpy.typing as npt
+
 from vibesensor.domain.driving_segment import DrivingPhase
 from vibesensor.domain.order_match import SensorOrderLevel
 from vibesensor.dsp.constants import FFT_N, SAMPLE_RATE_HZ
@@ -39,6 +42,9 @@ from vibesensor.dsp.line_significance import (
 )
 from vibesensor.dsp.window_spectrum import LineRead
 from vibesensor.recording.run_schema import RunMetadata
+
+if TYPE_CHECKING:
+    from vibesensor.analysis.drive_table import DriveTable
 
 __all__ = [
     "TrackedCells",
@@ -60,21 +66,29 @@ def window_duration_s(context: RunMetadata) -> float:
     return (context.fft_window_size_samples or FFT_N) / sample_rate_hz
 
 
-def speed_rates_kmh_per_s(samples: Sequence[Sample]) -> list[float]:
-    """Each sample's rate of speed change (km/h per s) from its sensor's neighbouring samples."""
-    by_sensor: dict[str, list[int]] = defaultdict(list)
-    for index, sample in enumerate(samples):
-        if sample.t_s is not None and sample.speed_kmh is not None:
-            by_sensor[sample.client_id].append(index)
-    rates = [0.0] * len(samples)
-    for indices in by_sensor.values():
-        indices.sort(key=lambda index: samples[index].t_s or 0.0)
-        for position, index in enumerate(indices):
-            before = samples[indices[max(0, position - 1)]]
-            after = samples[indices[min(len(indices) - 1, position + 1)]]
-            span = (after.t_s or 0.0) - (before.t_s or 0.0)
-            if 0 < span <= _MAX_RATE_SPAN_S:
-                rates[index] = ((after.speed_kmh or 0.0) - (before.speed_kmh or 0.0)) / span
+def speed_rates_kmh_per_s(table: DriveTable) -> npt.NDArray[np.float64]:
+    """Each sample's rate of speed change (km/h per s) from its sensor's neighbouring samples.
+
+    0 where those are further apart than ``_MAX_RATE_SPAN_S``; a sample without
+    a time or speed has none.
+    """
+    rates = np.zeros(table.size)
+    rated = table.timed & table.has_speed
+    # A speed of 0 is 0, whatever its sign.
+    speed_kmh = np.where(table.speed_kmh != 0, table.speed_kmh, 0.0)
+    for client in range(len(table.clients)):
+        indices = np.flatnonzero(rated & (table.client_of == client))
+        if not indices.size:
+            continue
+        indices = indices[np.argsort(table.t_s[indices], kind="stable")]
+        positions = np.arange(indices.size)
+        before = indices[np.maximum(0, positions - 1)]
+        after = indices[np.minimum(indices.size - 1, positions + 1)]
+        span = table.t_s[after] - table.t_s[before]
+        spanned = (span > 0) & (span <= _MAX_RATE_SPAN_S)
+        rates[indices[spanned]] = (speed_kmh[after[spanned]] - speed_kmh[before[spanned]]) / span[
+            spanned
+        ]
     return rates
 
 

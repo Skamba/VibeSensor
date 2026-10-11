@@ -11,7 +11,6 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import replace
-from types import SimpleNamespace
 
 import numpy as np
 import pytest
@@ -20,6 +19,7 @@ from test_support.core import standard_metadata, wheel_hz
 from test_support.synthetic_samples import make_sample
 
 from vibesensor.analysis._reference_resolution import ESTIMATED_RPM_SOURCE
+from vibesensor.analysis.drive_table import DriveTable, build_drive_table
 from vibesensor.analysis.orders.fixed_tones import ringing_tones
 from vibesensor.analysis.orders.matching import (
     OrderMatchAccumulator,
@@ -39,6 +39,7 @@ from vibesensor.domain.order_match import OrderMatchObservation
 from vibesensor.dsp.constants import FFT_N, SAMPLE_RATE_HZ
 from vibesensor.dsp.order_bands import WHEEL_ORDER_PATH_COMPLIANCE
 from vibesensor.dsp.window_spectrum import WindowSpectrum
+from vibesensor.recording.sensor_frame_mapping import sensor_frame_from_mapping
 
 # E1 at 2.72 x T1 in top gear (ratio 0.8): engine orders fall between wheel orders.
 _E1_PER_T1 = 2.72
@@ -338,7 +339,7 @@ def test_a_fixed_tone_is_not_tracked_by_the_floor_noise_around_it() -> None:
     assert not any(f.get("finding_key") == "engine_2x" for f in summary["findings"])
 
 
-def _buzzing_samples(buzz_g: float, seed: int) -> list[SimpleNamespace]:
+def _buzzing_drive(buzz_g: float, seed: int) -> DriveTable:
     # A wheel's hop under the road (12 Hz, damping 0.2, a hump 5 Hz wide) and
     # an idle buzz (30 Hz, wandering a bin either side) over a 2 mg floor.
     rng = np.random.default_rng(seed)
@@ -352,22 +353,25 @@ def _buzzing_samples(buzz_g: float, seed: int) -> list[SimpleNamespace]:
         spectrum = WindowSpectrum(
             freq_hz=freq.astype(np.float32), amp_g=np.sqrt(power).astype(np.float32)
         )
-        samples.append(SimpleNamespace(client_id="a", t_s=2.56 * index, spectrum=spectrum))
-    return samples
+        frame = sensor_frame_from_mapping(
+            make_sample(t_s=2.56 * index, speed_kmh=0.0, client_name="a", client_id="a")
+        )
+        samples.append(replace(frame, spectrum=spectrum))
+    return build_drive_table(samples)
 
 
 def test_a_fixed_tone_masks_the_line_reads_only_where_it_rings_as_a_line() -> None:
     # The sensor's peaks hold still at the hump and at the buzz. An order
     # crossing the hump is still read; the buzz would read as the order's
     # level, so a line read takes in none of it.
-    samples = _buzzing_samples(0.01, seed=23)
+    drive = _buzzing_drive(0.01, seed=23)
     tones = (11.6, 12.1, 29.8, 30.0, 30.2)
 
-    ringing = ringing_tones(samples, [tones] * len(samples), window_s=2.56)
+    ringing = ringing_tones(drive, {"a": tones}, window_s=2.56)
 
     assert [tuple(tone.hz for tone in sample_tones) for sample_tones in ringing] == [
         (29.8, 30.0, 30.2)
-    ] * len(samples)
+    ] * drive.size
 
 
 def test_a_louder_tone_keeps_line_reads_further_from_it() -> None:
@@ -376,8 +380,8 @@ def test_a_louder_tone_keeps_line_reads_further_from_it() -> None:
     # main lobe, two bins; a loud one further, by its leak.
     tones = (29.8, 30.0, 30.2)
     reach = [
-        ringing_tones(samples, [tones] * len(samples), window_s=2.56)[0][1].reach_hz
-        for samples in (_buzzing_samples(0.01, seed=23), _buzzing_samples(0.3, seed=23))
+        ringing_tones(drive, {"a": tones}, window_s=2.56)[0][1].reach_hz
+        for drive in (_buzzing_drive(0.01, seed=23), _buzzing_drive(0.3, seed=23))
     ]
 
     assert reach[0] == pytest.approx(0.2 + 2 * SAMPLE_RATE_HZ / FFT_N)

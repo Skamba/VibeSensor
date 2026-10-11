@@ -2,27 +2,20 @@
 
 from __future__ import annotations
 
-from collections import defaultdict
-from collections.abc import Sequence
-from math import floor as _math_floor
+import numpy as np
+import numpy.typing as npt
 
-from vibesensor.analysis._sample_metrics import (
-    _estimate_strength_floor_amp_g,
-    _sample_top_peaks,
-)
-from vibesensor.analysis._sensor_locations import _location_label
-from vibesensor.analysis._types import PhaseLabels, Sample
+from vibesensor.analysis._types import PhaseLabels
+from vibesensor.analysis.drive_table import DriveTable, coded, counts_by_group, groups_in_order
 from vibesensor.analysis.speed_profile_helpers import _phase_to_str
-from vibesensor.domain.finding import speed_bin_label
-
-
-def _make_nested_int_defaultdict() -> defaultdict:
-    """Create a nested defaultdict(int)."""
-    return defaultdict(int)
 
 
 class PeakBinStats:
-    """Accumulated per-frequency-bin statistics collected from samples."""
+    """Accumulated per-frequency-bin statistics collected from samples.
+
+    The bins come in the order the drive's peaks first fall in them, each
+    bin's values in the order of its peaks.
+    """
 
     __slots__ = (
         "bin_amps",
@@ -31,7 +24,6 @@ class PeakBinStats:
         "bin_phase_counts",
         "bin_speed_amp_pairs",
         "bin_speed_bin_counts",
-        "bin_speeds",
         "n_samples",
         "total_location_sample_counts",
         "total_locations",
@@ -39,76 +31,108 @@ class PeakBinStats:
     )
 
     def __init__(self) -> None:
-        self.bin_amps: dict[float, list[float]] = defaultdict(list)
-        self.bin_floors: dict[float, list[float]] = defaultdict(list)
-        self.bin_speeds: dict[float, list[float]] = defaultdict(list)
-        self.bin_speed_amp_pairs: dict[float, list[tuple[float, float]]] = defaultdict(list)
-        dd_factory = _make_nested_int_defaultdict
-        self.bin_location_counts: dict[float, dict[str, int]] = defaultdict(dd_factory)
-        self.bin_speed_bin_counts: dict[float, dict[str, int]] = defaultdict(dd_factory)
-        self.bin_phase_counts: dict[float, dict[str, int]] = defaultdict(dd_factory)
-        self.total_speed_bin_counts: dict[str, int] = defaultdict(int)
+        self.bin_amps: dict[float, list[float]] = {}
+        self.bin_floors: dict[float, list[float]] = {}
+        self.bin_speed_amp_pairs: dict[float, list[tuple[float, float]]] = {}
+        self.bin_location_counts: dict[float, dict[str, int]] = {}
+        self.bin_speed_bin_counts: dict[float, dict[str, int]] = {}
+        self.bin_phase_counts: dict[float, dict[str, int]] = {}
+        self.total_speed_bin_counts: dict[str, int] = {}
         self.total_locations: set[str] = set()
-        self.total_location_sample_counts: dict[str, int] = defaultdict(int)
+        self.total_location_sample_counts: dict[str, int] = {}
         self.n_samples: int = 0
 
 
 def accumulate_peak_bin_stats(
-    samples: Sequence[Sample],
+    table: DriveTable,
     *,
     freq_bin_hz: float,
     freq_bin_hz_half: float,
-    lang: str,
     per_sample_phases: PhaseLabels | None,
     has_phases: bool,
 ) -> PeakBinStats:
-    """Accumulate per-sample data into frequency-bin statistics."""
+    """Accumulate the drive's analysed peaks into frequency-bin statistics.
+
+    Each peak counts in its bin with its sample's floor (0 where it has none),
+    its speed and speed bin where the sample is moving, its sensor's label and
+    its sample's phase label.
+    """
     stats = PeakBinStats()
-
-    local_speed_bin = speed_bin_label
-    local_location = _location_label
-    local_top_peaks = _sample_top_peaks
-    local_floor_est = _estimate_strength_floor_amp_g
-    local_phase_str = _phase_to_str
-    floor_fn = _math_floor
-
-    # The dicts bound once, and what is the same for every peak of a sample
-    # worked out once per sample: the loop runs over every peak of the drive.
-    bin_amps, bin_floors = stats.bin_amps, stats.bin_floors
-    bin_speeds, bin_speed_amp_pairs = stats.bin_speeds, stats.bin_speed_amp_pairs
-    bin_location_counts = stats.bin_location_counts
-    bin_speed_bin_counts = stats.bin_speed_bin_counts
-    bin_phase_counts = stats.bin_phase_counts
-    for i, sample in enumerate(samples):
-        stats.n_samples += 1
-        speed = sample.speed_kmh
-        moving = speed if speed is not None and speed > 0 else None
-        sample_speed_bin = local_speed_bin(moving) if moving is not None else None
-        if sample_speed_bin is not None:
-            stats.total_speed_bin_counts[sample_speed_bin] += 1
-        floor_raw = local_floor_est(sample)
-        floor_amp = max(0.0, floor_raw if floor_raw is not None else 0.0)
-        location = local_location(sample, lang=lang)
-        if location:
+    stats.n_samples = table.size
+    moving = table.moving
+    stats.total_speed_bin_counts = table.speed_bin_counts()
+    located = table.located
+    location_counts = np.bincount(table.location_of, minlength=len(table.locations)).tolist()
+    for location, count, is_located in zip(
+        table.locations, location_counts, located.tolist(), strict=True
+    ):
+        if is_located and count:
             stats.total_locations.add(location)
-            stats.total_location_sample_counts[location] += 1
-        sample_phase: str | None = None
-        if has_phases and per_sample_phases is not None and i < len(per_sample_phases):
-            sample_phase = local_phase_str(per_sample_phases[i])
-        for hz, amp in local_top_peaks(sample):
-            if hz <= 0 or amp <= 0:
-                continue
-            bin_center = floor_fn(hz / freq_bin_hz) * freq_bin_hz + freq_bin_hz_half
-            bin_amps[bin_center].append(amp)
-            bin_floors[bin_center].append(floor_amp)
-            if moving is not None:
-                bin_speeds[bin_center].append(moving)
-                bin_speed_amp_pairs[bin_center].append((moving, amp))
-            if location:
-                bin_location_counts[bin_center][location] += 1
-            if sample_speed_bin is not None:
-                bin_speed_bin_counts[bin_center][sample_speed_bin] += 1
-            if sample_phase is not None:
-                bin_phase_counts[bin_center][sample_phase] += 1
+            stats.total_location_sample_counts[location] = count
+    phase_of, phases = _phase_codes(table, per_sample_phases, has_phases)
 
+    row = table.peak_row
+    centre = np.floor(table.peak_hz / freq_bin_hz) * freq_bin_hz + freq_bin_hz_half
+    bins, bin_of = groups_in_order(centre)
+    # The peaks bin by bin, each bin's in the drive's order.
+    order = np.argsort(bin_of, kind="stable")
+    bounds = np.searchsorted(bin_of[order], np.arange(len(bins) + 1)).tolist()
+    ordered_row = row[order]
+    amps = table.peak_amp[order].tolist()
+    floors = table.floor_or_zero[ordered_row].tolist()
+    peak_moving = moving[ordered_row]
+    moving_bounds = np.concatenate(([0], np.cumsum(peak_moving)))[bounds].tolist()
+    speed_amp_pairs = list(
+        zip(
+            table.speed_kmh[ordered_row][peak_moving].tolist(),
+            table.peak_amp[order][peak_moving].tolist(),
+            strict=True,
+        )
+    )
+    ordered_bin = bin_of[order]
+    location_counts_by_bin = counts_by_group(
+        ordered_bin,
+        table.location_of[ordered_row],
+        located[table.location_of[ordered_row]],
+        table.locations,
+    )
+    speed_bin_of = table.speed_bin_of[ordered_row]
+    speed_bin_counts_by_bin = counts_by_group(
+        ordered_bin, speed_bin_of, speed_bin_of >= 0, table.speed_bins
+    )
+    phase_counts_by_bin = (
+        counts_by_group(ordered_bin, phase_of[ordered_row], phase_of[ordered_row] >= 0, phases)
+        if phases
+        else {}
+    )
+    for number, centre_hz in enumerate(bins):
+        start, end = bounds[number], bounds[number + 1]
+        stats.bin_amps[centre_hz] = amps[start:end]
+        stats.bin_floors[centre_hz] = floors[start:end]
+        moving_start, moving_end = moving_bounds[number], moving_bounds[number + 1]
+        if moving_end > moving_start:
+            stats.bin_speed_amp_pairs[centre_hz] = speed_amp_pairs[moving_start:moving_end]
+        for counts, by_bin in (
+            (stats.bin_location_counts, location_counts_by_bin),
+            (stats.bin_speed_bin_counts, speed_bin_counts_by_bin),
+            (stats.bin_phase_counts, phase_counts_by_bin),
+        ):
+            if number in by_bin:
+                counts[centre_hz] = by_bin[number]
     return stats
+
+
+def _phase_codes(
+    table: DriveTable, per_sample_phases: PhaseLabels | None, has_phases: bool
+) -> tuple[npt.NDArray[np.intp], list[str]]:
+    """Each sample's phase label (``_phase_to_str``) as an index into the labels; -1 for none."""
+    if not has_phases or per_sample_phases is None:
+        return np.full(table.size, -1, dtype=np.intp), []
+    labels = [_phase_to_str(phase) for phase in per_sample_phases[: table.size]]
+    labels += [None] * (table.size - len(labels))
+    codes, names = coded(labels)
+    # A sample without a label is not counted.
+    none_at = names.index(None) if None in names else -1
+    if none_at >= 0:
+        codes = np.where(codes == none_at, -1, codes)
+    return codes, [name if name is not None else "" for name in names]

@@ -4,19 +4,16 @@ from __future__ import annotations
 
 from collections import defaultdict
 from collections.abc import Sequence
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, replace
 from math import floor
 
-from vibesensor.analysis._sample_metrics import (
-    _effective_baseline_floor,
-    _estimate_strength_floor_amp_g,
-    _run_noise_baseline_g,
-    _sample_top_peaks,
-)
-from vibesensor.analysis._sensor_locations import _location_label
-from vibesensor.analysis._types import Sample
+import numpy as np
+import numpy.typing as npt
+
+from vibesensor.analysis._sample_metrics import _effective_baseline_floor, _run_noise_baseline_g
 from vibesensor.analysis._view_types import PeakTableRowData
-from vibesensor.analysis.constants import MEMS_NOISE_FLOOR_G
+from vibesensor.analysis.constants import MEMS_NOISE_FLOOR_G, SPEED_BIN_WIDTH_KMH
+from vibesensor.analysis.drive_table import DriveTable, counts_by_group, groups_in_order
 from vibesensor.analysis.peaks.classification import classify_peak_type
 from vibesensor.analysis.peaks.statistics import (
     compute_peak_distribution_stats,
@@ -24,191 +21,124 @@ from vibesensor.analysis.peaks.statistics import (
     compute_peak_spatial_uniformity,
     compute_peak_speed_uniformity,
 )
-from vibesensor.analysis.speed_profile_helpers import (
-    _amplitude_weighted_speed_window,
-)
 from vibesensor.domain.finding import Finding as DomainFinding
-from vibesensor.domain.finding import speed_bin_label
+from vibesensor.domain.finding import speed_band_sort_key
 from vibesensor.dsp.vibration_strength import compute_db, compute_db_or_none
 
 
-@dataclass(frozen=True, slots=True)
-class _PeakSampleScanRow:
-    speed_kmh: float | None
-    peaks: list[tuple[float, float]]
-    floor_amp_g: float | None
-    location: str | None
-    speed_bin: str | None
-
-
-@dataclass(frozen=True, slots=True)
-class _PeakSampleScan:
-    sample_count: int
-    rows: list[_PeakSampleScanRow]
-    total_locations: set[str]
-    total_speed_bin_counts: dict[str, int]
-
-
-def _scan_peak_samples(samples: Sequence[Sample]) -> _PeakSampleScan:
-    """Scan typed samples once and collect the peak-facing data the table needs."""
-    rows: list[_PeakSampleScanRow] = []
-    total_locations: set[str] = set()
-    total_speed_bin_counts: dict[str, int] = defaultdict(int)
-    sample_count = 0
-
-    for sample in samples:
-        sample_count += 1
-        speed = sample.speed_kmh
-        peaks = [(hz, amp) for hz, amp in _sample_top_peaks(sample) if hz > 0 and amp > 0]
-        floor_amp = _estimate_strength_floor_amp_g(sample)
-        location = _location_label(sample)
-        speed_bin = speed_bin_label(speed) if speed is not None and speed > 0 else None
-
-        if location:
-            total_locations.add(location)
-        if speed_bin is not None:
-            total_speed_bin_counts[speed_bin] += 1
-
-        rows.append(
-            _PeakSampleScanRow(
-                speed_kmh=speed,
-                peaks=peaks,
-                floor_amp_g=floor_amp,
-                location=location,
-                speed_bin=speed_bin,
-            ),
-        )
-
-    return _PeakSampleScan(
-        sample_count=sample_count,
-        rows=rows,
-        total_locations=total_locations,
-        total_speed_bin_counts=dict(total_speed_bin_counts),
-    )
-
-
-@dataclass
+@dataclass(slots=True)
 class _PeakBucket:
-    """Internal accumulator for per-frequency-bin peak statistics."""
+    """One frequency bin's peak statistics."""
 
     frequency_hz: float
-    amps: list[float] = field(default_factory=list)
-    floor_amps: list[float] = field(default_factory=list)
-    speeds: list[float] = field(default_factory=list)
-    speed_amps: list[float] = field(default_factory=list)
-    location_counts: dict[str, int] = field(default_factory=dict)
-    speed_bin_counts: dict[str, int] = field(default_factory=dict)
-    # Computed during the statistics pass:
-    max_intensity_db: float | None = None
-    median_intensity_db: float | None = None
-    p95_intensity_db: float | None = None
-    run_noise_baseline_db: float | None = None
-    median_vs_run_noise_ratio: float = 0.0
-    p95_vs_run_noise_ratio: float = 0.0
-    strength_floor_db: float | None = None
-    strength_db: float | None = None
-    presence_ratio: float = 0.0
-    burstiness: float = 0.0
-    persistence_score: float = 0.0
-    spatial_uniformity: float | None = None
-    speed_uniformity: float | None = None
+    # The bin's place among the bins (``groups_in_order``).
+    number: int
+    max_intensity_db: float | None
+    median_intensity_db: float | None
+    p95_intensity_db: float | None
+    median_vs_run_noise_ratio: float
+    p95_vs_run_noise_ratio: float
+    strength_floor_db: float | None
+    presence_ratio: float
+    burstiness: float
+    persistence_score: float
+    spatial_uniformity: float | None
+    speed_uniformity: float | None
 
 
 def top_peaks_table_rows(
-    samples: list[Sample],
+    table: DriveTable,
     *,
     top_n: int = 12,
     freq_bin_hz: float = 1.0,
     run_noise_baseline_g: float | None = None,
 ) -> list[PeakTableRowData]:
-    """Build ranked peak-table rows using persistence-weighted scoring."""
-    resolved_scan = _scan_peak_samples(samples)
-    grouped: dict[float, _PeakBucket] = {}
-    total_locations = resolved_scan.total_locations
-    total_speed_bin_counts = resolved_scan.total_speed_bin_counts
+    """Build ranked peak-table rows using persistence-weighted scoring.
+
+    The drive's analysed peaks fall in bins of *freq_bin_hz* named by their low
+    edge, the bins in the order the peaks first fall in them; the *top_n* with
+    the highest persistence score (the first of equal ones) become the rows.
+    """
     if freq_bin_hz <= 0:
         freq_bin_hz = 1.0
-
     if run_noise_baseline_g is None:
-        run_noise_baseline_g = _run_noise_baseline_g(samples)
+        run_noise_baseline_g = _run_noise_baseline_g(table)
     baseline_floor = _effective_baseline_floor(run_noise_baseline_g)
-
-    n_samples = resolved_scan.sample_count
-    for row in resolved_scan.rows:
-        speed = row.speed_kmh
-        moving = speed if speed is not None and speed > 0 else None
-        sample_speed_bin = row.speed_bin
-        location = row.location
-        floor_amp = row.floor_amp_g
-        for hz, amp in row.peaks:
-            freq_key = floor(hz / freq_bin_hz) * freq_bin_hz
-            bucket = grouped.get(freq_key)
-            if bucket is None:
-                bucket = grouped[freq_key] = _PeakBucket(frequency_hz=freq_key)
-            bucket.amps.append(amp)
-            if floor_amp is not None:
-                bucket.floor_amps.append(floor_amp)
-            if moving is not None:
-                bucket.speeds.append(moving)
-                bucket.speed_amps.append(amp)
-            if location:
-                bucket.location_counts[location] = bucket.location_counts.get(location, 0) + 1
-            if sample_speed_bin is not None:
-                bucket.speed_bin_counts[sample_speed_bin] = (
-                    bucket.speed_bin_counts.get(sample_speed_bin, 0) + 1
-                )
-
     run_noise_baseline_db: float | None = (
-        compute_db(
-            _effective_baseline_floor(run_noise_baseline_g),
-            MEMS_NOISE_FLOOR_G,
-        )
-        if run_noise_baseline_g is not None
-        else None
+        compute_db(baseline_floor, MEMS_NOISE_FLOOR_G) if run_noise_baseline_g is not None else None
+    )
+    n_samples = table.size
+    located = table.located
+    total_locations = int(np.count_nonzero(located))
+    total_speed_bin_counts = table.speed_bin_counts()
+
+    frequencies, bin_of = groups_in_order(np.floor(table.peak_hz / freq_bin_hz) * freq_bin_hz)
+    # The peaks bin by bin, each bin's in the drive's order.
+    order = np.argsort(bin_of, kind="stable")
+    ordered_bin = bin_of[order]
+    bounds = np.searchsorted(ordered_bin, np.arange(len(frequencies) + 1)).tolist()
+    row = table.peak_row[order]
+    amps = table.peak_amp[order]
+    amp_values = amps.tolist()
+    with_floor = table.has_floor[row]
+    floors = table.floor_amp_g[row][with_floor].tolist()
+    floor_bounds = np.concatenate(([0], np.cumsum(with_floor)))[bounds].tolist()
+    location_of = table.location_of[row]
+    locations_by_bin = counts_by_group(
+        ordered_bin, location_of, located[location_of], table.locations
+    )
+    speed_bin_of = table.speed_bin_of[row]
+    speed_bins_by_bin = counts_by_group(
+        ordered_bin, speed_bin_of, speed_bin_of >= 0, table.speed_bins
     )
 
-    for bucket in grouped.values():
-        stats = compute_peak_distribution_stats(bucket.amps, bucket.floor_amps)
-        count = stats.sample_count
-        presence_ratio = min(1.0, count / max(1, n_samples))
+    buckets: list[_PeakBucket] = []
+    for number, frequency_hz in enumerate(frequencies):
+        stats = compute_peak_distribution_stats(
+            amp_values[bounds[number] : bounds[number + 1]],
+            floors[floor_bounds[number] : floor_bounds[number + 1]],
+        )
+        presence_ratio = min(1.0, stats.sample_count / max(1, n_samples))
         floor_amp_val = stats.median_floor_amp
-        max_intensity_db = compute_db_or_none(stats.max_amp, floor_amp_val)
-        median_intensity_db = compute_db_or_none(stats.median_amp, floor_amp_val)
-        p95_intensity_db = compute_db_or_none(stats.p95_amp, floor_amp_val)
-        spatial_uniformity = compute_peak_spatial_uniformity(
-            matching_locations=len(bucket.location_counts),
-            total_locations=len(total_locations),
+        buckets.append(
+            _PeakBucket(
+                frequency_hz=frequency_hz,
+                number=number,
+                max_intensity_db=compute_db_or_none(stats.max_amp, floor_amp_val),
+                median_intensity_db=compute_db_or_none(stats.median_amp, floor_amp_val),
+                p95_intensity_db=compute_db_or_none(stats.p95_amp, floor_amp_val),
+                median_vs_run_noise_ratio=stats.median_amp / baseline_floor,
+                p95_vs_run_noise_ratio=stats.p95_amp / baseline_floor,
+                strength_floor_db=compute_db_or_none(floor_amp_val, MEMS_NOISE_FLOOR_G),
+                presence_ratio=presence_ratio,
+                burstiness=stats.burstiness,
+                persistence_score=compute_peak_persistence_score(
+                    presence_ratio=presence_ratio,
+                    p95_amp=stats.p95_amp,
+                ),
+                spatial_uniformity=compute_peak_spatial_uniformity(
+                    matching_locations=len(locations_by_bin.get(number, {})),
+                    total_locations=total_locations,
+                ),
+                speed_uniformity=compute_peak_speed_uniformity(
+                    speed_bin_counts_for_bin=speed_bins_by_bin.get(number, {}),
+                    total_speed_bin_counts=total_speed_bin_counts,
+                ),
+            )
         )
-        speed_uniformity = compute_peak_speed_uniformity(
-            speed_bin_counts_for_bin=bucket.speed_bin_counts,
-            total_speed_bin_counts=total_speed_bin_counts,
-        )
-        bucket.max_intensity_db = max_intensity_db
-        bucket.median_intensity_db = median_intensity_db
-        bucket.p95_intensity_db = p95_intensity_db
-        bucket.run_noise_baseline_db = run_noise_baseline_db
-        bucket.median_vs_run_noise_ratio = stats.median_amp / baseline_floor
-        bucket.p95_vs_run_noise_ratio = stats.p95_amp / baseline_floor
-        bucket.strength_floor_db = compute_db_or_none(floor_amp_val, MEMS_NOISE_FLOOR_G)
-        bucket.strength_db = p95_intensity_db
-        bucket.presence_ratio = presence_ratio
-        bucket.burstiness = stats.burstiness
-        bucket.persistence_score = compute_peak_persistence_score(
-            presence_ratio=presence_ratio,
-            p95_amp=stats.p95_amp,
-        )
-        bucket.spatial_uniformity = spatial_uniformity
-        bucket.speed_uniformity = speed_uniformity
 
-    ordered = sorted(
-        grouped.values(),
-        key=lambda bucket: bucket.persistence_score,
-        reverse=True,
-    )[:top_n]
+    ordered = sorted(buckets, key=lambda bucket: bucket.persistence_score, reverse=True)[:top_n]
 
+    # The peaks that weigh in a bin's speed window: a moving sample's, both values finite.
+    weighed = (speed_bin_of >= 0) & np.isfinite(table.speed_kmh[row]) & np.isfinite(amps)
+    band_lows = [speed_band_sort_key(label) for label in table.speed_bins]
     rows: list[PeakTableRowData] = []
     for idx, item in enumerate(ordered, start=1):
-        low_speed, high_speed = _amplitude_weighted_speed_window(item.speeds, item.speed_amps)
+        start, end = bounds[item.number], bounds[item.number + 1]
+        in_window = weighed[start:end]
+        low_speed, high_speed = _amplitude_weighted_speed_window(
+            speed_bin_of[start:end][in_window], amps[start:end][in_window], band_lows
+        )
         speed_band = (
             f"{low_speed:.0f}-{high_speed:.0f} km/h"
             if low_speed is not None and high_speed is not None
@@ -223,11 +153,11 @@ def top_peaks_table_rows(
                 max_intensity_db=item.max_intensity_db,
                 median_intensity_db=item.median_intensity_db,
                 p95_intensity_db=item.p95_intensity_db,
-                run_noise_baseline_db=item.run_noise_baseline_db,
+                run_noise_baseline_db=run_noise_baseline_db,
                 median_vs_run_noise_ratio=item.median_vs_run_noise_ratio,
                 p95_vs_run_noise_ratio=item.p95_vs_run_noise_ratio,
                 strength_floor_db=item.strength_floor_db,
-                strength_db=item.strength_db,
+                strength_db=item.p95_intensity_db,
                 presence_ratio=item.presence_ratio,
                 burstiness=item.burstiness,
                 persistence_score=item.persistence_score,
@@ -242,6 +172,25 @@ def top_peaks_table_rows(
             ),
         )
     return rows
+
+
+def _amplitude_weighted_speed_window(
+    speed_bin_of: npt.NDArray[np.intp],
+    amps: npt.NDArray[np.float64],
+    band_lows: Sequence[int],
+) -> tuple[float | None, float | None]:
+    """The speed bin with the most amplitude summed in it (the faster of equal ones), as a window.
+
+    *speed_bin_of* indexes the speed bins whose low ends are *band_lows*.
+    """
+    if not speed_bin_of.size:
+        return (None, None)
+    # Each bin's amplitudes summed one by one in the peaks' order.
+    weights = np.bincount(speed_bin_of, weights=amps, minlength=len(band_lows)).tolist()
+    present = np.flatnonzero(np.bincount(speed_bin_of, minlength=len(band_lows))).tolist()
+    strongest = max(present, key=lambda code: (weights[code], band_lows[code]))
+    low_kmh = float(band_lows[strongest])
+    return (low_kmh, low_kmh + float(SPEED_BIN_WIDTH_KMH))
 
 
 _MIN_ORDER_POINTS_PER_ROW = 3

@@ -86,30 +86,6 @@ def speed_typed_in(speed_source: str | None) -> bool:
     return speed_source in _MANUAL_SPEED_SOURCES
 
 
-def _amplitude_weighted_speed_window(
-    speeds: Sequence[float],
-    amplitudes: Sequence[float],
-) -> tuple[float | None, float | None]:
-    """Return the dominant amplitude-weighted speed bin window."""
-    bin_weight: dict[str, float] = defaultdict(float)
-    for speed, amp in zip(speeds, amplitudes, strict=False):
-        speed_val = _as_float(speed)
-        amp_val = _as_float(amp)
-        if speed_val is None or speed_val <= 0 or amp_val is None or amp_val <= 0:
-            continue
-        bin_weight[speed_bin_label(speed_val)] += amp_val
-
-    if not bin_weight:
-        return (None, None)
-
-    strongest_bin = max(
-        bin_weight.items(),
-        key=lambda item: (item[1], speed_band_sort_key(item[0])),
-    )[0]
-    low_kmh = float(speed_band_sort_key(strongest_bin))
-    return (low_kmh, low_kmh + float(SPEED_BIN_WIDTH_KMH))
-
-
 def _loudest_speed_window(
     speeds: Sequence[float],
     amplitudes: Sequence[float],

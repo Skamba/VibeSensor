@@ -14,13 +14,14 @@ tones" in ``docs/order_tracking.md``.
 from __future__ import annotations
 
 from collections import defaultdict
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 
-from vibesensor.analysis._sample_metrics import _estimate_strength_floor_amp_g
-from vibesensor.analysis._types import Sample
+import numpy as np
+import numpy.typing as npt
+
+from vibesensor.analysis.drive_table import DriveTable
 from vibesensor.dsp.fixed_tones import (
     RingingTone,
-    clear_peak_hz,
     ringing,
     ringing_tone,
     sensor_fixed_tones,
@@ -28,6 +29,7 @@ from vibesensor.dsp.fixed_tones import (
     tone_speed_bin,
     tone_width_hz,
 )
+from vibesensor.dsp.line_significance import HEARD_OVER_FLOOR
 from vibesensor.dsp.window_spectrum import WindowSpectrum
 
 __all__ = [
@@ -37,47 +39,57 @@ __all__ = [
 ]
 
 
-def fixed_tones(
-    samples: Sequence[Sample],
-    peaks: Sequence[Sequence[tuple[float, float]]],
-) -> list[tuple[float, ...]]:
-    """The fixed tones (Hz) of each spectrum's sensor (``sensor_fixed_tones``).
+def fixed_tones(table: DriveTable) -> dict[str, tuple[float, ...]]:
+    """The fixed tones (Hz) of each sensor (``sensor_fixed_tones``), by client id.
 
-    Only spectra taken while moving judge what is fixed; a tone found that way
-    is a tone of every spectrum of that sensor.
+    Only spectra taken while moving judge what is fixed, each by its analysed
+    peaks that stand out from its floor (``clear_peak_hz``); a tone found that
+    way is a tone of every spectrum of that sensor.
     """
-    by_sensor: dict[str, list[tuple[int, list[float]]]] = defaultdict(list)
-    for index, sample in enumerate(samples):
-        if sample.speed_kmh is not None and sample.speed_kmh > 0 and peaks[index]:
-            floor_amp = _estimate_strength_floor_amp_g(sample) or 0.0
-            by_sensor[sample.client_id].append(
-                (tone_speed_bin(float(sample.speed_kmh)), clear_peak_hz(peaks[index], floor_amp))
-            )
-    by_client = {
-        sensor: tuple(sensor_fixed_tones(spectra)) for sensor, spectra in by_sensor.items()
+    peak_row = table.peak_row
+    # ``clear_peak_hz``: 6 dB over the spectrum's floor (0 where it has none).
+    clear = table.peak_amp >= HEARD_OVER_FLOOR * table.floor_or_zero[peak_row]
+    clear_hz = table.peak_hz[clear].tolist()
+    clear_start = np.zeros(table.size + 1, dtype=np.intp)
+    np.cumsum(np.bincount(peak_row[clear], minlength=table.size), out=clear_start[1:])
+    judged = np.flatnonzero(table.moving & (np.diff(table.peak_start) > 0))
+    by_sensor: dict[int, list[tuple[int, list[float]]]] = defaultdict(list)
+    for client, speed_kmh, start, end in zip(
+        table.client_of[judged].tolist(),
+        table.speed_kmh[judged].tolist(),
+        clear_start[judged].tolist(),
+        clear_start[judged + 1].tolist(),
+        strict=True,
+    ):
+        by_sensor[client].append((tone_speed_bin(speed_kmh), clear_hz[start:end]))
+    return {
+        table.clients[client]: tuple(sensor_fixed_tones(spectra))
+        for client, spectra in by_sensor.items()
     }
-    return [by_client.get(sample.client_id, ()) for sample in samples]
-
-
-def _near_fixed_tone(hz: float, half_width_hz: float, tones: Sequence[float]) -> bool:
-    """Whether a band ``hz ± half_width_hz`` takes in one of *tones*."""
-    return any(abs(hz - tone) <= half_width_hz + tone_width_hz(tone) for tone in tones)
 
 
 def without_fixed_tones(
-    peaks: Sequence[Sequence[tuple[float, float]]],
-    tones: Sequence[Sequence[float]],
-) -> list[list[tuple[float, float]]]:
-    """Each spectrum's peaks without those at its sensor's fixed tones (``fixed_tones``)."""
-    return [
-        [(hz, amp) for hz, amp in sample_peaks if not _near_fixed_tone(hz, 0.0, sample_tones)]
-        for sample_peaks, sample_tones in zip(peaks, tones, strict=True)
-    ]
+    table: DriveTable, tones: Mapping[str, Sequence[float]]
+) -> npt.NDArray[np.bool_]:
+    """Which analysed peaks are clear of their sensor's fixed tones (``fixed_tones``).
+
+    A peak within a tone's width (``tone_width_hz``) of one is at it.
+    """
+    clear = np.ones(table.peak_row.size, dtype=np.bool_)
+    peak_client = table.client_of[table.peak_row]
+    for client, name in enumerate(table.clients):
+        at_client = np.flatnonzero(peak_client == client)
+        if not at_client.size:
+            continue
+        hz = table.peak_hz[at_client]
+        for tone in tones.get(name, ()):
+            clear[at_client[np.abs(hz - tone) <= 0.0 + tone_width_hz(tone)]] = False
+    return clear
 
 
 def ringing_tones(
-    samples: Sequence[Sample],
-    tones: Sequence[Sequence[float]],
+    table: DriveTable,
+    tones: Mapping[str, Sequence[float]],
     window_s: float,
 ) -> list[tuple[RingingTone, ...]]:
     """Each spectrum's sensor's fixed tones that ring as a line, not a broad hump.
@@ -88,30 +100,33 @@ def ringing_tones(
     (``WindowSpectrum.line_read``), and judged by ``ringing``: it rings at a
     sensor where its reads stand out of their scatter there, whether or not
     the peak picker held it fixed at that sensor. A ringing tone reaches as
-    far as its power leaks.
+    far as its power leaks. *tones* are each sensor's fixed tones by client id.
     """
-    by_sensor: dict[str, list[tuple[int, WindowSpectrum]]] = defaultdict(list)
-    for index, sample in enumerate(samples):
-        if sample.spectrum is not None:
-            by_sensor[sample.client_id].append((index, sample.spectrum))
-    candidates = sorted({tone for spectra in by_sensor.values() for tone in tones[spectra[0][0]]})
-    ringing_at: dict[str, tuple[RingingTone, ...]] = {}
-    for sensor, spectra in by_sensor.items():
+    by_sensor: dict[int, list[tuple[float, WindowSpectrum]]] = defaultdict(list)
+    for client, time_s, spectrum in zip(
+        table.client_of.tolist(), table.t_s.tolist(), table.spectra, strict=True
+    ):
+        if spectrum is not None:
+            by_sensor[client].append((time_s, spectrum))
+    candidates = sorted(
+        {tone for client in by_sensor for tone in tones.get(table.clients[client], ())}
+    )
+    ringing_at: list[tuple[RingingTone, ...]] = [()] * len(table.clients)
+    for client, spectra in by_sensor.items():
         kept: list[RingingTone] = []
         for group in tone_groups(candidates):
             centre, half_width = (group[0] + group[-1]) / 2.0, (group[-1] - group[0]) / 2.0
             excess: list[float] = []
             flanks: list[float] = []
             t_s: list[float] = []
-            for index, spectrum in spectra:
+            for t, spectrum in spectra:
                 read = spectrum.line_read(centre, half_width)
                 if read is not None:
                     excess.append(read.excess)
                     flanks.append(read.flanks)
-                    t = samples[index].t_s
-                    t_s.append(t if t is not None else float("nan"))
+                    t_s.append(t)
             rings = ringing(excess, flanks, t_s, window_s)
             if rings is not None:
                 kept.extend(ringing_tone(group, *rings, spectra[0][1].bin_hz))
-        ringing_at[sensor] = tuple(kept)
-    return [ringing_at.get(sample.client_id, ()) for sample in samples]
+        ringing_at[client] = tuple(kept)
+    return [ringing_at[client] for client in table.client_of.tolist()]

@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field, replace
-from functools import lru_cache
+from dataclasses import dataclass, field
 from typing import Literal
 
 from vibesensor.common.json_types import JsonObject
@@ -15,7 +14,6 @@ from vibesensor.domain.engine_profile import EngineProfile
 from vibesensor.domain.order_reference import OrderReferenceSpec
 from vibesensor.domain.vehicle_configuration import VehicleDrivetrain, VehicleFuelType
 from vibesensor.power.monitor import PowerIssue
-from vibesensor.recording.sensor_frame import SensorFrame
 from vibesensor.settings.order_reference_settings import order_reference_spec_from_snapshot
 
 __all__ = [
@@ -345,19 +343,6 @@ class RunMetadata:
         value = self.analysis_settings.current_gear_ratio
         return value if value > 0 else None
 
-    def order_reference_spec_for(
-        self,
-        sample: SensorFrame | None = None,
-    ) -> OrderReferenceSpec | None:
-        spec = self.order_reference_spec
-        if sample is None or spec is None:
-            return spec
-        final_drive = sample.final_drive_ratio
-        gear_ratio = sample.gear
-        if final_drive is None and gear_ratio is None:
-            return spec
-        return _spec_at_ratios(spec, final_drive, gear_ratio)
-
     @property
     def tire_circumference_m(self) -> float | None:
         spec = self.order_reference_spec
@@ -381,17 +366,3 @@ class RunMetadata:
                 else spec.supports_engine_reference
             )
         )
-
-
-# Every sample of a drive asks for its car's spec at its own ratios, which
-# take a few values over a drive; typed, so 3 and 3.0 stay apart.
-@lru_cache(maxsize=32, typed=True)
-def _spec_at_ratios(
-    spec: OrderReferenceSpec, final_drive: float | None, gear_ratio: float | None
-) -> OrderReferenceSpec:
-    """*spec* at a sample's final-drive and gear ratios, where it has them."""
-    return replace(
-        spec,
-        final_drive_ratio=final_drive if final_drive is not None else spec.final_drive_ratio,
-        current_gear_ratio=gear_ratio if gear_ratio is not None else spec.current_gear_ratio,
-    )

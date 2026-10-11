@@ -113,8 +113,8 @@ path caps the loop's duty cycle at 50%. Even at a 5–10× slower Raspberry Pi
   harmonic comb (`_wheel_harmonic_peaks`) reads only which peaks each
   harmonic matched (`matched_peaks_for_hypothesis`), not the whole match.
   The spectra's grouping by shared rows array is worked out once per drive
-  (`spectra_by_rows`) rather than per hypothesis, an order's reference spec
-  at given ratios is cached, a sample's location label is remembered, and
+  (`spectra_by_rows`) rather than per hypothesis, a sample's location label
+  is remembered, and
   the peak findings check a frequency bin against the orders' frequencies
   by bisection rather than against every one. Measured on a 30-minute,
   4-sensor drive on the Pi: the analyze step went from 29.8 s to 21.2 s

@@ -32,7 +32,7 @@ One package per feature under `apps/server/vibesensor/`; each owns its types, lo
 - `live/`: signal processor, processing loop, live WebSocket payload and broadcaster.
 - `dsp/`: FFT, order bands, canonical dB strength math, DSP constants.
 - `recording/`: `RunRecorder`, sample flush, raw-capture writer, run metadata/sensor-frame codecs, capture readiness, the guided brake step's stop counter.
-- `analysis/`: post-run diagnostics (findings, `orders/`, `peaks/`) and the post-analysis worker.
+- `analysis/`: post-run diagnostics (findings, `orders/`, `peaks/`) and the post-analysis worker; `drive_table.py` holds a drive's samples as columns and its analysed peaks as one flat table, built once per analysis and read by the findings stages ("Drive table" in `docs/analysis_pipeline.md`).
 - `summary/`: the persisted analysis-summary contract and its (de)serialization; read by history, report, and web.
 - `report/`: PDF report of a stored run: `view_model.py` (stored analysis + run metadata -> localized text; `build_owner_page` is also History's opened-run page 1), `pdf.py` (ReportLab pages and charts), `service.py` (history delivery + cache), `i18n.py`.
 - `history/`: `HistoryDB` (SQLite), history queries/projections, exports.

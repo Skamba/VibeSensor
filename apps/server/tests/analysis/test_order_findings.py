@@ -13,6 +13,7 @@ from test_support.synthetic_samples import make_sample
 
 from vibesensor.analysis._reference_resolution import ESTIMATED_RPM_SOURCE
 from vibesensor.analysis._run_input import normalize_run_metadata
+from vibesensor.analysis.drive_table import build_drive_table
 from vibesensor.analysis.orders.brake_attribution import only_while_braking
 from vibesensor.analysis.orders.heuristics import suppress_engine_aliases
 from vibesensor.analysis.orders.match_rate import (
@@ -20,7 +21,7 @@ from vibesensor.analysis.orders.match_rate import (
     order_min_match_rate,
 )
 from vibesensor.analysis.orders.matching import OrderMatchAccumulator
-from vibesensor.analysis.orders.physics import _driveshaft_hz
+from vibesensor.analysis.orders.physics import ReferenceColumns, reference_columns
 from vibesensor.domain.order_match import OrderMatchObservation
 from vibesensor.recording.run_metadata import run_metadata_from_mapping
 from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
@@ -428,8 +429,15 @@ def _context(overrides: dict | None = None):
     return normalize_run_metadata(run_metadata_from_mapping(overrides or {}), file_name="test")
 
 
-def _sample(**fields: object):
-    return sensor_frames_from_mappings([fields])[0]
+def _driveshaft(
+    sample: dict, overrides: dict | None, tire_circumference_m: float | None
+) -> ReferenceColumns:
+    return reference_columns(
+        "driveshaft",
+        build_drive_table(sensor_frames_from_mappings([sample])),
+        _context(overrides),
+        tire_circumference_m,
+    )
 
 
 @pytest.mark.parametrize(
@@ -444,17 +452,14 @@ def _sample(**fields: object):
 def test_driveshaft_order_needs_tire_and_final_drive(
     sample: dict, overrides: dict, tire_m: float | None
 ) -> None:
-    assert (
-        _driveshaft_hz(_sample(**sample), _context(overrides), tire_circumference_m=tire_m) is None
-    )
+    assert not _driveshaft(sample, overrides, tire_m).known[0]
 
 
 def test_driveshaft_order_is_wheel_rate_times_final_drive() -> None:
     # 72 km/h = 20 m/s on a 2.0 m tire: 10 wheel turns/s, 35 shaft turns/s at 3.5:1.
-    result = _driveshaft_hz(
-        _sample(speed_kmh=72.0, final_drive_ratio=3.5), _context(), tire_circumference_m=2.0
-    )
-    assert result == pytest.approx(35.0)
+    result = _driveshaft({"speed_kmh": 72.0, "final_drive_ratio": 3.5}, None, 2.0)
+    assert result.known[0]
+    assert result.hz[0] == pytest.approx(35.0)
 
 
 def test_a_driving_phase_rescues_the_match_rate_of_an_order_there_alone() -> None:

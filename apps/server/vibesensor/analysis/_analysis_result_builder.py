@@ -61,7 +61,7 @@ def build_analysis_result(
     summary_phase_info = build_phase_summary(context.prepared.phase_segments)
     peaks_table = annotate_peak_rows_with_order_labels(
         top_peaks_table_rows(
-            list(context.samples),
+            context.prepared.drive_table,
             run_noise_baseline_g=context.prepared.run_noise_baseline_g,
         ),
         findings_bundle.domain_findings,

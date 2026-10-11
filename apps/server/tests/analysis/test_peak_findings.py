@@ -8,6 +8,7 @@ from test_support.report_helpers import analysis_sample_with_peaks as sample
 
 from vibesensor.analysis._sample_metrics import _estimate_strength_floor_amp_g
 from vibesensor.analysis._view_types import PeakTableRowData
+from vibesensor.analysis.drive_table import DriveTable, build_drive_table
 from vibesensor.analysis.findings import _build_persistent_peak_findings
 from vibesensor.analysis.peaks.classification import classify_peak_type
 from vibesensor.analysis.peaks.scoring import _compute_peak_confidence
@@ -22,11 +23,14 @@ from vibesensor.dsp.vibration_strength import percentile
 from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
 
 
+def _table(samples: list[dict]) -> DriveTable:
+    return build_drive_table(sensor_frames_from_mappings(samples))
+
+
 def _findings_at(samples: list[dict], frequency: str) -> list:
     findings = _build_persistent_peak_findings(
-        samples=sensor_frames_from_mappings(samples),
+        table=_table(samples),
         order_finding_freqs=set(),
-        lang="en",
         per_sample_phases=None,
     )
     return [
@@ -87,7 +91,7 @@ def test_a_persistent_peak_ranks_above_a_single_loud_spike() -> None:
             peaks.append({"hz": 80.0, "amp": 1.0})
         samples.append(sample(float(i) * 0.5, 85.0, peaks))
 
-    rows = top_peaks_table_rows(sensor_frames_from_mappings(samples))
+    rows = top_peaks_table_rows(_table(samples))
 
     assert len(rows) >= 2
     assert rows[0].frequency_hz == 30.0
@@ -108,7 +112,7 @@ def test_a_peak_seen_evenly_everywhere_is_baseline_noise() -> None:
                 )
 
     assert _findings_at(samples, "25")[0].peaks.classification == "baseline_noise"
-    rows = top_peaks_table_rows(sensor_frames_from_mappings(samples), top_n=12, freq_bin_hz=1.0)
+    rows = top_peaks_table_rows(_table(samples), top_n=12, freq_bin_hz=1.0)
     row_25 = next(row for row in rows if abs(row.frequency_hz - 25.0) <= 0.5)
     assert row_25.peaks.classification == "baseline_noise"
 

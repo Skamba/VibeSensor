@@ -3,11 +3,15 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import TYPE_CHECKING
 
 from vibesensor.analysis._types import Sample
 from vibesensor.analysis.constants import MEMS_NOISE_FLOOR_G, MIN_ANALYSIS_FREQ_HZ
 from vibesensor.domain.strength_metrics import StrengthPeak
 from vibesensor.dsp.vibration_strength import percentile, vibration_strength_db_scalar
+
+if TYPE_CHECKING:
+    from vibesensor.analysis.drive_table import DriveTable
 
 
 def _sensor_limit_g(sensor_model: object) -> float | None:
@@ -62,27 +66,28 @@ def _sample_most_prominent_peak(sample: Sample) -> tuple[float, StrengthPeak] | 
 
 
 def _estimate_strength_floor_amp_g(sample: Sample) -> float | None:
-    """Estimate per-sample floor amplitude."""
+    """Estimate per-sample floor amplitude: its own where over 0, else from its peaks."""
     floor_amp = sample.strength_floor_amp_g
     if floor_amp is not None and floor_amp > 0:
         return float(floor_amp)
-    peak_amps = sorted(amp for _hz, amp in _sample_top_peaks(sample) if amp > 0)
-    if len(peak_amps) < 3:
+    return _floor_from_peaks([peak.amp for peak in _analysed_peaks(sample)])
+
+
+def _floor_from_peaks(peak_amps: Sequence[float]) -> float | None:
+    """A sample's floor from its analysed peaks' amplitudes: the quiet end of three or more."""
+    ordered = sorted(amp for amp in peak_amps if amp > 0)
+    if len(ordered) < 3:
         return None
-    floor_from_peaks = float(percentile(peak_amps, 0.20))
-    return float(floor_from_peaks) if floor_from_peaks > 0 else None
+    floor_from_peaks = float(percentile(ordered, 0.20))
+    return floor_from_peaks if floor_from_peaks > 0 else None
 
 
-def _run_noise_baseline_g(samples: Sequence[Sample]) -> float | None:
+def _run_noise_baseline_g(table: DriveTable) -> float | None:
     """Estimate run-level noise baseline as median of per-sample floor estimates."""
-    floors: list[float] = []
-    for sample in samples:
-        floor_amp = _estimate_strength_floor_amp_g(sample)
-        if floor_amp is not None:
-            floors.append(floor_amp)
-    if not floors:
+    floors = table.floor_amp_g[table.has_floor]
+    if not floors.size:
         return None
-    return float(percentile(sorted(floors), 0.50))
+    return float(percentile(sorted(floors.tolist()), 0.50))
 
 
 def _effective_baseline_floor(
