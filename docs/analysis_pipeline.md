@@ -64,15 +64,16 @@ window's combined spectrum in memory (never persisted), so order tracking can
 read each order's level at its line at every sensor ("Order-tracked reads" in
 `docs/order_tracking.md`).
 
-The replay rebuilds a sample's strength fields in place on its `SensorFrame`
-from those columns and gathers the peaks it rebuilds straight into columns
-(`SamplePeaks` in `recording/sample_peaks.py`), with no metrics dict or peak
-object per window. The loader leaves every loaded frame's
-`top_peaks` empty: the stored peaks are read, straight into columns
+The loader decodes the kept rows straight into columns, without their peaks
+(`HistoryDB.load_run_sample_columns`; "Sample columns" below). The replay
+finds each sensor's samples' windows from those columns, writes each rebuilt
+sample's last reading, strength fields and spectrum into them in place, and
+gathers the peaks it rebuilds straight into columns (`SamplePeaks` in
+`recording/sample_peaks.py`), with no metrics dict, peak or sample object per
+window. The stored peaks are read, straight into columns
 (`HistoryDB.load_run_peaks_by_id`), only for the samples the replay does not
 rebuild, and joined with the rebuilt ones as `DiagnosticsRunInput.peaks`. The
-analysis reads a sample's peaks there (through the drive table below), never
-from `SensorFrame.top_peaks`.
+analysis reads a sample's peaks there (through the drive table below).
 
 The summary analysis is the single diagnosis: the UI insights endpoint and the
 PDF report both read its `findings`, `top_causes`, and `most_likely_origin`.
@@ -96,7 +97,7 @@ RunRecorder.stop_recording()            # recording/recorder.py
        └─ PostAnalysisWorker.schedule() # analysis/post_analysis.py
             └─ _worker_loop()           # daemon thread, sequential queue
                  └─ _run_post_analysis(run_id)
-                      ├─ load metadata, then a light pass over the summary rows picks ≤ 12,000 rows; only those are decoded, without their peaks
+                      ├─ load metadata, then a light pass over the summary rows picks ≤ 12,000 rows; only those are decoded, into columns (SampleColumns), without their peaks
                       ├─ load raw manifest; replay memory-maps the raw waveform (read-only) via RawRunCapture
                       ├─ build_post_analysis_input(...)
                       │    ├─ raw_capture_replay.py rebuilds FFT-derived strength fields (in place) and peaks from raw windows when possible
@@ -167,6 +168,25 @@ give them, and every grouping over the table (`first_seen`,
 over the samples does; sums stay Python `sum` or a sequential `np.bincount`
 where values were added one at a time. That keeps the stored analysis
 byte-identical to the per-sample code it replaced.
+
+### Sample columns
+
+The drive's samples reach the analysis as columns too (`SampleColumns` in
+`recording/sample_columns.py`, `DiagnosticsRunInput.samples`): one NumPy array
+per field the analysis reads, NaN where a sample has no value (a stored float
+is finite or NULL, and the replay writes one that is not finite as none), and
+each text field (sensor, speed and RPM source, strength bucket) as a code into
+its distinct values in first-seen order. The drive table shares their arrays.
+The stages that walk the samples themselves read the columns: validation,
+phase segmentation, the accel and frame-integrity statistics, the speed
+profile and source, sensor locations and their coverage, the per-location
+intensity and speed breakdowns, loose mounts, the brake attribution, the
+data-quality payload and the diagnosis. They group with `first_seen` and
+`rows_of_groups` (each group's rows in sample order) and keep Python `sum`,
+`max`, `Counter` and the like over lists in sample order where the result is
+a float or breaks ties by order, so the stored analysis stays byte-identical
+to the per-sample code they replaced. `SensorFrame` stays the live and
+recording side's sample.
 
 ## Data Flow
 
