@@ -110,7 +110,7 @@ def _import_pyfftw() -> ModuleType:
     drop-in scipy FFT functions. This module uses ``pyfftw.FFTW`` alone, and
     nothing else in the server imports scipy. A ``None`` entry in
     ``sys.modules`` makes that optional import fail, so pyfftw skips them:
-    about 30 MB less resident and over a second less on the first FFT on the
+    about 17 MB less resident and over a second less on the first FFT on the
     Pi. The entry is removed again, so a later ``import scipy.fftpack`` works.
     """
     with _PYFFTW_IMPORT_LOCK:

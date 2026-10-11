@@ -135,7 +135,7 @@ def test_server_start_leaves_slow_imports_for_first_use(tmp_path: Path) -> None:
 
 
 def test_first_fft_loads_pyfftw_without_scipy() -> None:
-    """pyfftw's optional scipy interfaces (~30 MB, >1 s on the Pi) stay unloaded."""
+    """pyfftw's optional scipy interfaces (~17 MB, >1 s on the Pi) stay unloaded."""
     result = _run_import_probe(
         """
 import sys
