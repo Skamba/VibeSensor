@@ -7,7 +7,6 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from vibesensor.analysis._sample_metrics import _run_noise_baseline_g
-from vibesensor.analysis._types import Sample
 from vibesensor.analysis._view_types import (
     PhaseSpeedBreakdownRowData,
     SpeedBreakdownRowData,
@@ -33,6 +32,7 @@ from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
 from vibesensor.domain.speed_profile import SpeedProfile
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
 from vibesensor.recording.run_schema import RunMetadata
+from vibesensor.recording.sample_columns import SampleColumns
 from vibesensor.recording.sample_peaks import SamplePeaks
 
 
@@ -88,7 +88,7 @@ class PreparedRunData:
 
 def prepare_run_data(
     context: RunMetadata,
-    samples: Sequence[Sample],
+    samples: SampleColumns,
     peaks: SamplePeaks,
 ) -> PreparedRunData:
     """Prepare shared timing, speed, and phase context for summary generation.
@@ -106,7 +106,7 @@ def prepare_run_data(
     ) = prepare_speed_and_phases(samples)
     drive_table = build_drive_table(samples, peaks)
     run_noise_baseline_g = _run_noise_baseline_g(drive_table)
-    speed_breakdown = _speed_breakdown(samples) if speed_sufficient else []
+    speed_breakdown = _speed_breakdown(samples, drive_table) if speed_sufficient else []
     speed_breakdown_skipped_reason: JsonObject | None = None
     if not speed_sufficient:
         speed_breakdown_skipped_reason = i18n_ref(

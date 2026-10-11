@@ -9,8 +9,10 @@ strength.
 
 from __future__ import annotations
 
+import math
+
 import pytest
-from test_support.analysis import stored_peaks_of
+from test_support.analysis import sample_columns_of, stored_peaks_of
 from test_support.raw_capture_fixtures import (
     post_analysis_metadata,
     sine_xyz_i16,
@@ -60,7 +62,7 @@ def _run(
             run_id=run_id,
             metadata=post_analysis_metadata(run_id, **(metadata or {})),
             language="en",
-            samples=samples,
+            samples=sample_columns_of(samples),
             stored_peaks=stored_peaks_of(samples),
             raw_capture=raw_capture,
             **loaded,  # type: ignore[arg-type]
@@ -292,8 +294,8 @@ def test_rows_without_stored_strength_get_it_from_peak_and_floor() -> None:
         ],
     )
 
-    assert run.samples[0].vibration_strength_db is not None
-    assert run.samples[0].strength_bucket
+    assert not math.isnan(run.samples.vibration_strength_db[0])
+    assert run.samples.strength_bucket_of[0] >= 0
 
 
 def test_raw_backed_rows_drive_the_per_location_intensity() -> None:
@@ -312,8 +314,8 @@ def test_raw_backed_rows_drive_the_per_location_intensity() -> None:
         raw_capture=_raw_capture("run-raw-intensity"),
         metadata={"feature_interval_s": None},
     )
-    raw_backed_strength = run.samples[0].vibration_strength_db
-    assert raw_backed_strength is not None and raw_backed_strength > 0.0
+    raw_backed_strength = float(run.samples.vibration_strength_db[0])
+    assert raw_backed_strength > 0.0
 
     intensity = build_post_analysis_summary(run)["sensor_intensity_by_location"]
 

@@ -9,7 +9,7 @@ import numpy as np
 import numpy.typing as npt
 
 from vibesensor.analysis._sample_metrics import _run_noise_baseline_g
-from vibesensor.analysis._types import PhaseLabels, Sample
+from vibesensor.analysis._types import PhaseLabels
 from vibesensor.analysis.constants import ORDER_SUPPRESS_PERSISTENT_MIN_CONF
 from vibesensor.analysis.drive_table import DriveTable
 from vibesensor.analysis.peaks.accumulation import (
@@ -24,6 +24,7 @@ from vibesensor.analysis.phase_segmentation import (
     segment_run_phases,
 )
 from vibesensor.domain.finding import Finding as DomainFinding
+from vibesensor.recording.sample_columns import SampleColumns
 
 PERSISTENT_PEAK_MAX_FINDINGS = 3
 
@@ -38,10 +39,10 @@ _MIN_DIAGNOSTIC_SAMPLES = 5
 
 
 def prepare_analysis_samples(
-    samples: list[Sample],
+    samples: SampleColumns,
     *,
     per_sample_phases: PhaseLabels | None,
-) -> tuple[list[Sample], npt.NDArray[np.intp] | None, Sequence[DrivingPhase]]:
+) -> tuple[SampleColumns, npt.NDArray[np.intp] | None, Sequence[DrivingPhase]]:
     """The samples the findings analyse, their indexes among *samples*, and their phases.
 
     The indexes are ``None`` where all samples are kept: too few are left once
@@ -56,16 +57,13 @@ def prepare_analysis_samples(
         resolved_phases, _ = segment_run_phases(samples)
 
     diagnostic_mask = diagnostic_sample_mask(resolved_phases)
-    diagnostic_samples = [
-        sample for sample, keep in zip(samples, diagnostic_mask, strict=True) if keep
-    ]
-    if len(diagnostic_samples) < _MIN_DIAGNOSTIC_SAMPLES:
+    rows = np.flatnonzero(np.asarray(diagnostic_mask, dtype=np.bool_))
+    if rows.size < _MIN_DIAGNOSTIC_SAMPLES:
         return samples, None, list(resolved_phases)
     analysis_phases: Sequence[DrivingPhase] = [
         phase for phase, keep in zip(resolved_phases, diagnostic_mask, strict=True) if keep
     ]
-    rows = np.flatnonzero(np.asarray(diagnostic_mask, dtype=np.bool_))
-    return diagnostic_samples, rows, analysis_phases
+    return samples.subset(rows), rows, analysis_phases
 
 
 def collect_order_frequencies(order_findings: list[DomainFinding]) -> set[float]:

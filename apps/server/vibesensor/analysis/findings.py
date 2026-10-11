@@ -66,7 +66,7 @@ def _build_findings(request: FindingsBuildRequest) -> tuple[DomainFinding, ...]:
     confident diagnostic finding appears first.
     """
     context = request.context
-    samples = list(request.samples)
+    samples = request.samples
     tire_circumference_m, _ = _tire_reference_from_context(context)
     findings: list[DomainFinding]
     findings, engine_ref_sufficient = _reference_findings.build_reference_findings(
@@ -96,10 +96,7 @@ def _build_findings(request: FindingsBuildRequest) -> tuple[DomainFinding, ...]:
             tire_circumference_m=(tire_circumference_m if request.speed_sufficient else None),
             engine_ref_sufficient=engine_ref_sufficient,
             raw_sample_rate_hz=request.raw_sample_rate_hz,
-            connected_locations=_locations_connected_throughout_run(
-                analysis_samples,
-                lang=request.lang,
-            ),
+            connected_locations=_locations_connected_throughout_run(analysis_samples),
             lang=request.lang,
             per_sample_phases=list(analysis_phases),
         ),

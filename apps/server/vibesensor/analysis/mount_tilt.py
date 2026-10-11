@@ -23,11 +23,11 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from vibesensor.analysis._sensor_locations import _location_label
-from vibesensor.analysis._types import Sample
+from vibesensor.analysis._sensor_locations import location_labels
 from vibesensor.common.json_utils import i18n_ref
 from vibesensor.domain.locations import location_code_for_label
 from vibesensor.recording.run_schema import RunMetadata
+from vibesensor.recording.sample_columns import SampleColumns
 from vibesensor.summary.run_context_warning import (
     WARNING_CODE_SENSOR_LOOSE_MOUNT,
     RunContextWarning,
@@ -64,7 +64,7 @@ class LooseMount:
 
 
 def find_loose_mounts(
-    samples: Sequence[Sample],
+    samples: SampleColumns,
     window_means: Sequence[tuple[float, float, float] | None],
     *,
     metadata: RunMetadata,
@@ -72,15 +72,22 @@ def find_loose_mounts(
     """The sensors that turned on their fixing during the drive (needs three or more)."""
     if len(window_means) != len(samples):
         return ()
+    client_of, clients = samples.clients()
+    label_of, location_names = location_labels(samples, metadata)
+    # Timed driving samples (a NaN time or speed is none, and fails the test).
+    driving = (samples.speed_kmh >= _MIN_SPEED_KMH) & ~np.isnan(samples.t_s)
+    times = samples.t_s.tolist()
+    client_codes = client_of.tolist()
+    label_codes = label_of.tolist()
     rows: dict[str, list[tuple[float, tuple[float, float, float]]]] = defaultdict(list)
     labels: dict[str, str] = {}
-    for sample, mean in zip(samples, window_means, strict=True):
-        if mean is None or sample.t_s is None:
+    for index in np.flatnonzero(driving).tolist():
+        mean = window_means[index]
+        if mean is None:
             continue
-        if sample.speed_kmh is None or sample.speed_kmh < _MIN_SPEED_KMH:
-            continue
-        rows[sample.client_id].append((float(sample.t_s), mean))
-        labels.setdefault(sample.client_id, _location_label(sample, metadata=metadata))
+        client_id = clients[client_codes[index]]
+        rows[client_id].append((times[index], mean))
+        labels.setdefault(client_id, location_names[label_codes[index]])
     if len(rows) < _MIN_SENSORS:
         return ()
     sensors = sorted(rows)

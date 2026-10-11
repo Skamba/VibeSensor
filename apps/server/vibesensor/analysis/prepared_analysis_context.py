@@ -7,7 +7,7 @@ from collections.abc import Sequence
 from vibesensor.analysis._analysis_models import (
     PreparedAnalysisContext,
 )
-from vibesensor.analysis._types import AccelStatistics, Sample
+from vibesensor.analysis._types import AccelStatistics
 from vibesensor.analysis.mount_tilt import find_loose_mounts
 from vibesensor.analysis.run_analysis_projection import build_sensor_analysis
 from vibesensor.analysis.run_data_preparation import PreparedRunData
@@ -15,6 +15,7 @@ from vibesensor.analysis.speed_profile_helpers import run_speed_source, speed_ty
 from vibesensor.analysis.statistics import compute_frame_integrity_counts
 from vibesensor.domain.run_suitability import RunSuitability
 from vibesensor.recording.run_schema import RunMetadata
+from vibesensor.recording.sample_columns import SampleColumns
 
 __all__ = ["prepare_analysis_context"]
 
@@ -22,7 +23,7 @@ __all__ = ["prepare_analysis_context"]
 def prepare_analysis_context(
     *,
     context: RunMetadata,
-    samples: Sequence[Sample],
+    samples: SampleColumns,
     file_name: str,
     language: str,
     prepared: PreparedRunData,
@@ -31,20 +32,18 @@ def prepare_analysis_context(
 ) -> PreparedAnalysisContext:
     """Assemble the one canonical typed context for diagnostics result building."""
 
-    typed_samples = tuple(samples)
     sensor_locations, connected_locations, sensor_intensity_by_location = build_sensor_analysis(
-        samples=typed_samples,
-        language=language,
+        samples=samples,
         per_sample_phases=list(prepared.per_sample_phases),
         metadata=context,
     )
-    sensor_ids = {client_id for sample in typed_samples if (client_id := sample.client_id)}
-    total_dropped, total_overflow = compute_frame_integrity_counts(typed_samples)
-    loose_mounts = find_loose_mounts(typed_samples, window_means, metadata=context)
+    sensor_ids = {client_id for client_id in samples.clients()[1] if client_id}
+    total_dropped, total_overflow = compute_frame_integrity_counts(samples)
+    loose_mounts = find_loose_mounts(samples, window_means, metadata=context)
     return PreparedAnalysisContext(
         file_name=file_name,
         context=context,
-        samples=typed_samples,
+        samples=samples,
         language=language,
         prepared=prepared,
         accel_stats=accel_stats,

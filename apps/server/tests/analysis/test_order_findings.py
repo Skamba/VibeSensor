@@ -6,7 +6,7 @@ Pure order-tracking rules whose effects the simulator benchmark cannot isolate.
 from __future__ import annotations
 
 import pytest
-from test_support.analysis import run_analysis, sample_peaks_of
+from test_support.analysis import run_analysis, sample_columns_of, sample_peaks_of
 from test_support.core import standard_metadata, wheel_hz
 from test_support.findings import make_finding
 from test_support.synthetic_samples import make_sample
@@ -215,8 +215,10 @@ def _brake_check(*, front_left_clear_in_band: int, clear_amp: float) -> bool:
         (40.0 + 0.25 * i, 60.0, "front-left", "cruise", clear_amp)
         for i in range(front_left_clear_in_band)
     ]
-    samples = sensor_frames_from_mappings(
-        [{"t_s": t_s, "speed_kmh": kmh, "location": loc} for t_s, kmh, loc, _, _ in rows]
+    samples = sample_columns_of(
+        sensor_frames_from_mappings(
+            [{"t_s": t_s, "speed_kmh": kmh, "location": loc} for t_s, kmh, loc, _, _ in rows]
+        )
     )
     points = [
         OrderMatchObservation(
@@ -435,7 +437,7 @@ def _driveshaft(
     frames = sensor_frames_from_mappings([sample])
     return reference_columns(
         "driveshaft",
-        build_drive_table(frames, sample_peaks_of(frames)),
+        build_drive_table(sample_columns_of(frames), sample_peaks_of(frames)),
         _context(overrides),
         tire_circumference_m,
     )

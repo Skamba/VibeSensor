@@ -29,7 +29,9 @@ application settings and client names in a single SQLite file located at
   a column at a time (msgspec decodes each row's `top_peaks` JSON straight into `StrengthPeak`);
   if any value in the batch is unusual (wrong type, non-finite, malformed peaks) the batch is
   decoded row by row instead, so results and corrupt-row warnings match the per-row path.
-  The post-analysis reads its kept rows without their peaks (`load_run_samples_without_peaks`)
+  The post-analysis reads the fields it analyses of its kept rows, without their peaks, straight
+  into columns (`load_run_sample_columns` -> `SampleColumns`; a batch decoded a column at a time,
+  with the same row-by-row fallback, which skips a row only where one of those fields is corrupt)
   and then the stored `top_peaks` of only the rows the raw replay does not rebuild, straight
   into columns (`load_run_peaks_by_id` -> `SamplePeaks`; the same peaks a full row decode
   keeps, with the same row-by-row fallback).

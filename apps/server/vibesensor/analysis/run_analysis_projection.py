@@ -7,10 +7,9 @@ from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 from vibesensor.analysis._sensor_locations import (
-    _location_label,
     _locations_connected_throughout_run,
+    location_labels,
 )
-from vibesensor.analysis._types import Sample
 from vibesensor.analysis.phase_segmentation import DrivingPhase, PhaseSegment
 from vibesensor.analysis.signal_aggregation import _sensor_intensity_by_location
 from vibesensor.domain.driving_segment import DrivingPhaseInterval
@@ -20,6 +19,7 @@ from vibesensor.domain.location_hotspot import LocationIntensitySummary
 
 if TYPE_CHECKING:
     from vibesensor.recording.run_schema import RunMetadata
+    from vibesensor.recording.sample_columns import SampleColumns
 
 
 def build_phase_timeline(
@@ -81,29 +81,17 @@ def build_domain_driving_segments(
 
 def build_sensor_analysis(
     *,
-    samples: Sequence[Sample],
-    language: str,
+    samples: SampleColumns,
     per_sample_phases: Sequence[DrivingPhase],
     metadata: RunMetadata | None = None,
 ) -> tuple[list[str], set[str], list[LocationIntensitySummary]]:
     """Build sensor location lists and intensity rows from analysed samples."""
-    sensor_locations = sorted(
-        {
-            label
-            for sample in samples
-            if (label := _location_label(sample, metadata=metadata, lang=language))
-        },
-    )
-    connected_locations = _locations_connected_throughout_run(
-        samples,
-        metadata=metadata,
-        lang=language,
-    )
+    sensor_locations = sorted(label for label in location_labels(samples, metadata)[1] if label)
+    connected_locations = _locations_connected_throughout_run(samples, metadata=metadata)
     sensor_intensity_by_location = _sensor_intensity_by_location(
         samples,
         include_locations=set(sensor_locations),
         metadata=metadata,
-        lang=language,
         connected_locations=connected_locations,
         per_sample_phases=per_sample_phases,
     )

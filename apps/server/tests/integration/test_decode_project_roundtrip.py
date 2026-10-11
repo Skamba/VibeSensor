@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from test_support.analysis import sample_peaks_of
+from test_support.analysis import sample_columns_of, sample_peaks_of
 from test_support.core import ALL_WHEEL_SENSORS, standard_metadata
 from test_support.persisted_analysis import make_persisted_analysis
 from test_support.synthetic_samples import make_fault_samples, make_noise_samples
@@ -46,7 +46,7 @@ def _run_analysis() -> tuple[RunAnalysis, AnalysisResult]:
     analysis = RunAnalysis(
         build_diagnostics_run_input(
             run_metadata_from_mapping(meta),
-            frames,
+            sample_columns_of(frames),
             sample_peaks_of(frames),
             file_name="roundtrip",
         ),

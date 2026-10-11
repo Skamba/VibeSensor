@@ -15,6 +15,7 @@ from statistics import median
 from typing import TYPE_CHECKING, cast
 
 import numpy as np
+import numpy.typing as npt
 
 from vibesensor.analysis._reference_findings import SPEED_REFERENCE_FINDING_ID
 from vibesensor.analysis._reference_resolution import (
@@ -23,7 +24,7 @@ from vibesensor.analysis._reference_resolution import (
     _tire_reference_from_context,
     effective_engine_rpm,
 )
-from vibesensor.analysis._sensor_locations import _location_label
+from vibesensor.analysis._sensor_locations import location_labels
 from vibesensor.analysis.constants import (
     LIGHT_STRENGTH_MAX_DB,
     MIN_ORDER_TRACKING_SLOPE,
@@ -63,6 +64,7 @@ from vibesensor.dsp.order_bands import ORDER_TOLERANCE_REL
 from vibesensor.dsp.strength_bands import BANDS
 from vibesensor.dsp.vibration_strength import percentile, vibration_strength_db_scalar
 from vibesensor.dsp.window_spectrum import tone_line_level_g
+from vibesensor.recording.sample_columns import SampleColumns, optional_floats, rows_of_groups
 from vibesensor.summary.diagnosis_contracts import (
     AmplitudeBasis,
     DiagnosisAlternative,
@@ -89,7 +91,6 @@ from vibesensor.summary.diagnosis_contracts import (
 )
 
 if TYPE_CHECKING:
-    from vibesensor.analysis._types import Sample
     from vibesensor.analysis.drive_table import DriveTable
     from vibesensor.domain.test_run import TestRun
     from vibesensor.domain.tire_spec import AxleTireSetup
@@ -168,10 +169,29 @@ _AWAY_FROM_ENGINE = frozenset(
 )
 
 
+@dataclass(frozen=True, slots=True)
+class _Located:
+    """The drive's samples, each with its location label (``location_labels``)."""
+
+    samples: SampleColumns
+    label_of: npt.NDArray[np.intp]
+    labels: list[str]
+
+    def locations(self) -> list[str]:
+        """Each sample's location label."""
+        return [self.labels[code] for code in self.label_of.tolist()]
+
+    def rows_at(self, location: str) -> npt.NDArray[np.intp]:
+        """The samples at *location*."""
+        if location not in self.labels:
+            return np.empty(0, dtype=np.intp)
+        return np.flatnonzero(self.label_of == self.labels.index(location))
+
+
 def build_diagnosis(
     *,
     test_run: TestRun,
-    samples: Sequence[Sample],
+    samples: SampleColumns,
     drive_table: DriveTable,
     metadata: RunMetadata,
     sensor_count: int,
@@ -187,7 +207,7 @@ def build_diagnosis(
     verdict = _verdict(top_cause)
     level = top_cause.confidence_level if top_cause is not None else None
     candidate = None if verdict is DiagnosisVerdict.NO_FAULT else test_run.diagnosis_order_finding
-    located = [(sample, _location_label(sample, metadata=metadata)) for sample in samples]
+    located = _Located(samples, *location_labels(samples, metadata))
     floors = _location_floors(located, drive_table)
     bin_hz = 1.0 / window_duration_s(metadata)
     braking = _braking_spans(test_run)
@@ -534,7 +554,7 @@ class _References:
 
 def _references(
     metadata: RunMetadata,
-    samples: Sequence[Sample],
+    samples: SampleColumns,
     drive_table: DriveTable,
     *,
     speed_missing: bool,
@@ -759,11 +779,11 @@ def _tone_mg(level_g: float, bin_hz: float) -> float:
     return _mg(level_g / tone_line_level_g(1.0, bin_hz))
 
 
-def _location_floors(located: Sequence[tuple[Sample, str]], table: DriveTable) -> dict[str, float]:
+def _location_floors(located: _Located, table: DriveTable) -> dict[str, float]:
     """Each location's median sample floor (``DriveTable.floor_amp_g``)."""
     floors: dict[str, list[float]] = defaultdict(list)
-    for (_sample, location), has_floor, floor_amp in zip(
-        located, table.has_floor.tolist(), table.floor_amp_g.tolist(), strict=True
+    for location, has_floor, floor_amp in zip(
+        located.locations(), table.has_floor.tolist(), table.floor_amp_g.tolist(), strict=True
     ):
         if has_floor:
             floors[location].append(floor_amp)
@@ -800,7 +820,7 @@ def _with_ratios(
 
 def _order_location_amplitudes(
     candidate: Finding,
-    located: Sequence[tuple[Sample, str]],
+    located: _Located,
     floors: dict[str, float],
     braking: Sequence[tuple[float, float]],
     bin_hz: float,
@@ -813,14 +833,15 @@ def _order_location_amplitudes(
             heard[point.location] += point.heard
     brakes = candidate.suspected_source is VibrationSource.BRAKES
     in_braking = TimeSpanLookup(braking) if brakes else None
-    speed_samples: Counter[str] = Counter(
-        location
-        for sample, location in located
-        if sample.speed_kmh is not None
-        and sample.speed_kmh > 0
-        and (in_braking is None or in_braking(sample.t_s))
-    )
-    locations = sorted({location for _sample, location in located} | set(amps))
+    samples = located.samples
+    # A NaN (no) speed is not over 0.
+    moving = np.flatnonzero(samples.speed_kmh > 0).tolist()
+    if in_braking is not None:
+        times = optional_floats(samples.t_s)
+        moving = [row for row in moving if in_braking(times[row])]
+    labels = located.locations()
+    speed_samples: Counter[str] = Counter(labels[row] for row in moving)
+    locations = sorted(set(located.labels) | set(amps))
     # The order's own level read at its line at every sensor (``sensor_levels``),
     # comparable between sensors whatever road noise each one carries. Where a
     # sensor that matched the order has no reads (its spectra were not rebuilt),
@@ -849,16 +870,19 @@ def _order_location_amplitudes(
 
 
 def _overall_location_amplitudes(
-    located: Sequence[tuple[Sample, str]],
+    located: _Located,
     floors: dict[str, float],
     bin_hz: float,
 ) -> list[LocationAmplitudeRow]:
-    peaks: dict[str, list[float]] = defaultdict(list)
-    for sample, location in located:
-        amp = sample.strength_peak_amp_g
-        if amp is not None and amp > 0:
-            peaks[location].append(amp)
-    locations = sorted({location for _sample, location in located})
+    peaks: dict[str, list[float]] = {}
+    peak_amps = located.samples.strength_peak_amp_g
+    for location, rows in zip(
+        located.labels, rows_of_groups(located.label_of, len(located.labels)), strict=True
+    ):
+        amps = peak_amps[rows]
+        # A NaN (no) amplitude is not over 0.
+        peaks[location] = amps[amps > 0].tolist()
+    locations = sorted(located.labels)
     p95: dict[str, float | None] = {
         location: percentile(sorted(peaks[location]), 0.95) if peaks.get(location) else None
         for location in locations
@@ -867,7 +891,7 @@ def _overall_location_amplitudes(
 
 
 def _unexplained(
-    located: Sequence[tuple[Sample, str]], table: DriveTable, bin_hz: float
+    located: _Located, table: DriveTable, bin_hz: float
 ) -> UnexplainedVibration | None:
     """The vibration a sensor felt by the elevated band (L3) or above, where it stood out most.
 
@@ -882,11 +906,17 @@ def _unexplained(
     starts = table.peak_start.tolist()
     amps = table.peak_amp.tolist()
     local_floors = table.peak_local_floor_amp_g.tolist()
-    for row, (sample, location) in enumerate(located):
+    for row, (location, strength_floor) in enumerate(
+        zip(
+            located.locations(),
+            optional_floats(located.samples.strength_floor_amp_g),
+            strict=True,
+        )
+    ):
         peak = _most_prominent_peak(
             amps[starts[row] : starts[row + 1]],
             local_floors[starts[row] : starts[row + 1]],
-            sample.strength_floor_amp_g or 0.0,
+            strength_floor or 0.0,
         )
         if peak is not None:
             prominent[location].append(peak)
@@ -924,7 +954,7 @@ def _most_prominent_peak(
 
 def _location_amplitudes(
     candidate: Finding | None,
-    located: Sequence[tuple[Sample, str]],
+    located: _Located,
     floors: dict[str, float],
     braking: Sequence[tuple[float, float]],
     bin_hz: float,
@@ -1089,7 +1119,7 @@ def _braked(braking: Sequence[tuple[float, float]]) -> bool:
 
 def _presence_ratio(
     candidate: Finding | None,
-    located: Sequence[tuple[Sample, str]],
+    located: _Located,
     braking: Sequence[tuple[float, float]] = (),
 ) -> float | None:
     """Share of the moving drive in which the order was there, at a sensor that hears it.
@@ -1107,13 +1137,13 @@ def _presence_ratio(
         return candidate.evidence.presence_ratio
     brakes = candidate.suspected_source is VibrationSource.BRAKES
     in_braking = TimeSpanLookup(braking) if brakes else None
+    samples = located.samples
+    # A NaN (no) speed is not over 0.
+    timed_moving = samples.t_s[(samples.speed_kmh > 0) & ~np.isnan(samples.t_s)].tolist()
     moving = {
-        floor(sample.t_s / _PRESENCE_SLOT_S)
-        for sample, _location in located
-        if sample.t_s is not None
-        and sample.speed_kmh is not None
-        and sample.speed_kmh > 0
-        and (in_braking is None or in_braking(sample.t_s))
+        floor(t_s / _PRESENCE_SLOT_S)
+        for t_s in timed_moving
+        if in_braking is None or in_braking(t_s)
     }
     if not moving:
         return candidate.evidence.match_rate
@@ -1145,7 +1175,7 @@ def _order_findings(
     candidate: Finding | None,
     level: ConfidenceLevel | None,
     findings: Sequence[Finding],
-    located: Sequence[tuple[Sample, str]],
+    located: _Located,
     braking: Sequence[tuple[float, float]],
     engine_alike: frozenset[str] = frozenset(),
 ) -> list[OrderFindingRow]:
@@ -1551,18 +1581,15 @@ def _coast_ruled_out_reason(
 
 def _guided_steps_done(
     phases: Sequence[RunGuidedPhase],
-    samples: Sequence[Sample],
+    samples: SampleColumns,
     braking: Sequence[tuple[float, float]],
     refs: _References,
 ) -> list[RunGuidedPhase]:
     """The tapped guided steps whose window the run's measured speed shows done."""
     if refs.manual_speed:
         return []
-    by_time = {
-        sample.t_s: sample.speed_kmh
-        for sample in samples
-        if sample.t_s is not None and sample.speed_kmh is not None
-    }
+    known = ~np.isnan(samples.t_s) & ~np.isnan(samples.speed_kmh)
+    by_time = dict(zip(samples.t_s[known].tolist(), samples.speed_kmh[known].tolist(), strict=True))
     speeds = sorted(by_time.items())
     return [phase for phase in phases if guided_step_done(phase, speeds, braking)]
 
@@ -1577,7 +1604,7 @@ def _guided_phase_names(phases: Sequence[RunGuidedPhase]) -> list[GuidedPhaseVal
 
 def _speed_dependence(
     candidate: Finding | None,
-    located: Sequence[tuple[Sample, str]],
+    located: _Located,
     phases: Sequence[RunGuidedPhase],
 ) -> SpeedDependenceValue | None:
     """Whether the diagnosed order kept going while coasting in neutral (guided test).
@@ -1613,16 +1640,11 @@ def _speed_dependence(
         outside = sum(1 for t_s in times if not in_window(t_s, windows))
         return inside, outside
 
-    inside, outside = split(
-        [
-            sample.t_s
-            for sample, label in located
-            if label == location
-            and sample.t_s is not None
-            and sample.speed_kmh is not None
-            and sample.speed_kmh > 0
-        ]
-    )
+    rows = located.rows_at(location)
+    times = located.samples.t_s[rows]
+    speeds = located.samples.speed_kmh[rows]
+    # A NaN (no) speed is not over 0.
+    inside, outside = split(times[~np.isnan(times) & (speeds > 0)].tolist())
     if inside < _MIN_COAST_SAMPLES or outside < _MIN_COAST_SAMPLES:
         return None
     timed = [
@@ -1632,13 +1654,11 @@ def _speed_dependence(
     ]
     matched_inside, matched_outside = split([t_s for t_s, _point in timed])
     coast_points = [point for t_s, point in timed if in_window(t_s, settled)]
+    known = ~np.isnan(times) & ~np.isnan(speeds)
     coast_speeds = [
-        (sample.t_s, sample.speed_kmh)
-        for sample, label in located
-        if label == location
-        and sample.t_s is not None
-        and sample.speed_kmh is not None
-        and in_window(sample.t_s, settled)
+        (t_s, speed)
+        for t_s, speed in zip(times[known].tolist(), speeds[known].tolist(), strict=True)
+        if in_window(t_s, settled)
     ]
     slope = frequency_tracking_slope(coast_points) if trend_moves(coast_speeds) else None
     if slope is not None and slope < MIN_ORDER_TRACKING_SLOPE:
@@ -1763,14 +1783,18 @@ def _conditions(refs: _References) -> TestConditions:
 # -- spectrum -----------------------------------------------------------------
 
 
-def _measured_rpm(samples: Sequence[Sample]) -> float | None:
-    rpms = [
-        sample.engine_rpm
-        for sample in samples
-        if sample.engine_rpm is not None
-        and sample.engine_rpm > 0
-        and sample.engine_rpm_source.strip().lower() not in _MEASURED_RPM_EXCLUDED
-    ]
+def _measured_rpm(samples: SampleColumns, rows: npt.NDArray[np.intp]) -> float | None:
+    """The median measured engine RPM of the samples at *rows*."""
+    measured = np.array(
+        [
+            source.strip().lower() not in _MEASURED_RPM_EXCLUDED
+            for source in samples.engine_rpm_sources
+        ],
+        dtype=np.bool_,
+    )
+    rpm = samples.engine_rpm[rows]
+    # A NaN (no) RPM is not over 0.
+    rpms = rpm[(rpm > 0) & measured[samples.engine_rpm_source_of[rows]]].tolist()
     return median(rpms) if rpms else None
 
 
@@ -1802,7 +1826,7 @@ def _order_markers(
 
 
 def _spectrum(
-    located: Sequence[tuple[Sample, str]],
+    located: _Located,
     table: DriveTable,
     bin_hz: float,
     *,
@@ -1813,28 +1837,20 @@ def _spectrum(
     if location is None:
         return None
     # Moving samples only: standing still is no point on the speed axis.
-    moving = [
-        (row, sample, sample.speed_kmh)
-        for row, (sample, label) in enumerate(located)
-        if label == location and sample.speed_kmh is not None and sample.speed_kmh > 0
-    ]
-    if not moving:
+    at_location = located.rows_at(location)
+    # A NaN (no) speed is not over 0.
+    moving = at_location[located.samples.speed_kmh[at_location] > 0]
+    if not moving.size:
         return None
-    centre = (
-        centre_speed_kmh
-        if centre_speed_kmh is not None
-        else median(speed for _row, _sample, speed in moving)
+    moving_speeds = located.samples.speed_kmh[moving]
+    centre = centre_speed_kmh if centre_speed_kmh is not None else median(moving_speeds.tolist())
+    near = np.abs(moving_speeds - centre) <= _SPECTRUM_HALF_WINDOW_KMH
+    rows, window_speeds_array = (
+        (moving[near], moving_speeds[near])
+        if np.count_nonzero(near) >= _SPECTRUM_MIN_WINDOW_SAMPLES
+        else (moving, moving_speeds)
     )
-    in_window = [
-        (row, sample, speed)
-        for row, sample, speed in moving
-        if abs(speed - centre) <= _SPECTRUM_HALF_WINDOW_KMH
-    ]
-    if len(in_window) < _SPECTRUM_MIN_WINDOW_SAMPLES:
-        in_window = moving
-    rows = np.array([row for row, _sample, _speed in in_window], dtype=np.intp)
-    window = [sample for _row, sample, _speed in in_window]
-    window_speeds = [speed for _row, _sample, speed in in_window]
+    window_speeds: list[float] = window_speeds_array.tolist()
     bins: dict[float, list[float]] = defaultdict(list)
     starts = table.peak_start
     for row in rows.tolist():
@@ -1849,7 +1865,7 @@ def _spectrum(
             seen[key] = max(amp, seen.get(key, 0.0))
         for key, amp in seen.items():
             bins[key].append(amp)
-    min_count = max(1, int(len(window) * _SPECTRUM_MIN_PRESENCE))
+    min_count = max(1, int(rows.size * _SPECTRUM_MIN_PRESENCE))
     recurring = [(hz, median(amps)) for hz, amps in bins.items() if len(amps) >= min_count]
     recurring.sort(key=lambda item: -item[1])
     peaks: list[SpectrumPeak] = [
@@ -1864,5 +1880,7 @@ def _spectrum(
         "speed_max_kmh": max(window_speeds),
         "floor_mg": _tone_mg(median(floors), bin_hz) if floors else None,
         "peaks": peaks,
-        "order_markers": _order_markers(refs, window_centre, _measured_rpm(window), location),
+        "order_markers": _order_markers(
+            refs, window_centre, _measured_rpm(located.samples, rows), location
+        ),
     }

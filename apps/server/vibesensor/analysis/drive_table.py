@@ -18,19 +18,17 @@ import numpy as np
 import numpy.typing as npt
 
 from vibesensor.analysis._sample_metrics import _floor_from_peaks
-from vibesensor.analysis._sensor_locations import _sample_location_label
-from vibesensor.analysis._types import Sample
+from vibesensor.analysis._sensor_locations import location_labels
 from vibesensor.analysis.constants import MIN_ANALYSIS_FREQ_HZ
 from vibesensor.domain.finding import speed_bin_label
 from vibesensor.dsp.window_spectrum import WindowSpectrum
+from vibesensor.recording.sample_columns import SampleColumns, coded, first_seen
 from vibesensor.recording.sample_peaks import SamplePeaks
 
 __all__ = [
     "DriveTable",
     "build_drive_table",
-    "coded",
     "counts_by_group",
-    "first_seen",
     "groups_in_order",
 ]
 
@@ -51,7 +49,7 @@ class DriveTable:
     # Each sample's sensor: its (location code, name, client id).
     sensor_of: npt.NDArray[np.intp]
     sensors: Sequence[tuple[str, str, str]]
-    # Each sample's sensor label (``_location_label``) and client id.
+    # Each sample's sensor label (``location_labels``) and client id.
     location_of: npt.NDArray[np.intp]
     locations: Sequence[str]
     client_of: npt.NDArray[np.intp]
@@ -154,23 +152,6 @@ class DriveTable:
         )
 
 
-def first_seen[T](
-    codes: npt.NDArray[np.intp], names: Sequence[T]
-) -> tuple[npt.NDArray[np.intp], list[T]]:
-    """*codes* (indexes into *names*; -1 for none) renumbered by the order they first come.
-
-    The names come back in that order (those no code uses dropped): the order
-    one pass over the codes meets them in. A code of -1 stays -1.
-    """
-    present = codes[codes >= 0]
-    distinct, first = np.unique(present, return_index=True)
-    ordered = distinct[np.argsort(first, kind="stable")]
-    # One entry more than there are names, never numbered: where -1 lands.
-    number = np.full(len(names) + 1, -1, dtype=np.intp)
-    number[ordered] = np.arange(ordered.size)
-    return number[codes], [names[code] for code in ordered.tolist()]
-
-
 def groups_in_order(
     keys: npt.NDArray[np.float64],
 ) -> tuple[list[float], npt.NDArray[np.intp]]:
@@ -204,24 +185,6 @@ def counts_by_group[T](
     return by_group
 
 
-def coded[T](values: Sequence[T]) -> tuple[npt.NDArray[np.intp], list[T]]:
-    """Each of *values* as an index into the distinct values, which come in first-seen order."""
-    names: dict[T, int] = {}
-    codes = np.array([names.setdefault(value, len(names)) for value in values], dtype=np.intp)
-    return codes, list(names)
-
-
-def _floats(
-    values: Sequence[float | None],
-) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.bool_]]:
-    """*values* as floats (NaN where ``None``), and which are not ``None``."""
-    known = np.array([value is not None for value in values], dtype=np.bool_)
-    return (
-        np.array([value if value is not None else np.nan for value in values], dtype=np.float64),
-        known,
-    )
-
-
 def _starts(rows: npt.NDArray[np.intp], size: int) -> npt.NDArray[np.intp]:
     """Where each of *size* samples' run of entries starts in *rows* (sorted), and the end."""
     starts = np.zeros(size + 1, dtype=np.intp)
@@ -229,58 +192,45 @@ def _starts(rows: npt.NDArray[np.intp], size: int) -> npt.NDArray[np.intp]:
     return starts
 
 
-def build_drive_table(samples: Sequence[Sample], peaks: SamplePeaks) -> DriveTable:
+def build_drive_table(samples: SampleColumns, peaks: SamplePeaks) -> DriveTable:
     """*samples*, whose peaks are *peaks*, as a ``DriveTable``."""
-    size = len(samples)
-    sensor_of, sensors = coded(
-        [(sample.location, sample.client_name, sample.client_id) for sample in samples]
-    )
-    # The sensors come in the order they first come, so their labels and
-    # clients do too.
-    label_of, locations = coded([_sample_location_label(*sensor) for sensor in sensors])
-    client_id_of, clients = coded([client_id for _location, _name, client_id in sensors])
-    t_s, timed = _floats([sample.t_s for sample in samples])
-    speed_kmh, has_speed = _floats([sample.speed_kmh for sample in samples])
-    speed_bin_of, speed_bins = _speed_bins(speed_kmh, has_speed)
-    engine_rpm, has_engine_rpm = _floats([sample.engine_rpm for sample in samples])
-    engine_rpm_source_of, engine_rpm_sources = coded(
-        [sample.engine_rpm_source for sample in samples]
-    )
-    gear, has_gear = _floats([sample.gear for sample in samples])
-    final_drive_ratio, has_final_drive_ratio = _floats(
-        [sample.final_drive_ratio for sample in samples]
+    sensor_of, sensors = first_seen(samples.sensor_of, samples.sensors)
+    location_of, locations = location_labels(samples)
+    client_of, clients = samples.clients()
+    has_speed = ~np.isnan(samples.speed_kmh)
+    speed_bin_of, speed_bins = _speed_bins(samples.speed_kmh, has_speed)
+    engine_rpm_source_of, engine_rpm_sources = first_seen(
+        samples.engine_rpm_source_of, samples.engine_rpm_sources
     )
     analysed = _analysed_peaks(peaks)
     peak_row = peaks.row[analysed]
     peak_amp = peaks.amp[analysed]
-    peak_start = _starts(peak_row, size)
-    floor_amp_g, has_floor = _floors(
-        [sample.strength_floor_amp_g for sample in samples], peak_amp, peak_start
-    )
+    peak_start = _starts(peak_row, len(samples))
+    floor_amp_g, has_floor = _floors(samples.strength_floor_amp_g, peak_amp, peak_start)
     return DriveTable(
         sensor_of=sensor_of,
         sensors=sensors,
-        location_of=label_of[sensor_of],
+        location_of=location_of,
         locations=locations,
-        client_of=client_id_of[sensor_of],
+        client_of=client_of,
         clients=clients,
-        t_s=t_s,
-        timed=timed,
-        speed_kmh=speed_kmh,
+        t_s=samples.t_s,
+        timed=~np.isnan(samples.t_s),
+        speed_kmh=samples.speed_kmh,
         has_speed=has_speed,
         speed_bin_of=speed_bin_of,
         speed_bins=speed_bins,
         floor_amp_g=floor_amp_g,
         has_floor=has_floor,
-        engine_rpm=engine_rpm,
-        has_engine_rpm=has_engine_rpm,
+        engine_rpm=samples.engine_rpm,
+        has_engine_rpm=~np.isnan(samples.engine_rpm),
         engine_rpm_source_of=engine_rpm_source_of,
         engine_rpm_sources=engine_rpm_sources,
-        gear=gear,
-        has_gear=has_gear,
-        final_drive_ratio=final_drive_ratio,
-        has_final_drive_ratio=has_final_drive_ratio,
-        spectra=[sample.spectrum for sample in samples],
+        gear=samples.gear,
+        has_gear=~np.isnan(samples.gear),
+        final_drive_ratio=samples.final_drive_ratio,
+        has_final_drive_ratio=~np.isnan(samples.final_drive_ratio),
+        spectra=samples.spectra,
         peak_row=peak_row,
         peak_hz=peaks.hz[analysed],
         peak_amp=peak_amp,
@@ -312,12 +262,12 @@ def _analysed_peaks(peaks: SamplePeaks) -> npt.NDArray[np.bool_]:
 
 
 def _floors(
-    strength_floors: Sequence[float | None],
+    strength_floors: npt.NDArray[np.float64],
     peak_amp: npt.NDArray[np.float64],
     peak_start: npt.NDArray[np.intp],
 ) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.bool_]]:
     """Each sample's floor: its own where over 0, else from its peaks (``_floor_from_peaks``)."""
-    floors, _known = _floats(strength_floors)
+    floors = strength_floors.copy()
     has_floor = floors > 0
     floors[~has_floor] = np.nan
     for row in np.flatnonzero(~has_floor).tolist():

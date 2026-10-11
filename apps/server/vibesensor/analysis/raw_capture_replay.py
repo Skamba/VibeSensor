@@ -6,7 +6,7 @@ from collections import defaultdict, deque
 from collections.abc import Sequence
 from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass
-from math import isfinite, nan
+from math import nan
 from typing import Literal, cast
 
 import numpy as np
@@ -34,8 +34,8 @@ from vibesensor.recording.raw_capture_timeline import (
     resolve_raw_window_end_time,
 )
 from vibesensor.recording.run_schema import RunMetadata
+from vibesensor.recording.sample_columns import SampleColumns, optional_floats, rows_of_groups
 from vibesensor.recording.sample_peaks import SamplePeaks
-from vibesensor.recording.sensor_frame import SensorFrame
 from vibesensor.summary.run_context_warning import (
     WARNING_CODE_RAW_CAPTURE_LOSS_POLICY,
     WARNING_CODE_RAW_REPLAY_COVERAGE_INCOMPLETE,
@@ -153,26 +153,32 @@ class _ResolvedWindow:
 
 
 @dataclass(frozen=True, slots=True)
-class _WindowRequest:
-    """A sample whose raw window is looked for, and when that window ends."""
+class _SensorRequests:
+    """One sensor's samples whose raw window is looked for, and when each window ends."""
 
-    sample: SensorFrame
+    client_id: str
+    timeline: RawSensorTimeline
+    sensor_data: RawCaptureSensorData
     sample_rate_hz: int
-    # On the sensor's clock (``_requested_end_us``); None without a sample time.
-    requested_end_us: float | None
-    # The coverage reason the window has when complete.
-    reason: str | None
+    rows: npt.NDArray[np.intp]
+    # On the sensor's clock (``_requested_end_us``); NaN without a sample time.
+    requested_end_us: npt.NDArray[np.float64]
+    # Those whose window end is the sample time's (``legacy_t_s``).
+    by_sample_time: list[bool]
+    # The coverage reason each window has when complete.
+    reasons: list[str | None]
 
 
 @dataclass(frozen=True, slots=True)
 class _RawWindow:
-    """A complete raw window, its spectrum still to be computed.
+    """A complete raw window (of sample *row*), its spectrum still to be computed.
 
     Where its samples start in the sensor's raw buffer, or (-1) the ``(N, 3)``
     counts assembled from its segments where they do not follow on there.
     """
 
-    request: _WindowRequest
+    row: int
+    reason: str | None
     raw_start: int
     samples_i16: npt.NDArray[np.int16] | None = None
 
@@ -182,7 +188,8 @@ class _WindowSpectra:
     """Each window's spectrum as a row (``None``: no analysis bins), its last and mean reading."""
 
     spectra: npt.NDArray[np.float32] | None
-    last_xyz: list[tuple[float, float, float]]
+    # ``(N, 3)``.
+    last_xyz: npt.NDArray[np.float32]
     mean_xyz: list[tuple[float, float, float]]
 
 
@@ -272,16 +279,16 @@ class _RebuiltPeaks:
 
 def replay_raw_windows(
     *,
-    samples: tuple[SensorFrame, ...],
+    samples: SampleColumns,
     metadata: RunMetadata,
     raw_capture: RawRunCapture | None,
 ) -> RawReplayResult:
     """Rebuild each sample's strength from its raw window, where it has a complete one.
 
-    A rebuilt sample's strength fields (its last reading per axis, dominant
-    frequency, strength, bucket, peak and floor amplitude, and spectrum) are
-    set in place; its peaks are the result's. A sample without a complete raw
-    window keeps its stored ones.
+    A rebuilt sample's strength fields (its last reading per axis, strength,
+    bucket, peak and floor amplitude, and spectrum) are set in place; its
+    peaks are the result's. A sample without a complete raw window keeps its
+    stored ones.
     """
 
     if raw_capture is None:
@@ -413,45 +420,83 @@ def _assemble_raw_replay_result(
     )
 
 
-def _window_request(
+def _sensor_requests(
     *,
-    sample: SensorFrame,
-    timeline: RawSensorTimeline | None,
-    sensor_data: RawCaptureSensorData | None,
-) -> RawReplayWindowCoverage | _WindowRequest:
-    """When *sample*'s raw window ends, or why it has none."""
-    if timeline is None or sensor_data is None:
-        return _uncovered(sample, "missing", "sensor_missing")
-    sensor_manifest = sensor_data.manifest
-    sample_rate_hz = int(sensor_manifest.sample_rate_hz or timeline.sample_rate_hz or 0)
-    if sample_rate_hz <= 0:
-        return _uncovered(sample, "missing", "sample_rate_missing")
-    requested_sample_rate_hz = int(sample.sample_rate_hz or 0)
-    sample_rate_mismatch = (
-        requested_sample_rate_hz > 0 and requested_sample_rate_hz != sample_rate_hz
-    )
-    if sample_rate_mismatch and sensor_manifest.sample_rate_unverified:
-        return _uncovered(sample, "missing", "sample_rate_mismatch")
-    requested_end_us, timing_source = _requested_end_us(timeline=timeline, sample=sample)
-    return _WindowRequest(
-        sample=sample,
-        sample_rate_hz=sample_rate_hz,
-        requested_end_us=requested_end_us,
-        reason=(
-            "sample_rate_mismatch"
-            if sample_rate_mismatch
-            else ("timing_fallback" if timing_source == "legacy_t_s" else None)
-        ),
-    )
+    samples: SampleColumns,
+    raw_capture: RawRunCapture,
+    timelines: dict[str, RawSensorTimeline],
+    coverages: list[RawReplayWindowCoverage | None],
+    times: list[float | None],
+) -> list[_SensorRequests]:
+    """Each sensor's samples whose raw window is looked for, in the order their first comes.
+
+    The others get their coverage, and why they have no raw window, in *coverages*.
+    """
+    client_of, client_ids = samples.clients()
+    found: list[_SensorRequests] = []
+    for client_id, rows in zip(client_ids, rows_of_groups(client_of, len(client_ids)), strict=True):
+        timeline = timelines.get(client_id)
+        sensor_data = raw_capture.sensor_data(client_id)
+        if timeline is None or sensor_data is None:
+            _uncover(coverages, rows, client_id, times, "sensor_missing")
+            continue
+        sensor_manifest = sensor_data.manifest
+        sample_rate_hz = int(sensor_manifest.sample_rate_hz or timeline.sample_rate_hz or 0)
+        if sample_rate_hz <= 0:
+            _uncover(coverages, rows, client_id, times, "sample_rate_missing")
+            continue
+        requested_rates = samples.sample_rate_hz[rows]
+        mismatch = (requested_rates > 0) & (requested_rates != sample_rate_hz)
+        if sensor_manifest.sample_rate_unverified:
+            _uncover(coverages, rows[mismatch], client_id, times, "sample_rate_mismatch")
+            rows, mismatch = rows[~mismatch], mismatch[~mismatch]
+            if not rows.size:
+                continue
+        requested_end_us, by_sample_time = _requested_end_us(
+            timeline=timeline, samples=samples, rows=rows
+        )
+        found.append(
+            _SensorRequests(
+                client_id=client_id,
+                timeline=timeline,
+                sensor_data=sensor_data,
+                sample_rate_hz=sample_rate_hz,
+                rows=rows,
+                requested_end_us=requested_end_us,
+                by_sample_time=by_sample_time.tolist(),
+                reasons=[
+                    "sample_rate_mismatch"
+                    if mismatched
+                    else ("timing_fallback" if legacy else None)
+                    for mismatched, legacy in zip(
+                        mismatch.tolist(), by_sample_time.tolist(), strict=True
+                    )
+                ],
+            )
+        )
+    found.sort(key=lambda sensor: int(sensor.rows[0]))
+    return found
+
+
+def _uncover(
+    coverages: list[RawReplayWindowCoverage | None],
+    rows: npt.NDArray[np.intp],
+    client_id: str,
+    times: list[float | None],
+    reason: str,
+) -> None:
+    """The coverage of samples *rows* (of sensor *client_id*), which have no raw window."""
+    for row in rows.tolist():
+        coverages[row] = _uncovered(client_id, times[row], "missing", reason)
 
 
 def _uncovered(
-    sample: SensorFrame, coverage_state: RawReplayCoverageState, reason: str | None
+    client_id: str, t_s: float | None, coverage_state: RawReplayCoverageState, reason: str | None
 ) -> RawReplayWindowCoverage:
-    """*sample*'s coverage without a complete raw window, and why: it is not rebuilt."""
+    """A sample's coverage without a complete raw window, and why: it is not rebuilt."""
     return RawReplayWindowCoverage(
-        client_id=sample.client_id,
-        t_s=sample.t_s,
+        client_id=client_id,
+        t_s=t_s,
         coverage_state=coverage_state,
         raw_backed=False,
         reason=reason,
@@ -460,28 +505,41 @@ def _uncovered(
 
 def _segmented_window(
     *,
-    request: _WindowRequest,
-    timeline: RawSensorTimeline,
-    sensor_data: RawCaptureSensorData,
+    sensor: _SensorRequests,
+    position: int,
+    t_s: float | None,
     fft_n: int,
 ) -> RawReplayWindowCoverage | _RawWindow:
-    """*request*'s window, one resolved on its own: incomplete, or in pieces in the raw buffer."""
-    sample = request.sample
-    window = _resolve_window(timeline=timeline, sample=sample, fft_n=fft_n)
+    """Sensor request *position*'s window, resolved on its own: incomplete, or in pieces."""
+    requested_end_us = float(sensor.requested_end_us[position])
+    window = _resolve_window(
+        timeline=sensor.timeline,
+        requested_end_us=None if np.isnan(requested_end_us) else requested_end_us,
+        timing_source="legacy_t_s" if sensor.by_sample_time[position] else "explicit_window",
+        fft_n=fft_n,
+    )
     if window.coverage_state != "complete" or not window.segments:
         coverage_reason = (
             "timing_fallback" if window.timing_source == "legacy_t_s" else window.reason
         )
-        return _uncovered(sample, window.coverage_state, coverage_reason)
-    window_i16 = assemble_raw_window_samples(sensor_data=sensor_data, segments=window.segments)
+        return _uncovered(sensor.client_id, t_s, window.coverage_state, coverage_reason)
+    window_i16 = assemble_raw_window_samples(
+        sensor_data=sensor.sensor_data, segments=window.segments
+    )
     if window_i16.shape[0] != fft_n:
-        return _uncovered(sample, "partial", "window_truncated")
-    return _RawWindow(request=request, raw_start=-1, samples_i16=window_i16)
+        return _uncovered(sensor.client_id, t_s, "partial", "window_truncated")
+    return _RawWindow(
+        row=int(sensor.rows[position]),
+        reason=sensor.reasons[position],
+        raw_start=-1,
+        samples_i16=window_i16,
+    )
 
 
 def _window_spectra(
     windows: Sequence[_RawWindow],
     sensor_data: RawCaptureSensorData,
+    sample_rate_hz: int,
     fft_computer: SpectralAnalysisComputer,
     fft_n: int,
     accel_scale_g_per_lsb: float | None,
@@ -530,92 +588,52 @@ def _window_spectra(
                 block[...] = window_counts
             else:
                 np.multiply(window_counts, scale, out=block)
-    last_xyz = [tuple(last) for last in blocks[:, :, -1].tolist()]
+    # A copy: the FFT overwrites the blocks.
+    last_xyz = blocks[:, :, -1].copy()
     means = np.mean(padded, axis=2, keepdims=True)
     mean_xyz = [tuple(mean) for mean in means[: len(windows), :, 0].tolist()]
-    spectra = fft_computer.combined_spectra(padded, windows[0].request.sample_rate_hz, means=means)
+    spectra = fft_computer.combined_spectra(padded, sample_rate_hz, means=means)
     if spectra is not None:
         spectra = spectra[: len(windows)]
     return _WindowSpectra(
         spectra=spectra,
-        last_xyz=cast("list[tuple[float, float, float]]", last_xyz),
+        last_xyz=last_xyz,
         mean_xyz=cast("list[tuple[float, float, float]]", mean_xyz),
     )
 
 
-def _fft_unusable_window(
-    index: int,
-    window: _RawWindow,
-    last_xyz: tuple[float, float, float],
-    mean_xyz: tuple[float, float, float],
-    rebuilt: _RebuiltPeaks,
-) -> RawReplayWindowCoverage:
-    """Rebuild *window*'s sample where its sample rate leaves the spectrum no analysis bins.
+def _set_last_readings(
+    samples: SampleColumns, rows: npt.NDArray[np.intp], last_xyz: npt.NDArray[np.float32]
+) -> None:
+    """Set samples *rows*' last reading per axis to *last_xyz*' rows in turn."""
+    samples.accel_x_g[rows] = last_xyz[:, 0]
+    samples.accel_y_g[rows] = last_xyz[:, 1]
+    samples.accel_z_g[rows] = last_xyz[:, 2]
 
-    It has no strength and no peaks.
+
+def _set_no_strengths(samples: SampleColumns, rows: npt.NDArray[np.intp]) -> None:
+    """Rebuild samples *rows* without strength, where the spectrum has no analysis bins."""
+    samples.vibration_strength_db[rows] = nan
+    samples.strength_bucket_of[rows] = -1
+    samples.strength_peak_amp_g[rows] = nan
+    samples.strength_floor_amp_g[rows] = nan
+
+
+def _set_strengths(
+    samples: SampleColumns, rows: npt.NDArray[np.intp], strengths: StrengthRows
+) -> None:
+    """Set samples *rows*' strength fields from *strengths*' rows in turn.
+
+    As ``strength_metrics_from_mapping`` takes them from the metrics: a value
+    that is not finite is none (NaN).
     """
-    sample = window.request.sample
-    sample.accel_x_g, sample.accel_y_g, sample.accel_z_g = last_xyz
-    sample.dominant_freq_hz = None
-    sample.vibration_strength_db = None
-    sample.strength_bucket = None
-    sample.strength_peak_amp_g = None
-    sample.strength_floor_amp_g = None
-    rebuilt.rebuilt[index] = True
-    return RawReplayWindowCoverage(
-        client_id=sample.client_id,
-        t_s=sample.t_s,
-        coverage_state="complete",
-        raw_backed=False,
-        reason="fft_no_valid_bins",
-        mean_xyz=mean_xyz,
-    )
-
-
-def _replayed_window(
-    window: _RawWindow,
-    spectrum: WindowSpectrum,
-    last_xyz: tuple[float, float, float],
-    mean_xyz: tuple[float, float, float],
-) -> RawReplayWindowCoverage:
-    """Rebuild *window*'s sample's last reading and spectrum.
-
-    Its strength follows, with its batch's (``_set_strengths``).
-    """
-    sample = window.request.sample
-    sample.accel_x_g, sample.accel_y_g, sample.accel_z_g = last_xyz
-    sample.spectrum = spectrum
-    return RawReplayWindowCoverage(
-        client_id=sample.client_id,
-        t_s=sample.t_s,
-        coverage_state="complete",
-        raw_backed=True,
-        reason=window.request.reason,
-        mean_xyz=mean_xyz,
-    )
-
-
-def _set_strengths(samples: Sequence[SensorFrame], strengths: StrengthRows) -> None:
-    """Set each sample's strength fields from its row of *strengths*, in turn.
-
-    As ``strength_metrics_from_mapping`` takes them from the metrics: the
-    dominant frequency is the first peak's (None where it has none, or one not
-    finite and over 0), and a value that is not finite is None.
-    """
-    for sample, dominant_hz, db, strength_bucket, peak_amp, floor_amp in zip(
-        samples,
-        strengths.first_peak(strengths.peak_hz).tolist(),
-        strengths.first_peak(strengths.peak_db).tolist(),
-        strengths.strength_buckets(),
-        strengths.first_peak(strengths.peak_amp).tolist(),
-        strengths.noise_floor_amp_g.tolist(),
-        strict=True,
+    for column, values in (
+        (samples.vibration_strength_db, strengths.first_peak(strengths.peak_db)),
+        (samples.strength_peak_amp_g, strengths.first_peak(strengths.peak_amp)),
+        (samples.strength_floor_amp_g, strengths.noise_floor_amp_g),
     ):
-        sample.dominant_freq_hz = dominant_hz if isfinite(dominant_hz) and dominant_hz > 0 else None
-        sample.vibration_strength_db = db if isfinite(db) else None
-        sample.strength_bucket = strength_bucket
-        sample.strength_peak_amp_g = peak_amp if isfinite(peak_amp) else None
-        sample.strength_floor_amp_g = floor_amp if isfinite(floor_amp) else None
+        column[rows] = np.where(np.isfinite(values), values, nan)
+    samples.set_strength_buckets(rows.tolist(), strengths.strength_buckets())
 
 
 def _raw_capture_mode(
@@ -630,8 +648,17 @@ def _raw_capture_mode(
     return "partial_raw_backed"
 
 
+def _missing_coverages(samples: SampleColumns, reason: str) -> tuple[RawReplayWindowCoverage, ...]:
+    """Each sample's coverage where none has a raw window, for *reason*."""
+    client_of, client_ids = samples.clients()
+    return tuple(
+        _uncovered(client_ids[client], t_s, "missing", reason)
+        for client, t_s in zip(client_of.tolist(), optional_floats(samples.t_s), strict=True)
+    )
+
+
 def _build_raw_capture_unavailable_replay_result(
-    samples: tuple[SensorFrame, ...],
+    samples: SampleColumns,
 ) -> RawReplayResult:
     return RawReplayResult(
         peaks=SamplePeaks.none(len(samples)),
@@ -664,16 +691,7 @@ def _build_raw_capture_unavailable_replay_result(
             raw_capture_mode="summary_only",
             udp_ingest_queue_drop_count=0,
         ),
-        window_coverages=tuple(
-            RawReplayWindowCoverage(
-                client_id=sample.client_id,
-                t_s=sample.t_s,
-                coverage_state="missing",
-                raw_backed=False,
-                reason="raw_capture_unavailable",
-            )
-            for sample in samples
-        ),
+        window_coverages=_missing_coverages(samples, "raw_capture_unavailable"),
     )
 
 
@@ -703,7 +721,7 @@ def _build_replay_context(
 
 def _build_replay_windows(
     *,
-    samples: tuple[SensorFrame, ...],
+    samples: SampleColumns,
     raw_capture: RawRunCapture,
     context: _ReplayBuildContext,
 ) -> _ReplayWindowBuildResult:
@@ -745,7 +763,7 @@ def _build_replay_windows(
 
 def _rebuild_samples(
     *,
-    samples: tuple[SensorFrame, ...],
+    samples: SampleColumns,
     raw_capture: RawRunCapture,
     context: _ReplayBuildContext,
 ) -> tuple[list[RawReplayWindowCoverage], _RebuiltPeaks]:
@@ -761,6 +779,7 @@ def _rebuild_samples(
     """
     rebuilt = _RebuiltPeaks(len(samples))
     coverages: list[RawReplayWindowCoverage | None] = [None] * len(samples)
+    times = optional_floats(samples.t_s)
     # Each sample rate's spectra, kept together as the rows of one array
     # (``WindowSpectrum.rows``), and how many rows are filled. Rows are taken
     # in turn, so only those filled take up memory.
@@ -768,7 +787,7 @@ def _rebuild_samples(
     # Each sample rate's samples whose strength is still to be taken: those of
     # its last filled rows, in order.
     pending: dict[int, list[int]] = defaultdict(list)
-    in_flight: deque[tuple[list[tuple[int, _RawWindow]], Future[_WindowSpectra]]] = deque()
+    in_flight: deque[tuple[_SensorRequests, list[_RawWindow], Future[_WindowSpectra]]] = deque()
 
     def finish(sample_rate_hz: int) -> None:
         """Take the strengths of the first ``_WINDOWS_PER_BATCH`` (at most) pending samples."""
@@ -782,18 +801,28 @@ def _rebuild_samples(
             rows[first : first + count], sample_rate_hz
         )
         rebuilt.add(indexes, strengths)
-        _set_strengths([samples[index] for index in indexes.tolist()], strengths)
+        _set_strengths(samples, indexes, strengths)
 
     def take_oldest() -> None:
-        chunk, future = in_flight.popleft()
+        sensor, chunk, future = in_flight.popleft()
         computed = future.result()
+        indexes = np.array([window.row for window in chunk], dtype=np.intp)
+        _set_last_readings(samples, indexes, computed.last_xyz)
         if computed.spectra is None:
-            for position, (index, window) in enumerate(chunk):
-                coverages[index] = _fft_unusable_window(
-                    index, window, computed.last_xyz[position], computed.mean_xyz[position], rebuilt
+            # The sample rate leaves the spectrum no analysis bins: no strength, no peaks.
+            _set_no_strengths(samples, indexes)
+            rebuilt.rebuilt[indexes] = True
+            for window, mean_xyz in zip(chunk, computed.mean_xyz, strict=True):
+                coverages[window.row] = RawReplayWindowCoverage(
+                    client_id=sensor.client_id,
+                    t_s=times[window.row],
+                    coverage_state="complete",
+                    raw_backed=False,
+                    reason="fft_no_valid_bins",
+                    mean_xyz=mean_xyz,
                 )
             return
-        sample_rate_hz = chunk[0][1].request.sample_rate_hz
+        sample_rate_hz = sensor.sample_rate_hz
         freq_hz = context.fft_computer.freq_slice(sample_rate_hz)
         if sample_rate_hz not in kept:
             kept[sample_rate_hz] = (np.empty((len(samples), freq_hz.size), dtype=np.float32), [0])
@@ -802,41 +831,42 @@ def _rebuild_samples(
         rows[first : first + len(chunk)] = computed.spectra
         filled[0] += len(chunk)
         waiting = pending[sample_rate_hz]
-        for position, (index, window) in enumerate(chunk):
-            coverages[index] = _replayed_window(
-                window,
-                WindowSpectrum(
-                    freq_hz=freq_hz, amp_g=rows[first + position], rows=rows, row=first + position
-                ),
-                computed.last_xyz[position],
-                computed.mean_xyz[position],
+        # Each sample's strength follows, with its batch's (``finish``).
+        for position, (window, mean_xyz) in enumerate(zip(chunk, computed.mean_xyz, strict=True)):
+            samples.spectra[window.row] = WindowSpectrum(
+                freq_hz=freq_hz, amp_g=rows[first + position], rows=rows, row=first + position
             )
-            waiting.append(index)
+            coverages[window.row] = RawReplayWindowCoverage(
+                client_id=sensor.client_id,
+                t_s=times[window.row],
+                coverage_state="complete",
+                raw_backed=True,
+                reason=window.reason,
+                mean_xyz=mean_xyz,
+            )
+        waiting.extend(indexes.tolist())
         while len(waiting) >= _WINDOWS_PER_BATCH:
             finish(sample_rate_hz)
 
-    requests: dict[str, list[tuple[int, _WindowRequest]]] = defaultdict(list)
-    for index, sample in enumerate(samples):
-        request = _window_request(
-            sample=sample,
-            timeline=context.timelines.get(sample.client_id),
-            sensor_data=raw_capture.sensor_data(sample.client_id),
-        )
-        if isinstance(request, _WindowRequest):
-            requests[sample.client_id].append((index, request))
-        else:
-            coverages[index] = request
-
+    sensors = _sensor_requests(
+        samples=samples,
+        raw_capture=raw_capture,
+        timelines=context.timelines,
+        coverages=coverages,
+        times=times,
+    )
     with ThreadPoolExecutor(max_workers=_FFT_WORKERS, thread_name_prefix="raw-replay-fft") as pool:
 
-        def submit(chunk: list[tuple[int, _RawWindow]], sensor_data: RawCaptureSensorData) -> None:
+        def submit(sensor: _SensorRequests, chunk: list[_RawWindow]) -> None:
             in_flight.append(
                 (
+                    sensor,
                     chunk,
                     pool.submit(
                         _window_spectra,
-                        [window for _index, window in chunk],
-                        sensor_data,
+                        chunk,
+                        sensor.sensor_data,
+                        sensor.sample_rate_hz,
                         context.fft_computer,
                         context.fft_n,
                         context.accel_scale_g_per_lsb,
@@ -846,43 +876,32 @@ def _rebuild_samples(
             while len(in_flight) > _FFT_CHUNKS_AHEAD:
                 take_oldest()
 
-        for client_id, sensor_requests in requests.items():
-            timeline = context.timelines[client_id]
-            sensor_data = cast("RawCaptureSensorData", raw_capture.sensor_data(client_id))
+        for sensor in sensors:
             raw_starts = contiguous_raw_window_starts(
-                timeline=timeline,
-                requested_end_us=np.array(
-                    [
-                        np.nan if request.requested_end_us is None else request.requested_end_us
-                        for _index, request in sensor_requests
-                    ],
-                    dtype=np.float64,
-                ),
+                timeline=sensor.timeline,
+                requested_end_us=sensor.requested_end_us,
                 sample_count=context.fft_n,
             )
-            chunk: list[tuple[int, _RawWindow]] = []
-            for (index, request), raw_start in zip(
-                sensor_requests, raw_starts.tolist(), strict=True
+            chunk: list[_RawWindow] = []
+            for position, (row, reason, raw_start) in enumerate(
+                zip(sensor.rows.tolist(), sensor.reasons, raw_starts.tolist(), strict=True)
             ):
                 window = (
-                    _RawWindow(request=request, raw_start=raw_start)
+                    _RawWindow(row=row, reason=reason, raw_start=raw_start)
                     if raw_start >= 0
                     else _segmented_window(
-                        request=request,
-                        timeline=timeline,
-                        sensor_data=sensor_data,
-                        fft_n=context.fft_n,
+                        sensor=sensor, position=position, t_s=times[row], fft_n=context.fft_n
                     )
                 )
                 if not isinstance(window, _RawWindow):
-                    coverages[index] = window
+                    coverages[row] = window
                     continue
-                chunk.append((index, window))
+                chunk.append(window)
                 if len(chunk) >= _WINDOWS_PER_FFT:
-                    submit(chunk, sensor_data)
+                    submit(sensor, chunk)
                     chunk = []
             if chunk:
-                submit(chunk, sensor_data)
+                submit(sensor, chunk)
         while in_flight:
             take_oldest()
     for sample_rate_hz, waiting in pending.items():
@@ -942,7 +961,7 @@ def _summarize_raw_capture_losses(raw_capture: RawRunCapture) -> _RawCaptureLoss
 
 def _build_fft_unavailable_replay_result(
     *,
-    samples: tuple[SensorFrame, ...],
+    samples: SampleColumns,
     raw_capture: RawRunCapture,
 ) -> RawReplayResult:
     loss_policy = assess_raw_capture_loss_policy(raw_capture.manifest)
@@ -1013,26 +1032,17 @@ def _build_fft_unavailable_replay_result(
                 loss_policy=loss_policy,
             ),
         ),
-        window_coverages=tuple(
-            RawReplayWindowCoverage(
-                client_id=sample.client_id,
-                t_s=sample.t_s,
-                coverage_state="missing",
-                raw_backed=False,
-                reason="fft_window_missing",
-            )
-            for sample in samples
-        ),
+        window_coverages=_missing_coverages(samples, "fft_window_missing"),
     )
 
 
 def _resolve_window(
     *,
     timeline: RawSensorTimeline,
-    sample: SensorFrame,
+    requested_end_us: float | None,
+    timing_source: str,
     fft_n: int,
 ) -> _ResolvedWindow:
-    requested_end_us, timing_source = _requested_end_us(timeline=timeline, sample=sample)
     if requested_end_us is None:
         return _ResolvedWindow(coverage_state="missing", reason="sample_time_missing")
     resolved = resolve_raw_window_end_time(
@@ -1052,15 +1062,25 @@ def _resolve_window(
 def _requested_end_us(
     *,
     timeline: RawSensorTimeline,
-    sample: SensorFrame,
-) -> tuple[float | None, str]:
+    samples: SampleColumns,
+    rows: npt.NDArray[np.intp],
+) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.bool_]]:
+    """When samples *rows*' raw windows end on the sensor's clock (NaN: no sample time).
+
+    And which of them go by the sample time (``legacy_t_s``): those without
+    an analysis window end.
+    """
     run_start_monotonic_us = float(timeline.run_start_monotonic_us or 0)
-    analysis_window_end_us = sample.analysis_window_end_us
-    if analysis_window_end_us is not None:
-        return run_start_monotonic_us + float(analysis_window_end_us), "explicit_window"
-    if sample.t_s is None or not isfinite(sample.t_s) or sample.t_s <= 0:
-        return None, "legacy_t_s"
-    return run_start_monotonic_us + (float(sample.t_s) * 1_000_000.0), "legacy_t_s"
+    analysis_window_end_us = samples.analysis_window_end_us[rows]
+    t_s = samples.t_s[rows]
+    by_sample_time = np.isnan(analysis_window_end_us)
+    timed = np.isfinite(t_s) & (t_s > 0)
+    requested_end_us = np.where(
+        by_sample_time,
+        np.where(timed, run_start_monotonic_us + (t_s * 1_000_000.0), nan),
+        run_start_monotonic_us + analysis_window_end_us,
+    )
+    return requested_end_us, by_sample_time
 
 
 def _replay_confidence(

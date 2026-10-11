@@ -9,11 +9,15 @@ selection a full decode of every row gives.
 from __future__ import annotations
 
 import math
-from dataclasses import replace
 from pathlib import Path
 
 import pytest
-from test_support.analysis import peaks_by_sample, sample_peaks_of
+from test_support.analysis import (
+    peaks_by_sample,
+    sample_column_values,
+    sample_columns_of,
+    sample_peaks_of,
+)
 from test_support.history_db_lifecycle import (
     build_history_db,
     create_analyzing_run,
@@ -76,7 +80,7 @@ def test_long_runs_keep_loud_events_when_thinned(
     assert result.stride == 2
     assert result.sampling_method == "event_preserving"
     assert result.event_sample_count == 1
-    assert [sample.t_s for sample in result.samples] == [1.0, 3.0]
+    assert result.samples.t_s.tolist() == [1.0, 3.0]
 
 
 def _varied_row(index: int) -> dict[str, object]:
@@ -96,7 +100,7 @@ def _varied_row(index: int) -> dict[str, object]:
 
 def _assert_loaded_rows(result: LoadedPostAnalysisRun, rows: list[SensorFrame]) -> None:
     """*result* holds *rows* without their peaks, and reads those as stored."""
-    assert result.samples == [replace(row, top_peaks=()) for row in rows]
+    assert sample_column_values(result.samples) == sample_column_values(sample_columns_of(rows))
     assert peaks_by_sample(result.stored_peaks(range(len(rows)))) == peaks_by_sample(
         sample_peaks_of(rows)
     )
@@ -172,7 +176,7 @@ def test_corrupt_rows_are_skipped(tmp_path: Path) -> None:
 
     result = _loaded(db, "run-corrupt")
 
-    assert [sample.t_s for sample in result.samples] == [1.0, 2.0, 4.0]
+    assert result.samples.t_s.tolist() == [1.0, 2.0, 4.0]
 
 
 def test_a_run_without_rows_is_reported_empty(tmp_path: Path) -> None:

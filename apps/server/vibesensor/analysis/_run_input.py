@@ -6,8 +6,8 @@ from collections.abc import Sequence
 from dataclasses import dataclass, replace
 
 from vibesensor.recording.run_schema import RunMetadata
+from vibesensor.recording.sample_columns import SampleColumns
 from vibesensor.recording.sample_peaks import SamplePeaks
-from vibesensor.recording.sensor_frame import SensorFrame
 
 __all__ = ["DiagnosticsRunInput", "build_diagnostics_run_input", "normalize_run_metadata"]
 
@@ -17,8 +17,8 @@ class DiagnosticsRunInput:
     """One normalized diagnostics run used by the typed analysis core."""
 
     context: RunMetadata
-    samples: tuple[SensorFrame, ...]
-    # Each sample's peaks: the analysis reads them here, not from its frame.
+    samples: SampleColumns
+    # Each sample's peaks.
     peaks: SamplePeaks
     # Each sample's raw window mean per axis (gravity and the car's own
     # acceleration), in sample order; empty without the raw capture.
@@ -31,7 +31,7 @@ class DiagnosticsRunInput:
 
 def build_diagnostics_run_input(
     metadata: RunMetadata,
-    samples: Sequence[SensorFrame],
+    samples: SampleColumns,
     peaks: SamplePeaks,
     *,
     file_name: str = "run",
@@ -42,7 +42,7 @@ def build_diagnostics_run_input(
     context = normalize_run_metadata(metadata, file_name=file_name)
     return DiagnosticsRunInput(
         context=context,
-        samples=tuple(samples),
+        samples=samples,
         peaks=peaks,
         window_means=tuple(window_means),
     )

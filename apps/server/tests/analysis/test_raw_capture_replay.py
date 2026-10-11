@@ -7,12 +7,13 @@ valid bins and a fatal loss policy."""
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 from dataclasses import replace
 from typing import Any
 
 import numpy as np
 import pytest
-from test_support.analysis import stored_peaks_of
+from test_support.analysis import sample_columns_of, stored_peaks_of
 from test_support.raw_capture_assertions import warning_codes
 from test_support.raw_capture_fixtures import (
     post_analysis_metadata,
@@ -35,6 +36,7 @@ from vibesensor.recording.raw_capture import (
     RawCaptureSensorManifest,
     RawRunCapture,
 )
+from vibesensor.recording.sensor_frame import SensorFrame
 from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
 from vibesensor.summary.run_context_warning import (
     WARNING_CODE_RAW_CAPTURE_LOSS_POLICY,
@@ -49,9 +51,11 @@ _FFT_N = 64
 _RUN_START_MONOTONIC_US = 1_000_000
 
 
-def _loaded(**fields: Any) -> LoadedPostAnalysisRun:
-    """A loaded run whose stored peaks are its samples' ``top_peaks``."""
-    return LoadedPostAnalysisRun(stored_peaks=stored_peaks_of(fields["samples"]), **fields)
+def _loaded(*, samples: Sequence[SensorFrame], **fields: Any) -> LoadedPostAnalysisRun:
+    """A loaded run of *samples*, whose stored peaks are their ``top_peaks``."""
+    return LoadedPostAnalysisRun(
+        samples=sample_columns_of(samples), stored_peaks=stored_peaks_of(samples), **fields
+    )
 
 
 def _rate_capture(
@@ -304,8 +308,7 @@ def test_build_post_analysis_input_marks_gap_windows_partial_and_falls_back() ->
         "complete",
         "partial",
     ]
-    assert result.samples[1].vibration_strength_db == 12.0
-    assert result.samples[1].dominant_freq_hz == 14.0
+    assert result.samples.vibration_strength_db[1] == 12.0
     # The partial window's sample keeps its stored peaks.
     peaks = result.diagnostics_run.peaks
     stored = slice(peaks.start[1], peaks.start[2])
@@ -368,8 +371,7 @@ def test_build_post_analysis_input_falls_back_for_legacy_raw_capture_without_anc
     assert result.raw_replay.replay_confidence == "fallback"
     assert result.raw_replay.unanchored_sensor_count == 1
     assert warning_codes(result.raw_replay.warnings) == [WARNING_CODE_RAW_REPLAY_LEGACY_FALLBACK]
-    assert result.samples[0].vibration_strength_db == 11.0
-    assert result.samples[0].dominant_freq_hz == 13.0
+    assert result.samples.vibration_strength_db[0] == 11.0
 
 
 def _outcome_capture(
@@ -462,7 +464,7 @@ def test_build_post_analysis_input_marks_no_valid_bin_fft_windows_unusable() -> 
 
     result = build_post_analysis_input(loaded)
 
-    rebuilt = result.diagnostics_run.samples[0]
+    rebuilt = result.diagnostics_run.samples
     assert result.raw_backed_summary_row_count == 0
     assert result.raw_replay.complete_window_count == 1
     assert result.raw_replay.fft_unusable_window_count == 1
@@ -470,12 +472,11 @@ def test_build_post_analysis_input_marks_no_valid_bin_fft_windows_unusable() -> 
     assert result.raw_replay.raw_capture_mode == "summary_only"
     assert result.raw_replay_window_coverages[0].reason == "fft_no_valid_bins"
     assert WARNING_CODE_RAW_REPLAY_FFT_UNUSABLE in warning_codes(result.raw_replay.warnings)
-    assert rebuilt.vibration_strength_db is None
-    assert rebuilt.dominant_freq_hz is None
+    assert math.isnan(rebuilt.vibration_strength_db[0])
     assert result.diagnostics_run.peaks.row.size == 0
-    assert rebuilt.strength_bucket is None
-    assert rebuilt.strength_peak_amp_g is None
-    assert rebuilt.strength_floor_amp_g is None
+    assert rebuilt.strength_bucket_of[0] == -1
+    assert math.isnan(rebuilt.strength_peak_amp_g[0])
+    assert math.isnan(rebuilt.strength_floor_amp_g[0])
 
 
 def test_build_post_analysis_input_marks_fatal_raw_capture_loss_policy() -> None:
@@ -566,19 +567,21 @@ def test_each_replayed_window_is_the_live_spectrum_of_its_samples(
         fft_n=_FFT_N, spectrum_min_hz=SPECTRUM_MIN_HZ, spectrum_max_hz=SPECTRUM_MAX_HZ
     )
     peaks = result.diagnostics_run.peaks
-    for row, (sample, sample_end) in enumerate(zip(result.samples, sample_ends, strict=True)):
+    samples = result.samples
+    for row, sample_end in enumerate(sample_ends):
         # C order, as the live ring buffer hands it over: the mean's summation
         # order, and so its last bit, follows the memory layout.
         block = np.ascontiguousarray(waveform[sample_end - _FFT_N : sample_end].T, dtype=np.float32)
         block *= np.float32(0.001)
         live = computer.compute_fft_spectrum(block, _SAMPLE_RATE_HZ)
         metrics = live["strength_metrics"]
-        assert sample.spectrum is not None
-        np.testing.assert_array_equal(sample.spectrum.amp_g, live["combined_amp"])
-        assert sample.vibration_strength_db == metrics["vibration_strength_db"]
-        assert sample.strength_floor_amp_g == metrics["noise_floor_amp_g"]
+        spectrum = samples.spectra[row]
+        assert spectrum is not None
+        np.testing.assert_array_equal(spectrum.amp_g, live["combined_amp"])
+        assert samples.vibration_strength_db[row] == metrics["vibration_strength_db"]
+        assert samples.strength_floor_amp_g[row] == metrics["noise_floor_amp_g"]
         start, end = peaks.start[row], peaks.start[row + 1]
         assert list(
             zip(peaks.hz[start:end].tolist(), peaks.amp[start:end].tolist(), strict=True)
         ) == [(peak["hz"], peak["amp"]) for peak in metrics["top_peaks"]]
-        assert sample.accel_z_g == float(block[2, -1])
+        assert samples.accel_z_g[row] == float(block[2, -1])

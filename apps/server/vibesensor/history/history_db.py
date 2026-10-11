@@ -42,11 +42,12 @@ from vibesensor.history.records import (
 )
 from vibesensor.history.run_clock_correction import StoredRunTimes, correct_run_times
 from vibesensor.history.sample_store import (
+    SAMPLE_COLUMNS_SELECT_SQL_COLS,
     SELECTION_SELECT_SQL_COLS,
     V2_INSERT_SQL,
     V2_SELECT_SQL_COLS,
-    V2_SELECT_SQL_COLS_WITHOUT_PEAKS,
     SampleSelectionColumns,
+    sample_column_rows_to_values,
     sample_to_v2_row,
     selection_columns_from_rows,
     v2_peak_rows_to_sample_peaks,
@@ -61,6 +62,7 @@ from vibesensor.recording.raw_capture import (
 )
 from vibesensor.recording.run_metadata import run_metadata_to_json_object
 from vibesensor.recording.run_schema import RunMetadata
+from vibesensor.recording.sample_columns import SAMPLE_COLUMN_FIELDS, SampleColumns
 from vibesensor.recording.sample_peaks import SamplePeaks
 from vibesensor.recording.sensor_frame import SensorFrame
 from vibesensor.settings.settings_snapshot import SettingsSnapshotPayload
@@ -896,36 +898,40 @@ class HistoryDB:
             )
         return SampleSelectionColumns.concatenate(parts)
 
-    def load_run_samples_without_peaks(
+    def load_run_sample_columns(
         self,
         run_id: str,
         row_ids: Sequence[int],
         batch_size: int = 500,
-    ) -> tuple[list[SensorFrame], list[int]]:
-        """Decode the given ``samples_v2`` rows (ascending ids) in id order, but not their peaks.
+    ) -> tuple[SampleColumns, list[int]]:
+        """The fields the post-stop analysis reads of the given ``samples_v2`` rows, as columns.
 
-        Each frame's ``top_peaks`` is left empty (``load_run_peaks_by_id`` reads
-        them); returns the frames and their row ids. Corrupt rows are skipped
-        and logged; the read lock is released between batches.
+        The rows (ascending ids) in id order, without their peaks
+        (``load_run_peaks_by_id`` reads those); returns the columns and the
+        row ids. Corrupt rows are skipped and logged; the read lock is
+        released between batches.
         """
         size = max(1, batch_size)
-        frames: list[SensorFrame] = []
+        values: list[list[object]] = [[] for _field in SAMPLE_COLUMN_FIELDS]
         decoded_ids: list[int] = []
         for offset in range(0, len(row_ids), size):
             batch_ids = [int(row_id) for row_id in row_ids[offset : offset + size]]
             placeholders = ", ".join("?" * len(batch_ids))
             with self._read() as cur:
                 cur.execute(
-                    f"SELECT {V2_SELECT_SQL_COLS_WITHOUT_PEAKS} FROM samples_v2"
+                    f"SELECT {SAMPLE_COLUMNS_SELECT_SQL_COLS} FROM samples_v2"
                     f" WHERE run_id = ? AND id IN ({placeholders}) ORDER BY id",
                     (run_id, *batch_ids),
                 )
                 rows = cur.fetchall()
-            batch, skipped = v2_rows_to_sensor_frames(rows)
-            frames.extend(batch)
-            corrupt = set(skipped)
-            decoded_ids.extend(int(row[0]) for row in rows if row[0] not in corrupt)
-        return frames, decoded_ids
+            columns, batch_decoded_ids = sample_column_rows_to_values(rows)
+            for field_values, column in zip(values, columns, strict=True):
+                field_values.extend(column)
+            decoded_ids.extend(batch_decoded_ids)
+        return (
+            SampleColumns.from_fields(dict(zip(SAMPLE_COLUMN_FIELDS, values, strict=True))),
+            decoded_ids,
+        )
 
     def load_run_peaks_by_id(
         self,

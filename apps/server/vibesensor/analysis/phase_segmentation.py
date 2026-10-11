@@ -25,9 +25,9 @@ from dataclasses import dataclass
 from itertools import accumulate, repeat
 from operator import mul
 
-from vibesensor.analysis._types import Sample
 from vibesensor.domain.driving_phase_summary import DrivingPhaseSummary
 from vibesensor.domain.driving_segment import DrivingPhase, DrivingPhaseSegment
+from vibesensor.recording.sample_columns import SampleColumns, optional_floats
 
 # Thresholds (tuneable)
 _IDLE_SPEED_KMH = 3.0  # below this → IDLE
@@ -86,19 +86,21 @@ class PhaseSegment:
     sample_count: int = 0
 
 
-def _speed_series(samples: Sequence[Sample]) -> list[tuple[float, float]]:
+def _speed_series(
+    times: Sequence[float | None], speeds: Sequence[float | None]
+) -> list[tuple[float, float]]:
     """The run's speed readings on the time axis: one ``(t_s, speed)`` per timestamp.
 
     Rows from several sensors at one timestamp read the same speed source; their
     mean stands for that moment.
     """
     by_time: dict[float, list[float]] = {}
-    for sample in samples:
-        if sample.t_s is None or sample.speed_kmh is None:
+    for t_s, speed in zip(times, speeds, strict=True):
+        if t_s is None or speed is None:
             continue
-        if not (math.isfinite(sample.t_s) and math.isfinite(sample.speed_kmh)):
+        if not (math.isfinite(t_s) and math.isfinite(speed)):
             continue
-        by_time.setdefault(sample.t_s, []).append(sample.speed_kmh)
+        by_time.setdefault(t_s, []).append(speed)
     return [(t_s, sum(speeds) / len(speeds)) for t_s, speeds in sorted(by_time.items())]
 
 
@@ -305,7 +307,7 @@ def _interpolate_speed_unknown(phases: list[DrivingPhase]) -> None:
 
 
 def segment_run_phases(
-    samples: Sequence[Sample],
+    samples: SampleColumns,
 ) -> tuple[list[DrivingPhase], list[PhaseSegment]]:
     """Classify every sample into a driving phase and return contiguous segments.
 
@@ -321,10 +323,10 @@ def segment_run_phases(
     if n == 0:
         return [], []
 
-    speeds: list[float | None] = [sample.speed_kmh for sample in samples]
-    times: list[float | None] = [sample.t_s for sample in samples]
+    speeds = optional_floats(samples.speed_kmh)
+    times = optional_floats(samples.t_s)
 
-    series = _speed_series(samples)
+    series = _speed_series(times, speeds)
     slopes = speed_slopes_kmh_s(series)
     slope_at = {t_s: slope for (t_s, _speed), slope in zip(series, slopes, strict=True)}
     in_braking = TimeSpanLookup(braking_intervals(series, slopes))

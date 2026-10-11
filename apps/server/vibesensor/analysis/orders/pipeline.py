@@ -12,7 +12,7 @@ from vibesensor.analysis._reference_resolution import (
     _NOT_MEASURED_RPM_SOURCES,
     ESTIMATED_RPM_SOURCE,
 )
-from vibesensor.analysis._types import PhaseLabels, Sample
+from vibesensor.analysis._types import PhaseLabels
 from vibesensor.analysis.constants import (
     MIN_ORDER_TRACKING_SLOPE,
     ORDER_MIN_CONFIDENCE,
@@ -60,6 +60,7 @@ from vibesensor.domain.order_match import frequency_tracking_slope, trend_moves
 from vibesensor.dsp.fixed_tones import RingingTone
 from vibesensor.dsp.order_bands import ORDER_TOLERANCE_REL
 from vibesensor.recording.run_schema import RunMetadata
+from vibesensor.recording.sample_columns import SampleColumns
 
 # Maximum dominance ratio for splitting a finding into per-location findings.
 # A ratio of 2.0 means the secondary location must be at least 50% as strong.
@@ -154,7 +155,7 @@ class OrderAnalysisRequest:
     """Typed inputs for one order-analysis pass across a prepared sample set."""
 
     context: RunMetadata
-    samples: Sequence[Sample]
+    samples: SampleColumns
     # The same samples as a drive table.
     table: DriveTable
     speed_sufficient: bool

@@ -6,9 +6,6 @@ from collections.abc import Sequence
 from typing import TypedDict
 
 from vibesensor.domain.driving_segment import DrivingPhase
-from vibesensor.recording.sensor_frame import SensorFrame
-
-type Sample = SensorFrame
 
 
 class AccelStatistics(TypedDict):

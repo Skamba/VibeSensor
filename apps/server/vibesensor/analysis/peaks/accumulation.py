@@ -6,8 +6,9 @@ import numpy as np
 import numpy.typing as npt
 
 from vibesensor.analysis._types import PhaseLabels
-from vibesensor.analysis.drive_table import DriveTable, coded, counts_by_group, groups_in_order
+from vibesensor.analysis.drive_table import DriveTable, counts_by_group, groups_in_order
 from vibesensor.analysis.speed_profile_helpers import _phase_to_str
+from vibesensor.recording.sample_columns import coded
 
 
 class PeakBinStats:
