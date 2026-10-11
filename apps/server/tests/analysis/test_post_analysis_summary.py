@@ -10,6 +10,7 @@ strength.
 from __future__ import annotations
 
 import pytest
+from test_support.analysis import stored_peaks_of
 from test_support.raw_capture_fixtures import (
     post_analysis_metadata,
     sine_xyz_i16,
@@ -53,12 +54,14 @@ def _run(
 ) -> PostAnalysisRunInput:
     loaded.setdefault("total_summary_row_count", 1)
     loaded.setdefault("stride", 1)
+    samples = sensor_frames_from_mappings(rows or [_ROW])
     return build_post_analysis_input(
         LoadedPostAnalysisRun(
             run_id=run_id,
             metadata=post_analysis_metadata(run_id, **(metadata or {})),
             language="en",
-            samples=sensor_frames_from_mappings(rows or [_ROW]),
+            samples=samples,
+            stored_peaks=stored_peaks_of(samples),
             raw_capture=raw_capture,
             **loaded,  # type: ignore[arg-type]
         )

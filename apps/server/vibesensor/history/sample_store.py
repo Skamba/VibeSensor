@@ -17,14 +17,17 @@ from typing import cast
 import numpy as np
 import numpy.typing as npt
 
+from vibesensor.recording.sample_peaks import SamplePeaks
 from vibesensor.recording.sensor_frame import SensorFrame
 from vibesensor.recording.sensor_frame_fields import (
     SENSOR_FRAME_FIELD_NAMES,
     sensor_frame_from_row_payload,
+    sensor_frame_peaks_from_row_value,
     sensor_frame_to_row_payload,
     sensor_frame_top_peak_amp_from_row_value,
     sensor_frames_from_canonical_rows,
     storage_float_column,
+    storage_peak_columns,
     storage_top_peak_amp_column,
 )
 from vibesensor.recording.sensor_frame_values import (
@@ -46,6 +49,10 @@ V2_INSERT_SQL: str = (
 
 _V2_SELECT_COLS: tuple[str, ...] = ("id",) + _V2_COLUMNS
 V2_SELECT_SQL_COLS: str = ", ".join(_V2_SELECT_COLS)
+# The same columns with every row's peaks read as none (``top_peaks`` NULL).
+V2_SELECT_SQL_COLS_WITHOUT_PEAKS: str = ", ".join(
+    "NULL" if column == "top_peaks" else column for column in _V2_SELECT_COLS
+)
 
 # Row offset: skip autoincrement id column in SELECT results.
 _V2_COL_OFFSET: int = 1
@@ -59,24 +66,55 @@ def sample_to_v2_row(run_id: str, item: SensorFrame) -> tuple[object, ...]:
     return (run_id, *row[1:])
 
 
-def v2_rows_to_sensor_frames(rows: Sequence[tuple[object, ...]]) -> tuple[list[SensorFrame], int]:
-    """Decode ``samples_v2`` rows in order; returns the frames and how many rows were corrupt.
+def v2_rows_to_sensor_frames(
+    rows: Sequence[tuple[object, ...]],
+) -> tuple[list[SensorFrame], list[object]]:
+    """Decode ``samples_v2`` rows in order; returns the frames and the ids of the corrupt rows.
 
     A batch of well-formed rows is decoded column by column; otherwise each row
     is decoded on its own and a corrupt one is skipped and logged.
     """
     frames = sensor_frames_from_canonical_rows(rows, row_offset=_V2_COL_OFFSET)
     if frames is not None:
-        return frames, 0
+        return frames, []
     frames = []
-    skipped = 0
+    skipped: list[object] = []
     for row in rows:
         try:
             frames.append(v2_row_to_sensor_frame(row))
         except SensorFrameDecodeError as exc:
-            skipped += 1
+            skipped.append(row[0])
             LOGGER.warning("Skipping corrupt v2 sample row id=%s: %s", row[0], exc)
     return frames, skipped
+
+
+def v2_peak_rows_to_sample_peaks(rows: Sequence[tuple[object, object]]) -> SamplePeaks:
+    """Decode ``(id, top_peaks)`` rows' peaks in order, as a full row decode keeps them.
+
+    A batch of well-formed values is decoded at once; otherwise each row on its
+    own, and a corrupt one is logged and has none.
+    """
+    peaks = storage_peak_columns([value for _row_id, value in rows])
+    if peaks is not None:
+        return peaks
+    positions: list[int] = []
+    hz: list[float] = []
+    amp: list[float] = []
+    local_floor_amp_g: list[float] = []
+    for position, (row_id, value) in enumerate(rows):
+        try:
+            kept = sensor_frame_peaks_from_row_value(value, source=f"samples_v2 row id={row_id}")
+        except SensorFrameDecodeError as exc:
+            LOGGER.warning("Skipping corrupt v2 sample peaks row id=%s: %s", row_id, exc)
+            continue
+        for peak in kept:
+            positions.append(position)
+            hz.append(peak.hz)
+            amp.append(peak.amp)
+            local_floor_amp_g.append(
+                math.nan if peak.local_floor_amp_g is None else peak.local_floor_amp_g
+            )
+    return SamplePeaks.of_peaks(positions, hz, amp, local_floor_amp_g, len(rows))
 
 
 def v2_row_to_sensor_frame(row: tuple[object, ...]) -> SensorFrame:

@@ -8,6 +8,7 @@ from dataclasses import fields
 
 import numpy as np
 import pytest
+from test_support.analysis import peaks_by_sample
 
 from vibesensor.history.sample_store import (
     _V2_COL_OFFSET,
@@ -16,6 +17,7 @@ from vibesensor.history.sample_store import (
     sample_to_v2_row,
     selection_columns_from_rows,
     selection_row_values,
+    v2_peak_rows_to_sample_peaks,
     v2_row_to_sensor_frame,
     v2_rows_to_sensor_frames,
 )
@@ -113,31 +115,36 @@ def test_v2_rows_to_sensor_frames_matches_one_row_at_a_time() -> None:
     frames, skipped = v2_rows_to_sensor_frames(_CANONICAL_ROWS)
 
     expected = _one_row_at_a_time(_CANONICAL_ROWS)
-    assert skipped == 0
+    assert skipped == []
     assert frames == expected
     assert [_field_types(frame) for frame in frames] == [_field_types(f) for f in expected]
 
 
-@pytest.mark.parametrize(
-    ("overrides", "corrupt"),
-    [
-        pytest.param({"speed_kmh": 80}, False, id="integer-in-float-column"),
-        pytest.param({"sample_rate_hz": 800.0}, False, id="float-in-integer-column"),
-        pytest.param({"analysis_window_start_us": 2**60}, False, id="integer-past-float-precision"),
-        pytest.param({"top_peaks": '[{"hz":"56","amp":0.4}]'}, False, id="text-peak-number"),
-        pytest.param({"top_peaks": '[{"hz":56.0,"amp":null}]'}, False, id="null-peak-amp"),
-        pytest.param({"top_peaks": '[{"hz":56.0,"amp":NaN}]'}, False, id="nan-token"),
-        pytest.param(
-            {"top_peaks": '[{"hz":56.0,"amp":0.4,"strength_bucket":" l2 "}]'},
-            False,
-            id="untrimmed-bucket",
-        ),
-        pytest.param({"top_peaks": '[42, {"hz":56.0,"amp":0.4}]'}, False, id="non-object-peak"),
-        pytest.param({"sample_rate_hz": "fast"}, True, id="text-in-integer-column"),
-        pytest.param({"top_peaks": "{not json"}, True, id="invalid-peak-json"),
-        pytest.param({"top_peaks": '{"hz":56.0}'}, True, id="peak-object-not-list"),
-    ],
-)
+_UNUSUAL_ROWS = [
+    pytest.param({"speed_kmh": 80}, False, id="integer-in-float-column"),
+    pytest.param({"sample_rate_hz": 800.0}, False, id="float-in-integer-column"),
+    pytest.param({"analysis_window_start_us": 2**60}, False, id="integer-past-float-precision"),
+    pytest.param({"top_peaks": '[{"hz":"56","amp":0.4}]'}, False, id="text-peak-number"),
+    pytest.param({"top_peaks": '[{"hz":56.0,"amp":null}]'}, False, id="null-peak-amp"),
+    pytest.param({"top_peaks": '[{"hz":56.0,"amp":NaN}]'}, False, id="nan-token"),
+    pytest.param(
+        {"top_peaks": '[{"hz":56.0,"amp":0.4,"strength_bucket":" l2 "}]'},
+        False,
+        id="untrimmed-bucket",
+    ),
+    pytest.param(
+        {"top_peaks": '[{"hz":56.0,"amp":0.4,"local_floor_amp_g":"0.1"}]'},
+        False,
+        id="text-local-floor",
+    ),
+    pytest.param({"top_peaks": '[42, {"hz":56.0,"amp":0.4}]'}, False, id="non-object-peak"),
+    pytest.param({"sample_rate_hz": "fast"}, True, id="text-in-integer-column"),
+    pytest.param({"top_peaks": "{not json"}, True, id="invalid-peak-json"),
+    pytest.param({"top_peaks": '{"hz":56.0}'}, True, id="peak-object-not-list"),
+]
+
+
+@pytest.mark.parametrize(("overrides", "corrupt"), _UNUSUAL_ROWS)
 def test_v2_rows_to_sensor_frames_decodes_unusual_rows_like_one_row_at_a_time(
     overrides: dict[str, object], corrupt: bool
 ) -> None:
@@ -146,10 +153,31 @@ def test_v2_rows_to_sensor_frames_decodes_unusual_rows_like_one_row_at_a_time(
     frames, skipped = v2_rows_to_sensor_frames(rows)
 
     expected = _one_row_at_a_time(rows)
-    assert skipped == int(corrupt)
+    assert skipped == ([6] if corrupt else [])
     assert len(expected) == len(rows) - int(corrupt)
     assert frames == expected
     assert [_field_types(frame) for frame in frames] == [_field_types(f) for f in expected]
+
+
+@pytest.mark.parametrize(("overrides", "corrupt"), _UNUSUAL_ROWS)
+def test_v2_peak_rows_to_sample_peaks_reads_the_peaks_a_full_decode_keeps(
+    overrides: dict[str, object], corrupt: bool
+) -> None:
+    rows = [*_CANONICAL_ROWS, _row(6, **overrides)]
+    top_peaks_at = _V2_COL_OFFSET + _V2_COLUMNS.index("top_peaks")
+
+    peaks = v2_peak_rows_to_sample_peaks([(row[0], row[top_peaks_at]) for row in rows])
+
+    # Each row's peaks as a full decode keeps them; none where its peaks do not decode.
+    expected = []
+    for row in rows:
+        try:
+            frame = v2_row_to_sensor_frame(_row(6, top_peaks=row[top_peaks_at]))
+        except SensorFrameDecodeError:
+            expected.append([])
+            continue
+        expected.append([(peak.hz, peak.amp, peak.local_floor_amp_g) for peak in frame.top_peaks])
+    assert peaks_by_sample(peaks) == expected
 
 
 def _selection_rows(rows: list[tuple[object, ...]]) -> list[tuple[object, ...]]:

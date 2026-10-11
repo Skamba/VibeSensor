@@ -914,7 +914,7 @@ capability line state the current layout's consequence.
   (it is never replaced by an estimate), and if the engine ran for less than
   35% of the measured samples the engine check is `not_testable` with reason
   `engine_not_running` (`_rpm_readings` in `diagnosis.py`,
-  `_effective_engine_rpm` in `_reference_resolution.py`). On a combustion car
+  `effective_engine_rpm` in `_reference_resolution.py`). On a combustion car
   (or an unknown powertrain) a 0 rpm reading while driving is a bad reading,
   not an engine off: the RPM is estimated from speed as without OBD-II, and no
   hybrid wording is used.

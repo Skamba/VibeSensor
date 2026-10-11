@@ -71,22 +71,24 @@ def _build_findings(request: FindingsBuildRequest) -> tuple[DomainFinding, ...]:
     findings: list[DomainFinding]
     findings, engine_ref_sufficient = _reference_findings.build_reference_findings(
         context=context,
-        samples=samples,
+        table=request.table,
         speed_sufficient=request.speed_sufficient,
         tire_circumference_m=tire_circumference_m,
         raw_sample_rate_hz=request.raw_sample_rate_hz,
     )
-    analysis_samples, analysis_phases, _per_sample_phases, use_filtered_samples = (
-        prepare_analysis_samples(
-            samples,
-            per_sample_phases=request.per_sample_phases,
-        )
+    analysis_samples, analysis_rows, analysis_phases = prepare_analysis_samples(
+        samples,
+        per_sample_phases=request.per_sample_phases,
+    )
+    analysis_table = (
+        request.table.subset(analysis_rows) if analysis_rows is not None else request.table
     )
 
     order_findings = _build_order_findings(
         OrderAnalysisRequest(
             context=context,
             samples=analysis_samples,
+            table=analysis_table,
             speed_sufficient=request.speed_sufficient,
             steady_speed=request.steady_speed,
             speed_steadiness=request.speed_steadiness,
@@ -106,13 +108,10 @@ def _build_findings(request: FindingsBuildRequest) -> tuple[DomainFinding, ...]:
     order_freqs = collect_order_frequencies(order_findings)
     findings.extend(
         _build_persistent_peak_findings(
-            samples=analysis_samples,  # IDLE-filtered; issue #191
+            table=analysis_table,  # IDLE-filtered; issue #191
             order_finding_freqs=order_freqs,
-            lang=request.lang,
             per_sample_phases=analysis_phases,
-            run_noise_baseline_g=(
-                request.run_noise_baseline_g if not use_filtered_samples else None
-            ),
+            run_noise_baseline_g=(request.run_noise_baseline_g if analysis_rows is None else None),
         ),
     )
     return finalize_findings(findings)

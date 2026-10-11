@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field, replace
+from collections.abc import Sequence
+from dataclasses import dataclass, field
+
+import numpy as np
 
 from vibesensor.analysis._run_input import (
     DiagnosticsRunInput,
@@ -13,12 +16,13 @@ from vibesensor.analysis.post_analysis_loader import LoadedPostAnalysisRun
 from vibesensor.analysis.raw_capture_replay import (
     RawReplaySummary,
     RawReplayWindowCoverage,
-    build_raw_backed_samples,
+    replay_raw_windows,
 )
 from vibesensor.dsp.strength_bands import bucket_for_strength
 from vibesensor.dsp.vibration_strength import vibration_strength_db_scalar
 from vibesensor.recording.raw_capture import RawCaptureManifest
 from vibesensor.recording.run_schema import RunMetadata
+from vibesensor.recording.sample_peaks import SamplePeaks
 
 
 @dataclass(frozen=True, slots=True)
@@ -54,12 +58,22 @@ class PostAnalysisRunInput:
 
 
 def build_post_analysis_input(loaded: LoadedPostAnalysisRun) -> PostAnalysisRunInput:
-    """Normalize one loaded persisted run into canonical diagnostics input."""
+    """Normalize one loaded persisted run into canonical diagnostics input.
 
-    replay_result = build_raw_backed_samples(
-        samples=tuple(loaded.samples),
+    The raw replay rebuilds the samples it can (in place, with their peaks);
+    the others keep their stored strengths, and their stored peaks are read.
+    """
+    samples = tuple(loaded.samples)
+    replay_result = replay_raw_windows(
+        samples=samples,
         metadata=loaded.metadata,
         raw_capture=loaded.raw_capture,
+    )
+    stored = np.flatnonzero(~replay_result.rebuilt)
+    peaks = (
+        replay_result.peaks.with_peaks_of(stored, loaded.stored_peaks(stored.tolist()))
+        if stored.size
+        else replay_result.peaks
     )
     raw_capture_manifest = (
         loaded.raw_capture_manifest
@@ -69,11 +83,12 @@ def build_post_analysis_input(loaded: LoadedPostAnalysisRun) -> PostAnalysisRunI
     raw_min_sensor_sample_count, raw_min_sensor_duration_s = _raw_capture_min_sensor_metrics(
         raw_capture_manifest
     )
-    samples = tuple(_ensure_strength_metrics(sample) for sample in replay_result.samples)
+    _ensure_strength_metrics(samples, peaks)
     return PostAnalysisRunInput(
         diagnostics_run=build_diagnostics_run_input(
             loaded.metadata,
             samples,
+            peaks,
             file_name=loaded.run_id,
             window_means=[coverage.mean_xyz for coverage in replay_result.window_coverages],
         ),
@@ -113,24 +128,24 @@ def _raw_capture_min_sensor_metrics(
     return min_sensor_sample_count, min_sensor_duration_s
 
 
-def _ensure_strength_metrics(sample: Sample) -> Sample:
-    if sample.vibration_strength_db is not None:
-        return sample
-    peak_amp_g = sample.strength_peak_amp_g
-    if (peak_amp_g is None or peak_amp_g <= 0) and sample.top_peaks:
-        first_peak_amp = sample.top_peaks[0].amp
-        if first_peak_amp > 0:
+def _ensure_strength_metrics(samples: Sequence[Sample], peaks: SamplePeaks) -> None:
+    """Give each sample without a strength one from its peak (else its first peak) and floor."""
+    first_peak_amps = peaks.first_amp().tolist()
+    for sample, first_peak_amp in zip(samples, first_peak_amps, strict=True):
+        if sample.vibration_strength_db is not None:
+            continue
+        peak_amp_g = sample.strength_peak_amp_g
+        # A sample without peaks has NaN here, which is not over 0.
+        if (peak_amp_g is None or peak_amp_g <= 0) and first_peak_amp > 0:
             peak_amp_g = first_peak_amp
-    floor_amp_g = sample.strength_floor_amp_g
-    if peak_amp_g is None or peak_amp_g <= 0 or floor_amp_g is None or floor_amp_g <= 0:
-        return sample
-    vibration_strength_db = vibration_strength_db_scalar(
-        peak_band_rms_amp_g=peak_amp_g,
-        floor_amp_g=floor_amp_g,
-    )
-    strength_bucket = sample.strength_bucket or bucket_for_strength(vibration_strength_db)
-    return replace(
-        sample,
-        vibration_strength_db=vibration_strength_db,
-        strength_bucket=strength_bucket,
-    )
+        floor_amp_g = sample.strength_floor_amp_g
+        if peak_amp_g is None or peak_amp_g <= 0 or floor_amp_g is None or floor_amp_g <= 0:
+            continue
+        vibration_strength_db = vibration_strength_db_scalar(
+            peak_band_rms_amp_g=peak_amp_g,
+            floor_amp_g=floor_amp_g,
+        )
+        sample.vibration_strength_db = vibration_strength_db
+        sample.strength_bucket = sample.strength_bucket or bucket_for_strength(
+            vibration_strength_db
+        )

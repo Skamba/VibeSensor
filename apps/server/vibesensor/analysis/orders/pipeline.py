@@ -5,17 +5,19 @@ from __future__ import annotations
 from collections.abc import Collection, Sequence
 from dataclasses import dataclass, replace
 
+import numpy as np
+import numpy.typing as npt
+
 from vibesensor.analysis._reference_resolution import (
     _NOT_MEASURED_RPM_SOURCES,
     ESTIMATED_RPM_SOURCE,
-    _order_reference_spec_from_context,
 )
-from vibesensor.analysis._sample_metrics import _sample_top_peaks
 from vibesensor.analysis._types import PhaseLabels, Sample
 from vibesensor.analysis.constants import (
     MIN_ORDER_TRACKING_SLOPE,
     ORDER_MIN_CONFIDENCE,
 )
+from vibesensor.analysis.drive_table import DriveTable
 from vibesensor.analysis.orders.brake_attribution import as_brake_finding, only_while_braking
 from vibesensor.analysis.orders.finding_builder import (
     assemble_order_finding,
@@ -32,20 +34,19 @@ from vibesensor.analysis.orders.match_rate import (
 )
 from vibesensor.analysis.orders.matching import (
     OrderMatchAccumulator,
-    ReferenceColumns,
     drive_facts,
     fft_bin_hz,
     is_harmonic_of,
     match_samples_for_hypothesis,
     matched_peaks_for_hypothesis,
     peak_table,
-    reference_columns,
 )
 from vibesensor.analysis.orders.physics import (
     WHEEL_HARMONIC_HYPOTHESES,
     OrderHypothesis,
+    ReferenceColumns,
     _order_hypotheses,
-    reference_hz,
+    reference_columns,
 )
 from vibesensor.analysis.orders.scoring import (
     OrderFindingBuildContext,
@@ -75,12 +76,17 @@ def _shared_fraction(
     return len(peaks & other) / len(peaks) if peaks else 0.0
 
 
-def _rpm_measured(sample: Sample) -> bool:
-    """The sample carries a measured engine RPM (an engine order is placed from it)."""
+def _rpm_measured(table: DriveTable) -> npt.NDArray[np.bool_]:
+    """The samples carrying a measured engine RPM (an engine order is placed from it)."""
+    measured_source = np.array(
+        [
+            source.strip().lower() not in _NOT_MEASURED_RPM_SOURCES
+            for source in table.engine_rpm_sources
+        ],
+        dtype=np.bool_,
+    )
     return (
-        sample.engine_rpm is not None
-        and sample.engine_rpm > 0
-        and sample.engine_rpm_source.strip().lower() not in _NOT_MEASURED_RPM_SOURCES
+        table.has_engine_rpm & (table.engine_rpm > 0) & measured_source[table.engine_rpm_source_of]
     )
 
 
@@ -149,6 +155,8 @@ class OrderAnalysisRequest:
 
     context: RunMetadata
     samples: Sequence[Sample]
+    # The same samples as a drive table.
+    table: DriveTable
     speed_sufficient: bool
     steady_speed: bool
     speed_steadiness: float
@@ -211,6 +219,7 @@ class OrderAnalysisSession:
     __slots__ = (
         "_context",
         "_samples",
+        "_table",
         "_speed_sufficient",
         "_steady_speed",
         "_speed_steadiness",
@@ -221,7 +230,6 @@ class OrderAnalysisSession:
         "_connected_locations",
         "_lang",
         "_per_sample_phases",
-        "_cached_peaks",
         "_speed_following_peaks",
         "_order_reference_spec",
         "_speed_moves",
@@ -232,7 +240,8 @@ class OrderAnalysisSession:
 
     def __init__(self, request: OrderAnalysisRequest) -> None:
         self._context = request.context
-        self._samples = list(request.samples)
+        self._samples = request.samples
+        self._table = table = request.table
         self._speed_sufficient = request.speed_sufficient
         self._steady_speed = request.steady_speed
         self._speed_steadiness = request.speed_steadiness
@@ -243,42 +252,30 @@ class OrderAnalysisSession:
         self._connected_locations = set(request.connected_locations)
         self._lang = request.lang
         self._per_sample_phases = request.per_sample_phases
-        self._order_reference_spec = _order_reference_spec_from_context(request.context)
+        self._order_reference_spec = request.context.order_reference_spec
+        moving = table.timed & table.has_speed & (table.speed_kmh > 0)
         self._speed_moves = trend_moves(
-            (sample.t_s, sample.speed_kmh)
-            for sample in self._samples
-            if sample.t_s is not None and sample.speed_kmh is not None and sample.speed_kmh > 0
+            zip(table.t_s[moving].tolist(), table.speed_kmh[moving].tolist(), strict=True)
         )
-        self._facts = drive_facts(
-            self._samples, request.context, request.per_sample_phases, request.lang
-        )
+        self._facts = drive_facts(table, request.context, request.per_sample_phases)
         self._references: dict[str, ReferenceColumns] = {}
-        self._cached_peaks: list[list[tuple[float, float]]] = [
-            _sample_top_peaks(sample) for sample in self._samples
-        ]
         # A hypothesis placed from the speed is matched without the sensors'
         # fixed-frequency tones; an engine order placed from measured RPM may
         # ring steadily while the speed changes, so it keeps every peak.
-        tones = fixed_tones(self._samples, self._cached_peaks)
-        road_peaks = without_fixed_tones(self._cached_peaks, tones)
+        tones = fixed_tones(table)
+        road_peaks = without_fixed_tones(table, tones)
+        rpm_measured = _rpm_measured(table)
         self._speed_following_peaks = {
-            "road": peak_table(road_peaks),
-            "engine": peak_table(
-                [
-                    raw if _rpm_measured(sample) else road
-                    for sample, raw, road in zip(
-                        self._samples, self._cached_peaks, road_peaks, strict=True
-                    )
-                ]
-            ),
+            "road": peak_table(table, road_peaks),
+            "engine": peak_table(table, road_peaks | rpm_measured[table.peak_row]),
         }
         # The order-tracked reads skip only the tones that ring as a line.
-        ringing = ringing_tones(self._samples, tones, window_duration_s(self._context))
+        ringing = ringing_tones(table, tones, window_duration_s(self._context))
         self._speed_following_tones: dict[str, list[tuple[RingingTone, ...]]] = {
             "road": ringing,
             "engine": [
-                () if _rpm_measured(sample) else sample_tones
-                for sample, sample_tones in zip(self._samples, ringing, strict=True)
+                () if measured else sample_tones
+                for measured, sample_tones in zip(rpm_measured.tolist(), ringing, strict=True)
             ],
         }
 
@@ -395,7 +392,6 @@ class OrderAnalysisSession:
             (index, peak_hz)
             for hypothesis in WHEEL_HARMONIC_HYPOTHESES
             for index, peak_hz in matched_peaks_for_hypothesis(
-                self._samples,
                 self._speed_following_peaks["road"],
                 self._speed_following_tones["road"],
                 hypothesis,
@@ -427,7 +423,6 @@ class OrderAnalysisSession:
     def _match_hypothesis(self, hypothesis: OrderHypothesis) -> OrderMatchAccumulator:
         engine = hypothesis.suspected_source is VibrationSource.ENGINE
         return match_samples_for_hypothesis(
-            self._samples,
             self._speed_following_peaks["engine" if engine else "road"],
             self._speed_following_tones["engine" if engine else "road"],
             hypothesis,
@@ -435,20 +430,15 @@ class OrderAnalysisSession:
             self._reference_hz(hypothesis.order_label_base),
             self._facts,
             self._per_sample_phases is not None
-            and len(self._per_sample_phases) == len(self._samples),
+            and len(self._per_sample_phases) == self._table.size,
         )
 
     def _reference_hz(self, order_label_base: str) -> ReferenceColumns:
-        """Each sample's ``reference_hz`` for the orders of one rotation, worked out once."""
+        """Each sample's ``reference_columns`` for the orders of one rotation, worked out once."""
         references = self._references.get(order_label_base)
         if references is None:
             references = reference_columns(
-                [
-                    reference_hz(
-                        order_label_base, sample, self._context, self._tire_circumference_m
-                    )
-                    for sample in self._samples
-                ]
+                order_label_base, self._table, self._context, self._tire_circumference_m
             )
             self._references[order_label_base] = references
         return references

@@ -8,6 +8,7 @@ Backend rules. Use `docs/ai/repo-map.md` only for ownership lookup and `docs/dom
 - Routes live in `web/` (one `create_*_routes` factory per group, assembled in `web/router.py` from `WebServices`); services are constructed once in `app/composition.py`.
 - Keep sensor metadata writes behind the client location-assignment handoff in `apps/server/vibesensor/web/clients.py`.
 - Analysis code delegates classification/ranking to domain `Finding`.
+- Post-run analysis that walks the samples' peaks, floors, speeds or sensors reads the drive table (`analysis/drive_table.py`, "Drive table" in `docs/analysis_pipeline.md`), not per-sample objects; keep its groupings in first-seen order so the stored analysis stays byte-identical. A sample's peaks come from `SamplePeaks` (`DiagnosticsRunInput.peaks`): the post-analysis loader leaves `SensorFrame.top_peaks` empty.
 - Keep pure math, DSP, FFT, and signal transforms functional; do not wrap them in classes without a domain reason.
 - Do not create phantom domain/infrastructure types consumed by no production path, or single-consumer domain satellites that should live with their host.
 - Preserve report ranking and persistence-aware diagnostics. Do not regress report ranking to max-only peak selection.

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from math import ceil
 from typing import TYPE_CHECKING
@@ -12,6 +12,7 @@ import numpy.typing as npt
 
 from vibesensor.recording.raw_capture import RawCaptureManifest, RawRunCapture
 from vibesensor.recording.run_schema import RunMetadata
+from vibesensor.recording.sample_peaks import SamplePeaks
 from vibesensor.recording.sensor_frame import SensorFrame
 
 if TYPE_CHECKING:
@@ -21,13 +22,19 @@ if TYPE_CHECKING:
 _MAX_POST_ANALYSIS_SAMPLES = 12_000
 _EVENT_PRESERVING_SAMPLING_METHOD = "event_preserving"
 
+# Reads the stored peaks of the loaded samples at the given positions (ascending).
+type StoredPeaksReader = Callable[[Sequence[int]], SamplePeaks]
+
 
 @dataclass(frozen=True, slots=True)
 class LoadedPostAnalysisRun:
     run_id: str
     metadata: RunMetadata
     language: str
+    # Loaded without their peaks (``top_peaks`` empty): ``stored_peaks`` reads
+    # those, for the samples the raw replay does not rebuild.
     samples: list[SensorFrame]
+    stored_peaks: StoredPeaksReader
     total_summary_row_count: int
     stride: int
     summary_duration_s: float | None = None
@@ -80,7 +87,8 @@ def load_post_analysis_run(
 
     A light pass reads only the columns that pick rows; only the kept rows (at
     most ``_MAX_POST_ANALYSIS_SAMPLES``) are decoded into ``SensorFrame``s, so
-    peak memory does not grow with the drive's length.
+    peak memory does not grow with the drive's length. Their stored peaks are
+    read later, only for the samples the raw replay does not rebuild.
     """
     stored_run = db.get_run(run_id)
     if stored_run is None:
@@ -96,7 +104,9 @@ def load_post_analysis_run(
     if total_summary_row_count <= 0:
         total_summary_row_count = len(columns)
     selection = _select_post_analysis_rows(columns)
-    samples = db.load_run_samples_by_id(run_id, columns.row_id[selection.indices].tolist())
+    samples, row_ids = db.load_run_samples_without_peaks(
+        run_id, columns.row_id[selection.indices].tolist()
+    )
     if not samples:
         return EmptyPostAnalysisSamples(
             run_id=run_id,
@@ -113,6 +123,7 @@ def load_post_analysis_run(
         metadata=metadata,
         language=metadata.language or "en",
         samples=samples,
+        stored_peaks=_stored_peaks_reader(db, run_id, row_ids),
         total_summary_row_count=total_summary_row_count,
         summary_duration_s=summary_duration_s,
         stride=selection.stride,
@@ -122,6 +133,13 @@ def load_post_analysis_run(
         raw_capture=db.load_raw_capture(run_id),
         raw_capture_manifest=raw_capture_manifest,
     )
+
+
+def _stored_peaks_reader(db: HistoryDB, run_id: str, row_ids: Sequence[int]) -> StoredPeaksReader:
+    def read(positions: Sequence[int]) -> SamplePeaks:
+        return db.load_run_peaks_by_id(run_id, [row_ids[position] for position in positions])
+
+    return read
 
 
 def _summary_duration_s(

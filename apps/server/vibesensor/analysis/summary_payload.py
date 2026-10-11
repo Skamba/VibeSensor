@@ -76,6 +76,7 @@ def analysis_result_to_summary(result: AnalysisResult) -> AnalysisSummary:
         diagnosis=build_diagnosis(
             test_run=result.test_run,
             samples=result.samples,
+            drive_table=result.prepared.drive_table,
             metadata=result.metadata,
             sensor_count=len(result.sensor_locations),
             loose_locations=frozenset(mount.location for mount in result.loose_mounts),

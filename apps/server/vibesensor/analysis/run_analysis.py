@@ -40,7 +40,7 @@ class RunAnalysis:
         self._language = normalize_lang(lang)
 
         _validate_required_strength_metrics(self._run.samples)
-        self._prepared = prepare_run_data(self._run.context, self._run.samples)
+        self._prepared = prepare_run_data(self._run.context, self._run.samples, self._run.peaks)
         self._accel_stats = compute_accel_statistics(
             self._run.samples,
             self._run.context.sensor_model,

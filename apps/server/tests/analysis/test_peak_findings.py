@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import pytest
+from test_support.analysis import sample_peaks_of
 from test_support.findings import make_finding
 from test_support.report_helpers import analysis_sample_with_peaks as sample
 
-from vibesensor.analysis._sample_metrics import _estimate_strength_floor_amp_g
 from vibesensor.analysis._view_types import PeakTableRowData
+from vibesensor.analysis.drive_table import DriveTable, build_drive_table
 from vibesensor.analysis.findings import _build_persistent_peak_findings
 from vibesensor.analysis.peaks.classification import classify_peak_type
 from vibesensor.analysis.peaks.scoring import _compute_peak_confidence
@@ -22,11 +23,15 @@ from vibesensor.dsp.vibration_strength import percentile
 from vibesensor.recording.sensor_frame_mapping import sensor_frames_from_mappings
 
 
+def _table(samples: list[dict]) -> DriveTable:
+    frames = sensor_frames_from_mappings(samples)
+    return build_drive_table(frames, sample_peaks_of(frames))
+
+
 def _findings_at(samples: list[dict], frequency: str) -> list:
     findings = _build_persistent_peak_findings(
-        samples=sensor_frames_from_mappings(samples),
+        table=_table(samples),
         order_finding_freqs=set(),
-        lang="en",
         per_sample_phases=None,
     )
     return [
@@ -87,7 +92,7 @@ def test_a_persistent_peak_ranks_above_a_single_loud_spike() -> None:
             peaks.append({"hz": 80.0, "amp": 1.0})
         samples.append(sample(float(i) * 0.5, 85.0, peaks))
 
-    rows = top_peaks_table_rows(sensor_frames_from_mappings(samples))
+    rows = top_peaks_table_rows(_table(samples))
 
     assert len(rows) >= 2
     assert rows[0].frequency_hz == 30.0
@@ -108,7 +113,7 @@ def test_a_peak_seen_evenly_everywhere_is_baseline_noise() -> None:
                 )
 
     assert _findings_at(samples, "25")[0].peaks.classification == "baseline_noise"
-    rows = top_peaks_table_rows(sensor_frames_from_mappings(samples), top_n=12, freq_bin_hz=1.0)
+    rows = top_peaks_table_rows(_table(samples), top_n=12, freq_bin_hz=1.0)
     row_25 = next(row for row in rows if abs(row.frequency_hz - 25.0) <= 0.5)
     assert row_25.peaks.classification == "baseline_noise"
 
@@ -128,25 +133,22 @@ def test_strongest_speed_band_follows_the_amplitude() -> None:
     assert target.strongest_speed_band in {"70-80 km/h", "80-90 km/h"}
 
 
-def _floor_sample(peaks: list[tuple[float, float]], *, floor_amp: float | None = None) -> object:
+def _floor(peaks: list[tuple[float, float]], *, floor_amp: float | None = None) -> float | None:
+    """The noise floor the drive table gives a sample with *peaks* and *floor_amp*."""
     row: dict[str, object] = {
         "top_peaks": [{"hz": hz, "amp": amp} for hz, amp in peaks],
         "speed_kmh": 80.0,
     }
     if floor_amp is not None:
         row["strength_floor_amp_g"] = floor_amp
-    return sensor_frames_from_mappings([row])[0]
+    table = _table([row])
+    return float(table.floor_amp_g[0]) if table.has_floor[0] else None
 
 
 def test_noise_floor_falls_back_to_the_quiet_end_of_the_peaks() -> None:
-    assert (
-        _estimate_strength_floor_amp_g(_floor_sample([(20.0, 0.2), (30.0, 0.3)], floor_amp=0.0))
-        is None
-    )
+    assert _floor([(20.0, 0.2), (30.0, 0.3)], floor_amp=0.0) is None
     amps = [0.1, 0.2, 0.3]
-    assert _estimate_strength_floor_amp_g(
-        _floor_sample([(10.0, a) for a in amps])
-    ) == pytest.approx(percentile(sorted(amps), 0.20))
+    assert _floor([(10.0, a) for a in amps]) == pytest.approx(percentile(sorted(amps), 0.20))
 
 
 def _peak_row(frequency_hz: float, classification: str = "transient") -> PeakTableRowData:
