@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-from vibesensor.analysis._types import AccelStatistics, PhaseLabels, Sample
+from vibesensor.analysis._types import AccelStatistics, PhaseLabels
 from vibesensor.analysis.drive_table import DriveTable
 from vibesensor.analysis.mount_tilt import LooseMount
 from vibesensor.analysis.run_data_preparation import PreparedRunData
@@ -15,6 +15,7 @@ from vibesensor.domain.location_hotspot import LocationIntensitySummary
 from vibesensor.domain.run_suitability import RunSuitability
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.recording.run_schema import RunMetadata
+from vibesensor.recording.sample_columns import SampleColumns
 
 
 @dataclass(frozen=True, slots=True)
@@ -22,7 +23,7 @@ class FindingsBuildRequest:
     """Normalized inputs required to build diagnostics findings."""
 
     context: RunMetadata
-    samples: Sequence[Sample]
+    samples: SampleColumns
     # The samples as columns (``PreparedRunData.drive_table``).
     table: DriveTable
     speed_sufficient: bool
@@ -52,7 +53,7 @@ class PreparedAnalysisContext:
 
     file_name: str
     context: RunMetadata
-    samples: tuple[Sample, ...]
+    samples: SampleColumns
     language: str
     prepared: PreparedRunData
     accel_stats: AccelStatistics

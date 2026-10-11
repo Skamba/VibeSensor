@@ -9,9 +9,9 @@ from typing import TYPE_CHECKING
 import numpy as np
 import numpy.typing as npt
 
-from vibesensor.analysis.drive_table import first_seen
 from vibesensor.common.units import KMH_TO_MPS, SECONDS_PER_MINUTE
 from vibesensor.recording.run_schema import RunMetadata
+from vibesensor.recording.sample_columns import first_seen
 
 if TYPE_CHECKING:
     from vibesensor.analysis.drive_table import DriveTable

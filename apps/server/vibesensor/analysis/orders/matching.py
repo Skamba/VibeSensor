@@ -26,7 +26,7 @@ from vibesensor.analysis.constants import (
     ORDER_VARIABLE_MIN_CORRELATION,
     ORDER_VARIABLE_MIN_MATCHED_SPEED_BINS,
 )
-from vibesensor.analysis.drive_table import DriveTable, coded, first_seen
+from vibesensor.analysis.drive_table import DriveTable
 from vibesensor.analysis.math_utils import _corr_abs_clamped, _ramp
 from vibesensor.analysis.orders.physics import OrderHypothesis, ReferenceColumns
 from vibesensor.analysis.orders.settings import ORDER_CONFIDENCE_SETTINGS
@@ -50,6 +50,7 @@ from vibesensor.dsp.window_spectrum import (
     spectra_by_rows,
 )
 from vibesensor.recording.run_schema import RunMetadata
+from vibesensor.recording.sample_columns import coded, first_seen
 
 BRAKING_PHASE = DrivingPhase.BRAKING.value
 GUIDED_COAST_PHASE = "guided_coast_down"

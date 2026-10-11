@@ -24,7 +24,7 @@ from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.dsp.vibration_strength import compute_db
 from vibesensor.recording.run_suitability_codec import run_suitability_payload
-from vibesensor.recording.sensor_frame import SensorFrame
+from vibesensor.recording.sample_columns import SampleColumns
 from vibesensor.summary.contracts import (
     AnalysisSummary,
     PayloadObject,
@@ -69,7 +69,7 @@ class AnalysisSummaryBuildContext:
 
     file_name: str
     run_id: str
-    samples: Sequence[SensorFrame]
+    samples: SampleColumns
     duration_s: float
     language: str
     metadata: JsonObject
@@ -101,7 +101,7 @@ def build_analysis_summary(
     *,
     file_name: str,
     run_id: str,
-    samples: Sequence[SensorFrame],
+    samples: SampleColumns,
     duration_s: float,
     language: str,
     metadata: JsonObject,

@@ -17,10 +17,13 @@ from typing import cast
 import numpy as np
 import numpy.typing as npt
 
+from vibesensor.recording.sample_columns import SAMPLE_COLUMN_FIELDS
 from vibesensor.recording.sample_peaks import SamplePeaks
 from vibesensor.recording.sensor_frame import SensorFrame
 from vibesensor.recording.sensor_frame_fields import (
     SENSOR_FRAME_FIELD_NAMES,
+    sample_column_values_from_row,
+    sample_column_values_from_rows,
     sensor_frame_from_row_payload,
     sensor_frame_peaks_from_row_value,
     sensor_frame_to_row_payload,
@@ -49,10 +52,8 @@ V2_INSERT_SQL: str = (
 
 _V2_SELECT_COLS: tuple[str, ...] = ("id",) + _V2_COLUMNS
 V2_SELECT_SQL_COLS: str = ", ".join(_V2_SELECT_COLS)
-# The same columns with every row's peaks read as none (``top_peaks`` NULL).
-V2_SELECT_SQL_COLS_WITHOUT_PEAKS: str = ", ".join(
-    "NULL" if column == "top_peaks" else column for column in _V2_SELECT_COLS
-)
+# The columns the post-stop analysis reads of a row (``SampleColumns``).
+SAMPLE_COLUMNS_SELECT_SQL_COLS: str = ", ".join(("id", *SAMPLE_COLUMN_FIELDS))
 
 # Row offset: skip autoincrement id column in SELECT results.
 _V2_COL_OFFSET: int = 1
@@ -86,6 +87,36 @@ def v2_rows_to_sensor_frames(
             skipped.append(row[0])
             LOGGER.warning("Skipping corrupt v2 sample row id=%s: %s", row[0], exc)
     return frames, skipped
+
+
+def sample_column_rows_to_values(
+    rows: Sequence[tuple[object, ...]],
+) -> tuple[list[Sequence[object]], list[int]]:
+    """Decode ``SAMPLE_COLUMNS_SELECT_SQL_COLS`` rows in order.
+
+    Returns each ``SAMPLE_COLUMN_FIELDS`` field's values and the ids of the
+    rows decoded. A batch of well-formed rows is decoded column by column;
+    otherwise each row is decoded on its own and a corrupt one is skipped and
+    logged.
+    """
+    columns = sample_column_values_from_rows(rows, row_offset=_V2_COL_OFFSET)
+    if columns is not None:
+        return columns, [int(cast(int, row[0])) for row in rows]
+    decoded: list[list[object]] = []
+    row_ids: list[int] = []
+    for row in rows:
+        try:
+            decoded.append(
+                sample_column_values_from_row(
+                    row, row_offset=_V2_COL_OFFSET, source=f"samples_v2 row id={row[0]}"
+                )
+            )
+        except SensorFrameDecodeError as exc:
+            LOGGER.warning("Skipping corrupt v2 sample row id=%s: %s", row[0], exc)
+            continue
+        row_ids.append(int(cast(int, row[0])))
+    values: list[Sequence[object]] = [list(column) for column in zip(*decoded, strict=True)]
+    return values or [[] for _field in SAMPLE_COLUMN_FIELDS], row_ids
 
 
 def v2_peak_rows_to_sample_peaks(rows: Sequence[tuple[object, object]]) -> SamplePeaks:

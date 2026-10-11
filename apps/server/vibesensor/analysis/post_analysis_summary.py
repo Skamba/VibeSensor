@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 from collections import Counter
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from math import ceil
 from typing import TYPE_CHECKING
+
+import numpy as np
+import numpy.typing as npt
 
 from vibesensor.analysis.post_analysis_input import PostAnalysisRunInput
 from vibesensor.analysis.summary_payload import analysis_result_to_summary
@@ -50,14 +53,15 @@ def _speed_missing_warning(
     order analysis leaves it out. Rows are evenly spaced in time, so their share
     is the share of the recording.
     """
-    if not run.samples or not isinstance(duration_s, int | float) or duration_s <= 0:
+    samples = run.samples
+    if not len(samples) or not isinstance(duration_s, int | float) or duration_s <= 0:
         return None
     missing = Counter(
         source.removesuffix("_unaligned")
-        for sample in run.samples
-        if (source := str(sample.speed_source or "")).endswith("_unaligned")
+        for source in (samples.speed_sources[code] for code in samples.speed_source_of.tolist())
+        if source.endswith("_unaligned")
     )
-    share = sum(missing.values()) / len(run.samples)
+    share = sum(missing.values()) / len(samples)
     if share < _SPEED_MISSING_WARN_SHARE:
         return None
     source = missing.most_common(1)[0][0]
@@ -201,11 +205,13 @@ def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
         analysis_metadata["raw_min_sensor_sample_count"] = run.raw_min_sensor_sample_count
     if run.raw_min_sensor_duration_s is not None:
         analysis_metadata["raw_min_sensor_duration_s"] = round(run.raw_min_sensor_duration_s, 3)
-    unaligned_speed_sample_count = sum(
-        1 for sample in run.samples if str(sample.speed_source or "").endswith("_unaligned")
+    unaligned_speed_sample_count = _count_of(
+        run.samples.speed_source_of,
+        [source.endswith("_unaligned") for source in run.samples.speed_sources],
     )
-    unaligned_rpm_sample_count = sum(
-        1 for sample in run.samples if str(sample.engine_rpm_source or "") == "context_unaligned"
+    unaligned_rpm_sample_count = _count_of(
+        run.samples.engine_rpm_source_of,
+        [source == "context_unaligned" for source in run.samples.engine_rpm_sources],
     )
     analysis_metadata["vehicle_context_unaligned_speed_sample_count"] = unaligned_speed_sample_count
     analysis_metadata["vehicle_context_unaligned_rpm_sample_count"] = unaligned_rpm_sample_count
@@ -288,6 +294,11 @@ def build_post_analysis_summary(run: PostAnalysisRunInput) -> PersistedAnalysis:
     # Built here and held nowhere else: no copy needed (a deep copy of a long
     # drive's summary takes seconds on the Pi).
     return PersistedAnalysis(payload=summary_payload)
+
+
+def _count_of(codes: npt.NDArray[np.intp], matches: Sequence[bool]) -> int:
+    """How many of *codes* index a True in *matches*."""
+    return int(np.count_nonzero(np.array(matches, dtype=np.bool_)[codes]))
 
 
 def _set_initial_report_fallback_reasons(analysis_metadata: JsonObject) -> None:

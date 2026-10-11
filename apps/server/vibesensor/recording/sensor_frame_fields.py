@@ -13,6 +13,7 @@ from vibesensor.common.json_types import JsonArray, JsonObject, JsonValue, is_js
 from vibesensor.common.json_utils import safe_json_dumps, safe_json_loads
 from vibesensor.common.scalars import float_or, optional_float, optional_int
 from vibesensor.domain.strength_metrics import StrengthPeak
+from vibesensor.recording.sample_columns import SAMPLE_COLUMN_FIELDS
 from vibesensor.recording.sample_peaks import SamplePeaks
 from vibesensor.recording.sensor_frame import SensorFrame
 from vibesensor.recording.sensor_frame_values import (
@@ -30,6 +31,8 @@ from vibesensor.recording.strength_metrics_codec import (
 
 __all__ = [
     "SENSOR_FRAME_FIELD_NAMES",
+    "sample_column_values_from_row",
+    "sample_column_values_from_rows",
     "sensor_frame_peaks_from_row_value",
     "sensor_frame_top_peak_amp_from_row_value",
     "sensor_frame_from_mapping_payload",
@@ -322,6 +325,61 @@ _SENSOR_FRAME_ARG_COLUMNS: tuple[int, ...] = tuple(
     for field in fields(SensorFrame)
     if field.name in SENSOR_FRAME_FIELD_NAMES
 )
+
+_FIELD_SPECS_BY_NAME = {field.name: field for field in _SENSOR_FRAME_SCALAR_FIELDS}
+_SAMPLE_COLUMN_SPECS: tuple[_SensorFrameScalarFieldSpec, ...] = tuple(
+    _FIELD_SPECS_BY_NAME[name] for name in SAMPLE_COLUMN_FIELDS
+)
+
+
+def sample_column_values_from_rows(
+    rows: Sequence[Sequence[object]],
+    *,
+    row_offset: int = 0,
+) -> list[Sequence[object]] | None:
+    """Each ``SAMPLE_COLUMN_FIELDS`` field of storage rows that hold just those, or None.
+
+    The rows hold the fields in that order after *row_offset* columns; each
+    field's values as ``sensor_frame_from_row_payload`` decodes them, a column
+    at a time. None when a value is not of its column's stored type: decode
+    those rows one at a time (``sample_column_values_from_row``).
+    """
+    if not rows:
+        return [[] for _spec in _SAMPLE_COLUMN_SPECS]
+    expected_end = row_offset + len(_SAMPLE_COLUMN_SPECS)
+    if any(len(row) < expected_end for row in rows):
+        return None
+    stored = list(zip(*rows, strict=False))[row_offset:expected_end]
+    columns: list[Sequence[object]] = []
+    for spec, values in zip(_SAMPLE_COLUMN_SPECS, stored, strict=True):
+        decoded = spec.decode_column(values)
+        if decoded is None:
+            return None
+        columns.append(decoded)
+    return columns
+
+
+def sample_column_values_from_row(
+    row: Sequence[object],
+    *,
+    row_offset: int = 0,
+    source: str = "sample row",
+) -> list[object]:
+    """One storage row's ``SAMPLE_COLUMN_FIELDS`` values (``sample_column_values_from_rows``).
+
+    Raises ``SensorFrameDecodeError`` where a value does not decode.
+    """
+    expected_end = row_offset + len(_SAMPLE_COLUMN_SPECS)
+    if len(row) < expected_end:
+        raise SensorFrameDecodeError(
+            source=source,
+            field="row",
+            detail=f"has {len(row)} column(s), expected at least {expected_end}",
+        )
+    return [
+        spec.decode_row(value, source)
+        for spec, value in zip(_SAMPLE_COLUMN_SPECS, row[row_offset:expected_end], strict=True)
+    ]
 
 
 def sensor_frame_from_mapping_payload(

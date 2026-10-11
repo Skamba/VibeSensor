@@ -20,11 +20,12 @@ from collections.abc import Sequence
 from dataclasses import replace
 from statistics import median
 
-from vibesensor.analysis._types import PhaseLabels, Sample
+from vibesensor.analysis._types import PhaseLabels
 from vibesensor.analysis.orders.matching import BRAKING_PHASE, OrderMatchAccumulator
 from vibesensor.domain.finding import Finding
 from vibesensor.domain.finding_types import VibrationSource
 from vibesensor.domain.order_match import SensorOrderLevel
+from vibesensor.recording.sample_columns import SampleColumns, optional_floats
 
 __all__ = ["BRAKING_PHASE", "as_brake_finding", "only_while_braking"]
 
@@ -55,12 +56,11 @@ def _phase_value(phase: object) -> str:
     return str(getattr(phase, "value", phase))
 
 
-def _half_window_s(sample: Sample) -> float:
-    start = sample.analysis_window_start_us
-    end = sample.analysis_window_end_us
-    if start is None or end is None or end <= start:
+def _half_window_s(start_us: float, end_us: float) -> float:
+    # A NaN (no) window start or end is not before the other.
+    if not start_us < end_us:
         return _DEFAULT_HALF_WINDOW_S
-    return (end - start) / 2e6
+    return (end_us - start_us) / 2e6
 
 
 def _near(times: Sequence[float], t_s: float, distance_s: float) -> bool:
@@ -69,12 +69,12 @@ def _near(times: Sequence[float], t_s: float, distance_s: float) -> bool:
     return any(abs(t - t_s) <= distance_s for t in neighbours)
 
 
-def _braking_spells(samples: Sequence[Sample], braking: Sequence[bool]) -> dict[int, int]:
+def _braking_spells(times: Sequence[float | None], braking: Sequence[bool]) -> dict[int, int]:
     """The stop (numbered in time order) each timed braking sample belongs to."""
     timed = sorted(
         (t_s, idx)
-        for idx, (sample, is_braking) in enumerate(zip(samples, braking, strict=True))
-        if is_braking and (t_s := sample.t_s) is not None
+        for idx, (t_s, is_braking) in enumerate(zip(times, braking, strict=True))
+        if is_braking and t_s is not None
     )
     spell_of: dict[int, int] = {}
     spell = 0
@@ -87,7 +87,7 @@ def _braking_spells(samples: Sequence[Sample], braking: Sequence[bool]) -> dict[
 
 def only_while_braking(
     match: OrderMatchAccumulator,
-    samples: Sequence[Sample],
+    samples: SampleColumns,
     per_sample_phases: PhaseLabels | None,
 ) -> bool:
     """Whether the matched order is there while braking and not otherwise.
@@ -98,14 +98,15 @@ def only_while_braking(
     if per_sample_phases is None or len(per_sample_phases) != len(samples):
         return False
     braking = [_phase_value(phase) == BRAKING_PHASE for phase in per_sample_phases]
+    times = optional_floats(samples.t_s)
     braking_times = sorted(
-        t_s
-        for sample, is_braking in zip(samples, braking, strict=True)
-        if is_braking and (t_s := sample.t_s) is not None
+        t_s for t_s, is_braking in zip(times, braking, strict=True) if is_braking and t_s is not None
     )
     if not braking_times:
         return False
-    spell_of = _braking_spells(samples, braking)
+    spell_of = _braking_spells(times, braking)
+    window_start_us = samples.analysis_window_start_us
+    window_end_us = samples.analysis_window_end_us
     locations = match.heard_locations or {location for _idx, location in match.possible_samples}
     # True: a braking spectrum; False: a spectrum clear of any braking; spectra
     # that straddle a braking spell are left out.
@@ -113,11 +114,13 @@ def only_while_braking(
     for idx, location in match.possible_samples:
         if location not in locations:
             continue
-        sample = samples[idx]
+        t_s = times[idx]
         if idx in spell_of:
             side[idx] = True
-        elif sample.t_s is not None and not _near(
-            braking_times, sample.t_s, _half_window_s(sample)
+        elif t_s is not None and not _near(
+            braking_times,
+            t_s,
+            _half_window_s(float(window_start_us[idx]), float(window_end_us[idx])),
         ):
             side[idx] = False
     heard = [
@@ -170,10 +173,11 @@ def only_while_braking(
         amps_by_location.setdefault(point.location, []).append(point.amp)
     level_at = {location: median(amps) for location, amps in amps_by_location.items()}
     location_of = dict(match.possible_samples)
+    sample_speeds = optional_floats(samples.speed_kmh)
     clear_possible = [
         idx
         for idx, is_braking in side.items()
-        if not is_braking and location_of[idx] in level_at and in_band(samples[idx].speed_kmh)
+        if not is_braking and location_of[idx] in level_at and in_band(sample_speeds[idx])
     ]
     if len(clear_possible) < _MIN_SPECTRA:
         return False

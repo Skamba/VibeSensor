@@ -6,7 +6,10 @@ from collections import Counter, defaultdict
 from collections.abc import Sequence
 from math import sqrt
 
-from vibesensor.analysis._types import PhaseLabel, Sample
+import numpy as np
+import numpy.typing as npt
+
+from vibesensor.analysis._types import PhaseLabel
 from vibesensor.analysis.constants import (
     CONSTANT_SPEED_STDDEV_KMH,
     CONSTANT_SPEED_STDDEV_RAMP_KMH,
@@ -21,6 +24,7 @@ from vibesensor.common.json_utils import as_float_or_none as _as_float
 from vibesensor.domain.finding import speed_band_sort_key, speed_bin_label
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
 from vibesensor.dsp.statistics_utils import _mean_variance
+from vibesensor.recording.sample_columns import SampleColumns, coded, first_seen
 
 # Fewer matched points than this in a speed bin say little about how hard it shakes there.
 _MIN_POINTS_PER_BAND = 3
@@ -63,22 +67,29 @@ def speed_constancy(stddev_kmh: float | None) -> float:
     )
 
 
-def run_speed_source(samples: Sequence[Sample]) -> str | None:
+def run_speed_source(samples: SampleColumns) -> str | None:
     """The most common speed source among the moving samples.
 
     A run that never moved on a speed names the source it had anyway: a live
     source that never gave a speed (no GPS fix) marks its rows
     ``gps_unaligned`` / ``obd2_unaligned``, and the run keeps that marker.
     """
-    sources = [
-        (sample.speed_source.strip().lower(), sample.speed_kmh is not None and sample.speed_kmh > 0)
-        for sample in samples
-    ]
-    moving = Counter(source for source, moved in sources if moved and source)
-    if moving:
-        return moving.most_common(1)[0][0]
-    standing = Counter(source for source, _ in sources if source and source != "none")
-    return standing.most_common(1)[0][0] if standing else None
+    source_of_source, sources = coded([source.strip().lower() for source in samples.speed_sources])
+    source_of = source_of_source[samples.speed_source_of]
+    named = np.array([bool(source) for source in sources], dtype=np.bool_)[source_of]
+    moving = _most_common(source_of[named & (samples.speed_kmh > 0)], sources)
+    if moving is not None:
+        return moving
+    standing = np.array([source != "none" for source in sources], dtype=np.bool_)[source_of]
+    return _most_common(source_of[named & standing], sources)
+
+
+def _most_common(codes: npt.NDArray[np.intp], names: Sequence[str]) -> str | None:
+    """The name *codes* index most often; of equally common ones, the first to come."""
+    if not codes.size:
+        return None
+    ordered, ordered_names = first_seen(codes, names)
+    return ordered_names[int(np.argmax(np.bincount(ordered)))]
 
 
 def speed_typed_in(speed_source: str | None) -> bool:
@@ -135,17 +146,17 @@ def _speed_stats(speed_values: Sequence[float]) -> SpeedProfileSummary:
 
 
 def _speed_stats_by_phase(
-    samples: Sequence[Sample],
+    samples: SampleColumns,
     per_sample_phases: Sequence[PhaseLabel],
 ) -> dict[str, SpeedProfileSummary]:
     """Compute speed statistics broken down by driving phase."""
     phase_speeds: dict[str, list[float]] = defaultdict(list)
     phase_sample_counts: dict[str, int] = defaultdict(int)
-    for sample, phase in zip(samples, per_sample_phases, strict=True):
+    for speed, phase in zip(samples.speed_kmh.tolist(), per_sample_phases, strict=True):
         phase_key = str(phase)
         phase_sample_counts[phase_key] += 1
-        speed = sample.speed_kmh
-        if speed is not None and speed > 0:
+        # A speed of NaN (none) is not over 0.
+        if speed > 0:
             phase_speeds[phase_key].append(speed)
     result: dict[str, SpeedProfileSummary] = {}
     for phase_key in phase_sample_counts:

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from vibesensor.analysis._types import AccelStatistics, Sample
+from vibesensor.analysis._types import AccelStatistics
 from vibesensor.analysis._view_types import PeakTableRowData
 from vibesensor.analysis.mount_tilt import LooseMount
 from vibesensor.analysis.run_data_preparation import PreparedRunData
@@ -17,6 +17,7 @@ from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
 from vibesensor.domain.test_run import TestRun
 from vibesensor.domain.vibration_origin import VibrationOrigin
 from vibesensor.recording.run_schema import RunMetadata
+from vibesensor.recording.sample_columns import SampleColumns
 
 __all__ = ["AnalysisResult"]
 
@@ -27,7 +28,7 @@ class AnalysisResult:
 
     file_name: str
     metadata: RunMetadata
-    samples: tuple[Sample, ...]
+    samples: SampleColumns
     language: str
     prepared: PreparedRunData
     accel_stats: AccelStatistics

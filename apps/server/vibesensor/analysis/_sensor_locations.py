@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from collections import defaultdict
-from collections.abc import Sequence
 from functools import lru_cache
 
-from vibesensor.analysis._sample_metrics import _primary_vibration_strength_db
-from vibesensor.analysis._types import Sample
+import numpy as np
+import numpy.typing as npt
+
 from vibesensor.domain.locations import label_for_code as _label_for_code
 from vibesensor.recording.run_schema import RunMetadata, RunSensorMetadata
+from vibesensor.recording.sample_columns import SampleColumns, coded, first_seen, rows_of_groups
 
 
 def _sensor_snapshot_label(snapshot: RunSensorMetadata, *, lang: str = "en") -> str:
@@ -27,19 +27,26 @@ def _sensor_snapshot_label(snapshot: RunSensorMetadata, *, lang: str = "en") -> 
     return "Unknown sensor"
 
 
-def _location_label(
-    sample: Sample,
-    *,
+def location_labels(
+    samples: SampleColumns,
     metadata: RunMetadata | None = None,
-    lang: str = "en",
-) -> str:
-    """Return a stable language-neutral location label for the sample."""
-    if metadata is not None:
-        snapshot = metadata.sensor_snapshot_for(sample.client_id)
-        if snapshot is not None:
-            return _sensor_snapshot_label(snapshot, lang=lang)
-    del lang
-    return _sample_location_label(sample.location, sample.client_name, sample.client_id)
+) -> tuple[npt.NDArray[np.intp], list[str]]:
+    """Each sample's stable language-neutral location label, as an index into the labels.
+
+    A sensor in *metadata*'s sensor snapshot has the label of its snapshot,
+    another the label of its samples' own location code, name and client id.
+    The labels come in the order a pass over the samples meets them in.
+    """
+    by_sensor: list[str] = []
+    for location, client_name, client_id in samples.sensors:
+        snapshot = metadata.sensor_snapshot_for(client_id) if metadata is not None else None
+        by_sensor.append(
+            _sensor_snapshot_label(snapshot)
+            if snapshot is not None
+            else _sample_location_label(location, client_name, client_id)
+        )
+    label_of_sensor, labels = coded(by_sensor)
+    return first_seen(label_of_sensor[samples.sensor_of], labels)
 
 
 # A drive's samples come from a few sensors, and each step of the analysis asks
@@ -69,26 +76,22 @@ def fallback_location_label(client_id: str) -> str:
 
 
 def _locations_connected_throughout_run(
-    samples: Sequence[Sample],
+    samples: SampleColumns,
     *,
     metadata: RunMetadata | None = None,
-    lang: str = "en",
 ) -> set[str]:
     """Return locations that remain present across the full run span."""
-    by_location_times: dict[str, set[float]] = defaultdict(set)
+    label_of, labels = location_labels(samples, metadata)
+    usable = ~np.isnan(samples.vibration_strength_db) & ~np.isnan(samples.t_s)
+    by_location_times: dict[str, set[float]] = {}
     all_times: list[float] = []
-
-    for sample in samples:
-        location = _location_label(sample, metadata=metadata, lang=lang)
-        if not location:
-            continue
-        if _primary_vibration_strength_db(sample) is None:
-            continue
-        t_s = sample.t_s
-        if t_s is None:
-            continue
-        by_location_times[location].add(t_s)
-        all_times.append(t_s)
+    for location, rows in zip(
+        labels, rows_of_groups(np.where(usable, label_of, -1), len(labels)), strict=True
+    ):
+        if location and rows.size:
+            times = samples.t_s[rows].tolist()
+            by_location_times[location] = set(times)
+            all_times.extend(times)
 
     if not by_location_times:
         return set()

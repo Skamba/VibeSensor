@@ -15,7 +15,7 @@ import numpy as np
 import numpy.typing as npt
 
 from vibesensor.analysis._reference_resolution import effective_engine_rpm, wheel_hz_columns
-from vibesensor.analysis.drive_table import DriveTable, first_seen
+from vibesensor.analysis.drive_table import DriveTable
 from vibesensor.common.units import SECONDS_PER_MINUTE
 from vibesensor.domain.engine_profile import EngineProfile, engine_orders
 from vibesensor.domain.finding_types import VibrationSource
@@ -25,6 +25,7 @@ from vibesensor.dsp.order_bands import (
     WHEEL_ORDER_PATH_COMPLIANCE,
 )
 from vibesensor.recording.run_schema import RunMetadata
+from vibesensor.recording.sample_columns import first_seen
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Reference frequencies

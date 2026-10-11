@@ -12,8 +12,8 @@ import numpy.typing as npt
 
 from vibesensor.recording.raw_capture import RawCaptureManifest, RawRunCapture
 from vibesensor.recording.run_schema import RunMetadata
+from vibesensor.recording.sample_columns import SampleColumns
 from vibesensor.recording.sample_peaks import SamplePeaks
-from vibesensor.recording.sensor_frame import SensorFrame
 
 if TYPE_CHECKING:
     from vibesensor.history.history_db import HistoryDB
@@ -31,9 +31,9 @@ class LoadedPostAnalysisRun:
     run_id: str
     metadata: RunMetadata
     language: str
-    # Loaded without their peaks (``top_peaks`` empty): ``stored_peaks`` reads
-    # those, for the samples the raw replay does not rebuild.
-    samples: list[SensorFrame]
+    # Loaded without their peaks: ``stored_peaks`` reads those, for the
+    # samples the raw replay does not rebuild.
+    samples: SampleColumns
     stored_peaks: StoredPeaksReader
     total_summary_row_count: int
     stride: int
@@ -86,9 +86,10 @@ def load_post_analysis_run(
     """Load a run's metadata, its analysed summary rows, and its raw capture.
 
     A light pass reads only the columns that pick rows; only the kept rows (at
-    most ``_MAX_POST_ANALYSIS_SAMPLES``) are decoded into ``SensorFrame``s, so
-    peak memory does not grow with the drive's length. Their stored peaks are
-    read later, only for the samples the raw replay does not rebuild.
+    most ``_MAX_POST_ANALYSIS_SAMPLES``) are decoded, into columns of the
+    fields the analysis reads, so peak memory does not grow with the drive's
+    length. Their stored peaks are read later, only for the samples the raw
+    replay does not rebuild.
     """
     stored_run = db.get_run(run_id)
     if stored_run is None:
@@ -104,10 +105,10 @@ def load_post_analysis_run(
     if total_summary_row_count <= 0:
         total_summary_row_count = len(columns)
     selection = _select_post_analysis_rows(columns)
-    samples, row_ids = db.load_run_samples_without_peaks(
+    samples, row_ids = db.load_run_sample_columns(
         run_id, columns.row_id[selection.indices].tolist()
     )
-    if not samples:
+    if not len(samples):
         return EmptyPostAnalysisSamples(
             run_id=run_id,
             error_message="No samples collected during run",

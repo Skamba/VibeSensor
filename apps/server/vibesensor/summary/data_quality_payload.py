@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
+
+import numpy as np
 
 from vibesensor.common.json_utils import as_float_or_none as _as_float
 from vibesensor.domain.speed_profile_summary import SpeedProfileSummary
 from vibesensor.dsp.statistics_utils import _outlier_summary
-from vibesensor.recording.sensor_frame import SensorFrame
+from vibesensor.recording.sample_columns import SampleColumns
 from vibesensor.summary.data_quality_contracts import (
     DataQualityResponse as DataQualityPayload,
 )
@@ -30,11 +32,11 @@ def _int_value(stats: AccelStatisticsLike, key: str) -> int | None:
     return int(value) if isinstance(value, (int, float)) else None
 
 
-def _percent_missing(samples: Sequence[SensorFrame], field: str) -> float:
-    """Return the percentage of samples without a value for *field*."""
-    if not samples:
+def _percent_missing(samples: SampleColumns, field: str) -> float:
+    """Return the percentage of samples without a value for the float column *field*."""
+    if not len(samples):
         return 100.0
-    missing = sum(1 for sample in samples if getattr(sample, field) is None)
+    missing = int(np.count_nonzero(np.isnan(getattr(samples, field))))
     return (missing / len(samples)) * 100.0
 
 
@@ -50,7 +52,7 @@ def _outlier_summary_payload(values: list[float]) -> OutlierSummaryPayload:
 
 
 def build_data_quality_dict(
-    samples: Sequence[SensorFrame],
+    samples: SampleColumns,
     speed_values: list[float],
     speed_stats: SpeedProfileSummary,
     speed_non_null_pct: float,
