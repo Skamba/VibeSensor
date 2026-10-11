@@ -168,6 +168,21 @@ path caps the loop's duty cycle at 50%. Even at a 5–10× slower Raspberry Pi
   is byte-identical on that drive (also with all or half of its raw capture
   removed), the CI-seed accuracy benchmark and the diagnostic matrix. Pi
   timing to be measured after merge.
+- The samples are columns too (`SampleColumns`, "Sample columns" in
+  `docs/analysis_pipeline.md`): the loader selects and decodes only the 22
+  fields the analysis reads, a column per batch, rather than a 30-field
+  `SensorFrame` per sample; the stages that walk the samples group them with
+  NumPy, and the raw replay groups its requests per sensor and writes the
+  rebuilt strengths as column slices. Measured on the x86 dev host (same
+  drive, 22 interleaved rounds pinned to 4 cores, two FFT threads): the
+  whole post-analysis from 1.87 s to 1.74 s (load 258 to 247 ms, replay 412
+  to 388 ms, analyze 1073 to 994 ms), peak RSS from 174 to 168 MB and the
+  memray peak from 126 MB to 117 MB; without the raw capture (26 rounds)
+  from 1.05 s to 0.97 s, peak RSS from 135 to 130 MB, memray peak from 90
+  to 78 MB. The analysis JSON is byte-identical on that drive (with all,
+  none, half the sensors' or half the time's raw capture), the CI-seed
+  accuracy benchmark and the diagnostic matrix. Pi timing to be measured
+  after merge.
 - Tried and not kept for order matching: a pool of 3 forked processes, one
   hypothesis each, saved 21 s on the Pi but each child dirtied 30-45 MB of
   the parent's pages through reference counts (86-135 MB in all), leaving 54-100
@@ -208,7 +223,7 @@ path caps the loop's duty cycle at 50%. Even at a 5–10× slower Raspberry Pi
 
 | Host | CPU time | Peak RSS |
 |------|----------|----------|
-| x86 dev host | ~2.1 s | ~178 MB |
+| x86 dev host | ~2.1 s | ~168 MB |
 | Raspberry Pi 3 A+ (`nice -n 10`) | ~39 s (before the drive table) | ~146 MB |
 
 The x86 row is the post-analysis's own CPU time (load to store, `OPENBLAS_NUM_THREADS=1`).
