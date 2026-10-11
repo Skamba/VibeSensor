@@ -99,14 +99,15 @@ handling and metric commits, while the pure DSP steps stay in shared helpers:
 2. The FFT step detrends the block by removing the per-axis mean. The block is
    not filtered, as the post-stop raw replay does not filter it, so a stored
    live row's strength and noise floor match the replay's (`docs/metrics.md`).
-3. `apps/server/vibesensor/dsp/fft_analysis.py` applies the SciPy-backed
-   Hann window, runs the implemented thread-local pyFFTW RFFT backend, slices
-   the configured frequency range via SciPy FFT frequency bins, and produces
-   both per-axis spectra and a combined amplitude curve.
-4. `apps/server/vibesensor/dsp/vibration_strength.py` uses SciPy peak finding to
-   select dominant candidate bins, estimates a P20/median noise floor, and
-   converts the dominant peak band into the
-   shared dB metric used by both live telemetry and post-stop analysis:
+3. `apps/server/vibesensor/dsp/fft_analysis.py` applies the Hann window,
+   runs a thread-local pyFFTW RFFT plan (pyFFTW is imported on the first FFT,
+   without its scipy interfaces), slices the configured frequency range from
+   numpy's `rfftfreq` bins, and produces both per-axis spectra and a combined
+   amplitude curve.
+4. `apps/server/vibesensor/dsp/vibration_strength.py` finds peaks in numpy
+   (`scipy.signal.find_peaks` rules) to select dominant candidate bins,
+   estimates a P20/median noise floor, and converts the dominant peak band
+   into the shared dB metric used by both live telemetry and post-stop analysis:
 
    ```text
    strength_db = 20 * log10((peak_rms + eps) / (floor + eps))
