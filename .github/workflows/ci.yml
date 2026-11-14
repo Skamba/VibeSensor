@@ -14,7 +14,7 @@ permissions:
 jobs:
   changes:
     name: Changed paths
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     outputs:
       backend: ${{ steps.filter.outputs.backend }}
@@ -71,7 +71,7 @@ jobs:
 
   secret-scan:
     name: Secret scan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
 
     steps:
@@ -87,7 +87,7 @@ jobs:
     name: Backend
     needs: changes
     if: ${{ needs.changes.outputs.backend == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
 
     steps:
@@ -112,7 +112,7 @@ jobs:
     name: Backend tests (${{ matrix.shard }}/2)
     needs: changes
     if: ${{ needs.changes.outputs.backend == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     strategy:
       fail-fast: false
@@ -136,7 +136,7 @@ jobs:
     name: Diagnosis seed matrix (${{ matrix.shard }}/8)
     needs: changes
     if: ${{ needs.changes.outputs.diagnosis == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     strategy:
       fail-fast: false
@@ -157,7 +157,7 @@ jobs:
     name: Frontend
     needs: changes
     if: ${{ needs.changes.outputs.frontend == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
 
     steps:
@@ -183,7 +183,7 @@ jobs:
     name: UI smoke
     needs: changes
     if: ${{ needs.changes.outputs.frontend == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
 
     steps:
@@ -229,7 +229,7 @@ jobs:
     name: Integration (contracts, e2e, release smoke)
     needs: changes
     if: ${{ needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
 
     steps:
@@ -262,7 +262,7 @@ jobs:
     name: Firmware
     needs: changes
     if: ${{ needs.changes.outputs.firmware == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
 
     steps:
